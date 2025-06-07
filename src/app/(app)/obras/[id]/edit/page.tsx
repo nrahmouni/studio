@@ -182,7 +182,7 @@ export default function EditObraPage() {
                           <CalendarIcon className="mr-2 h-4 w-4" />
                           {field.value ? format(field.value, "PPP", { locale: es }) : <span>Selecciona fecha</span>}
                         </Button></PopoverTrigger>
-                      <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={(date) => field.onChange(date || null)} initialFocus locale={es} /></PopoverContent>
+                      <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value || undefined} onSelect={(date) => field.onChange(date || null)} initialFocus locale={es} /></PopoverContent>
                     </Popover>)}/>
                 {form.formState.errors.fechaFin && <p className="text-sm text-destructive mt-1">{form.formState.errors.fechaFin.message}</p>}
               </div>
