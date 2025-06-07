@@ -1,3 +1,4 @@
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -16,8 +17,8 @@ body {
     --popover-foreground: 210 25% 15%;
     --primary: 210 43% 30%; /* Deep Blue #294B6D */
     --primary-foreground: 0 0% 98%;
-    --secondary: 210 16% 90%;
-    --secondary-foreground: 210 43% 30%;
+    --secondary: 210 16% 90%; /* Lighter gray for secondary elements */
+    --secondary-foreground: 210 43% 30%; /* Primary color for text on secondary */
     --muted: 210 16% 90%;
     --muted-foreground: 210 15% 45%;
     --accent: 19 80% 58%; /* Vibrant Orange #E57A44 */
@@ -32,36 +33,37 @@ body {
     --chart-3: 197 37% 24%;
     --chart-4: 43 74% 66%;
     --chart-5: 27 87% 67%;
-    --radius: 0.5rem;
-    --sidebar-background: 210 20% 98%; /* Slightly off-white for sidebar */
+    --radius: 0.75rem; /* Slightly larger radius for modern feel */
+    --sidebar-background: 210 20% 98%; 
     --sidebar-foreground: 210 30% 20%;
-    --sidebar-primary: 210 43% 30%; /* Deep Blue */
+    --sidebar-primary: 210 43% 30%; 
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 19 80% 58%; /* Vibrant Orange */
+    --sidebar-accent: 19 80% 58%; 
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 210 15% 85%;
     --sidebar-ring: 210 43% 30%;
   }
+
   .dark {
-    --background: 210 25% 10%; /* Darker blue-gray */
+    --background: 210 25% 10%; 
     --foreground: 210 15% 95%;
     --card: 210 25% 12%;
     --card-foreground: 210 15% 95%;
     --popover: 210 25% 10%;
     --popover-foreground: 210 15% 95%;
-    --primary: 19 80% 58%; /* Vibrant Orange as primary in dark */
+    --primary: 19 80% 58%; 
     --primary-foreground: 210 25% 10%;
-    --secondary: 210 20% 20%;
+    --secondary: 210 20% 18%; /* Darker secondary for dark mode */
     --secondary-foreground: 210 15% 95%;
     --muted: 210 20% 20%;
     --muted-foreground: 210 15% 65%;
-    --accent: 210 43% 40%; /* Muted Deep Blue as accent in dark */
+    --accent: 210 43% 50%; /* Adjusted Deep Blue for dark accent */
     --accent-foreground: 210 15% 95%;
-    --destructive: 0 62.8% 30.6%;
+    --destructive: 0 70% 50%; /* Slightly softer red for dark destructive */
     --destructive-foreground: 0 0% 98%;
     --border: 210 20% 25%;
     --input: 210 20% 25%;
-    --ring: 19 80% 58%; /* Vibrant Orange for focus rings in dark */
+    --ring: 19 80% 58%; 
     --chart-1: 220 70% 50%;
     --chart-2: 160 60% 45%;
     --chart-3: 30 80% 55%;
@@ -69,9 +71,9 @@ body {
     --chart-5: 340 75% 55%;
     --sidebar-background: 210 25% 12%;
     --sidebar-foreground: 210 15% 90%;
-    --sidebar-primary: 19 80% 58%; /* Vibrant Orange */
+    --sidebar-primary: 19 80% 58%; 
     --sidebar-primary-foreground: 210 25% 10%;
-    --sidebar-accent: 210 43% 40%; /* Muted Deep Blue */
+    --sidebar-accent: 210 43% 50%; 
     --sidebar-accent-foreground: 210 15% 90%;
     --sidebar-border: 210 20% 25%;
     --sidebar-ring: 19 80% 58%;
@@ -82,10 +84,68 @@ body {
   * {
     @apply border-border;
   }
+  html {
+    @apply scroll-smooth;
+  }
   body {
-    @apply bg-background text-foreground font-body;
+    @apply bg-background text-foreground font-body antialiased;
   }
   h1, h2, h3, h4, h5, h6 {
     @apply font-headline;
   }
+
+  /* Subtle default transitions for interactive elements */
+  button, a, input[type="checkbox"], input[type="radio"], select {
+    @apply transition-all duration-200 ease-in-out;
+  }
+  /* Cards can have their own hover transitions if more specific control is needed */
+  .card-interactive {
+     @apply transition-all duration-300 ease-in-out;
+  }
+  .card-interactive:hover {
+    @apply shadow-xl transform scale-[1.02];
+  }
+}
+
+/* Custom Animations (if not using a plugin) */
+@keyframes custom-fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-custom-fade-in-up {
+  animation: custom-fade-in-up 0.6s ease-out forwards;
+}
+
+@keyframes custom-fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+.animate-custom-fade-in-down {
+  animation: custom-fade-in-down 0.6s ease-out forwards;
+}
+
+/* Animation delay utilities */
+.animation-delay-100 { animation-delay: 0.1s; }
+.animation-delay-200 { animation-delay: 0.2s; }
+.animation-delay-300 { animation-delay: 0.3s; }
+.animation-delay-400 { animation-delay: 0.4s; }
+.animation-delay-500 { animation-delay: 0.5s; }
+.animation-delay-700 { animation-delay: 0.7s; }
+.animation-delay-1000 { animation-delay: 1s; }
+
+/* Ensure elements start invisible if they are meant to fade in */
+.will-animate-fade-in-up, .will-animate-fade-in-down {
+  opacity: 0;
 }
