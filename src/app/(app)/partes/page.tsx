@@ -183,68 +183,71 @@ export default function PartesPage() {
             {selectedObraId !== 'all' && obrasMap[selectedObraId] ? ` Filtrado por: ${obrasMap[selectedObraId]}.` : ''}
         </p>
         <div className="space-y-6">
-          {partes.map(parte => (
-            <Card key={parte.id} className="hover:shadow-xl transition-shadow duration-300">
-              <CardHeader className="pb-3">
-                <div className="flex justify-between items-start">
+          {partes.map(parte => {
+            const fotosURLs = parte.fotosURLs;
+            return (
+              <Card key={parte.id} className="hover:shadow-xl transition-shadow duration-300">
+                <CardHeader className="pb-3">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-xl font-headline text-primary hover:underline">
+                         <Link href={`/partes/${parte.id}`}>Parte del {new Date(parte.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</Link>
+                      </CardTitle>
+                      <CardDescription>
+                        Obra: <span className="font-medium text-foreground">{obrasMap[parte.obraId] || 'Desconocida'}</span>
+                         <span className="mx-1">|</span> 
+                        Trabajador: <span className="font-medium text-foreground">{usuariosMap[parte.usuarioId] || 'Desconocido'}</span>
+                      </CardDescription>
+                    </div>
+                    {parte.validado ? (
+                        <span className="flex items-center text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
+                          <CheckCircle className="h-4 w-4 mr-1" /> Validado
+                        </span>
+                      ) : (
+                         <span className="flex items-center text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
+                          <ShieldAlert className="h-4 w-4 mr-1" /> Pendiente
+                        </span>
+                      )}
+                  </div>
+                </CardHeader>
+                <CardContent className="pt-0 pb-4 space-y-2">
                   <div>
-                    <CardTitle className="text-xl font-headline text-primary hover:underline">
-                       <Link href={`/partes/${parte.id}`}>Parte del {new Date(parte.fecha).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })}</Link>
-                    </CardTitle>
-                    <CardDescription>
-                      Obra: <span className="font-medium text-foreground">{obrasMap[parte.obraId] || 'Desconocida'}</span>
-                       <span className="mx-1">|</span> 
-                      Trabajador: <span className="font-medium text-foreground">{usuariosMap[parte.usuarioId] || 'Desconocido'}</span>
-                    </CardDescription>
+                      <h4 className="font-semibold text-sm">Tareas Realizadas:</h4>
+                      <p className="text-sm text-muted-foreground line-clamp-2">{parte.tareasRealizadas}</p>
                   </div>
-                  {parte.validado ? (
-                      <span className="flex items-center text-xs text-green-600 bg-green-100 px-2 py-1 rounded-full">
-                        <CheckCircle className="h-4 w-4 mr-1" /> Validado
-                      </span>
-                    ) : (
-                       <span className="flex items-center text-xs text-amber-600 bg-amber-100 px-2 py-1 rounded-full">
-                        <ShieldAlert className="h-4 w-4 mr-1" /> Pendiente
-                      </span>
-                    )}
-                </div>
-              </CardHeader>
-              <CardContent className="pt-0 pb-4 space-y-2">
-                <div>
-                    <h4 className="font-semibold text-sm">Tareas Realizadas:</h4>
-                    <p className="text-sm text-muted-foreground line-clamp-2">{parte.tareasRealizadas}</p>
-                </div>
-                {parte.incidencias && (
-                  <div>
-                    <h4 className="font-semibold text-sm">Incidencias:</h4>
-                    <p className="text-sm text-destructive/80 line-clamp-1">{parte.incidencias}</p>
-                  </div>
-                )}
-                {parte.fotosURLs && parte.fotosURLs.length > 0 && (
-                  <div className="flex gap-2 mt-2">
-                    {parte.fotosURLs.slice(0,3).map((url, idx) => (
-                       <Image key={idx} src={url} alt={`Foto ${idx+1} del parte`} width={60} height={60} className="rounded-md object-cover border" data-ai-hint={parte.dataAIHint || "construction work"}/>
-                    ))}
-                    {parte.fotosURLs.length > 3 && <div className="w-[60px] h-[60px] bg-muted rounded-md flex items-center justify-center text-xs text-muted-foreground border">+{parte.fotosURLs.length - 3} más</div>}
-                  </div>
-                )}
-              </CardContent>
-              <CardFooter className="flex justify-end gap-2 pt-3 border-t">
-                {!parte.validado && currentUser && (currentUser.rol === 'admin' || currentUser.rol === 'jefeObra') && (
-                     <Button onClick={() => handleValidateParte(parte.id)} variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">
-                        <CheckCircle className="mr-2 h-4 w-4" /> Validar
+                  {parte.incidencias && (
+                    <div>
+                      <h4 className="font-semibold text-sm">Incidencias:</h4>
+                      <p className="text-sm text-destructive/80 line-clamp-1">{parte.incidencias}</p>
+                    </div>
+                  )}
+                  {fotosURLs && fotosURLs.length > 0 && (
+                    <div className="flex gap-2 mt-2">
+                      {fotosURLs.slice(0,3).map((url, idx) => (
+                         <Image key={idx} src={url} alt={`Foto ${idx+1} del parte`} width={60} height={60} className="rounded-md object-cover border" data-ai-hint={parte.dataAIHint || "construction work"}/>
+                      ))}
+                      {fotosURLs.length > 3 && <div className="w-[60px] h-[60px] bg-muted rounded-md flex items-center justify-center text-xs text-muted-foreground border">+{fotosURLs.length - 3} más</div>}
+                    </div>
+                  )}
+                </CardContent>
+                <CardFooter className="flex justify-end gap-2 pt-3 border-t">
+                  {!parte.validado && currentUser && (currentUser.rol === 'admin' || currentUser.rol === 'jefeObra') && (
+                       <Button onClick={() => handleValidateParte(parte.id)} variant="outline" size="sm" className="text-green-600 border-green-600 hover:bg-green-50 hover:text-green-700">
+                          <CheckCircle className="mr-2 h-4 w-4" /> Validar
+                      </Button>
+                  )}
+                  {parte.validado && parte.validadoPor && (
+                      <p className="text-xs text-muted-foreground italic">Validado por {usuariosMap[parte.validadoPor] || 'Admin'}</p>
+                  )}
+                  <Link href={`/partes/${parte.id}`} passHref>
+                    <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                      <Eye className="mr-2 h-4 w-4" /> Ver Parte
                     </Button>
-                )}
-                {parte.validado && parte.validadoPor && (
-                    <p className="text-xs text-muted-foreground italic">Validado por {usuariosMap[parte.validadoPor] || 'Admin'}</p>
-                )}
-                <Link href={`/partes/${parte.id}`} passHref>
-                  <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <Eye className="mr-2 h-4 w-4" /> Ver Parte
-                  </Button>
-                </Link>
-              </CardFooter>
-            </Card>
-          ))}
+                  </Link>
+                </CardFooter>
+              </Card>
+            );
+          })}
         </div>
         </>
       )}

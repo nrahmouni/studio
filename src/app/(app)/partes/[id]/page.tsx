@@ -126,6 +126,9 @@ export default function ParteDetailPage() {
     );
   }
 
+  const tareasSeleccionadas = parte.tareasSeleccionadas;
+  const fotosURLs = parte.fotosURLs;
+
   return (
     <div className="container mx-auto py-8 px-4">
       <Button variant="outline" onClick={() => router.push('/partes')} className="mb-6">
@@ -173,22 +176,22 @@ export default function ParteDetailPage() {
             </div>
           )}
           
-          {parte.tareasSeleccionadas && parte.tareasSeleccionadas.length > 0 && (
+          {tareasSeleccionadas && tareasSeleccionadas.length > 0 && (
             <div>
                 <h4 className="font-semibold text-md mb-1 text-primary/90">Tipos de Tarea:</h4>
                 <div className="flex flex-wrap gap-2">
-                    {parte.tareasSeleccionadas.map(tarea => (
+                    {tareasSeleccionadas.map(tarea => (
                         <span key={tarea} className="px-2 py-0.5 text-xs bg-secondary text-secondary-foreground rounded-full">{tarea}</span>
                     ))}
                 </div>
             </div>
           )}
 
-          {parte.fotosURLs && parte.fotosURLs.length > 0 && (
+          {fotosURLs && fotosURLs.length > 0 && (
             <div>
               <h4 className="font-semibold text-md mb-2 text-primary/90 flex items-center"><Camera className="mr-2 h-5 w-5 text-accent"/>Fotos Adjuntas:</h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
-                {parte.fotosURLs.map((url, index) => (
+                {fotosURLs.map((url, index) => (
                   <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
                     <Image 
                         src={url} 

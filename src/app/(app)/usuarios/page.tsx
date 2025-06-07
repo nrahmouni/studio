@@ -32,8 +32,8 @@ export default function UsuariosPage() {
       try {
         const fetchedUsuarios = await getUsuariosByEmpresaId(storedEmpresaId);
         setUsuarios(fetchedUsuarios);
-      } catch (err) {
-        console.error("Error fetching usuarios:", err);
+      } catch (err: any) { // Explicitly type err
+        console.error("Error fetching usuarios:", err); // It's good practice to log the actual error
         setError("No se pudieron cargar los usuarios. Inténtelo de nuevo más tarde.");
         toast({ title: "Error de Carga", description: "No se pudieron cargar los usuarios.", variant: "destructive" });
       } finally {
@@ -84,7 +84,7 @@ export default function UsuariosPage() {
           <CardHeader>
             <CardTitle className="flex items-center"><Users className="mr-3 h-6 w-6 text-primary" /><span>Listado de Usuarios</span></CardTitle>
             <CardDescription>Administra los perfiles y accesos de los trabajadores y gestores de tu empresa.</CardDescription>
-          </CardHeader>
+          </Header>
           <CardContent>
             <div className="text-center py-10 text-muted-foreground">
               <Users className="mx-auto h-12 w-12 mb-4" />
@@ -99,38 +99,41 @@ export default function UsuariosPage() {
         <>
           <p className="text-muted-foreground mb-6">Mostrando {usuarios.length} usuario(s).</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {usuarios.map(usuario => (
-              <Card key={usuario.id} className="flex flex-col hover:shadow-xl transition-shadow duration-300">
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-xl font-headline text-primary">{usuario.nombre}</CardTitle>
-                    <Badge variant={usuario.activo ? "secondary" : "destructive"} className={usuario.activo ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"}>
-                      {usuario.activo ? <ShieldCheck className="mr-1 h-3 w-3" /> : <ShieldOff className="mr-1 h-3 w-3" />}
-                      {usuario.activo ? 'Activo' : 'Inactivo'}
-                    </Badge>
-                  </div>
-                  <CardDescription className="flex items-center text-sm">
-                    <Mail className="mr-2 h-4 w-4 text-muted-foreground" /> {usuario.email}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent className="flex-grow space-y-2 text-sm">
-                  <div className="flex items-center">
-                    <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" /> 
-                    <span className="font-medium">Rol:</span>&nbsp;{getRolDisplay(usuario.rol)}
-                  </div>
-                   {usuario.obrasAsignadas && usuario.obrasAsignadas.length > 0 && (
-                     <p><span className="font-medium">Obras Asignadas:</span> {usuario.obrasAsignadas.length}</p>
-                   )}
-                </CardContent>
-                <CardFooter className="border-t pt-4">
-                  <Link href={`/usuarios/${usuario.id}/edit`} passHref className="w-full">
-                    <Button variant="outline" className="w-full">
-                      <Edit2 className="mr-2 h-4 w-4" /> Editar Usuario
-                    </Button>
-                  </Link>
-                </CardFooter>
-              </Card>
-            ))}
+            {usuarios.map(usuario => {
+              const obrasAsignadasCurrent = usuario.obrasAsignadas;
+              return (
+                <Card key={usuario.id} className="flex flex-col hover:shadow-xl transition-shadow duration-300">
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-xl font-headline text-primary">{usuario.nombre}</CardTitle>
+                      <Badge variant={usuario.activo ? "secondary" : "destructive"} className={usuario.activo ? "bg-green-100 text-green-700 border-green-200" : "bg-red-100 text-red-700 border-red-200"}>
+                        {usuario.activo ? <ShieldCheck className="mr-1 h-3 w-3" /> : <ShieldOff className="mr-1 h-3 w-3" />}
+                        {usuario.activo ? 'Activo' : 'Inactivo'}
+                      </Badge>
+                    </div>
+                    <CardDescription className="flex items-center text-sm">
+                      <Mail className="mr-2 h-4 w-4 text-muted-foreground" /> {usuario.email}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex-grow space-y-2 text-sm">
+                    <div className="flex items-center">
+                      <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" /> 
+                      <span className="font-medium">Rol:</span>&nbsp;{getRolDisplay(usuario.rol)}
+                    </div>
+                    {obrasAsignadasCurrent && obrasAsignadasCurrent.length > 0 && (
+                      <p><span className="font-medium">Obras Asignadas:</span> {obrasAsignadasCurrent.length}</p>
+                    )}
+                  </CardContent>
+                  <CardFooter className="border-t pt-4">
+                    <Link href={`/usuarios/${usuario.id}/edit`} passHref className="w-full">
+                      <Button variant="outline" className="w-full">
+                        <Edit2 className="mr-2 h-4 w-4" /> Editar Usuario
+                      </Button>
+                    </Link>
+                  </CardFooter>
+                </Card>
+              );
+            })}
           </div>
         </>
       )}
