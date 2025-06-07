@@ -98,7 +98,7 @@ export default function HomePage() {
               ObraLink transforma la gestión de tus proyectos de construcción y reformas. Digitaliza partes, optimiza recursos con IA y toma el control total.
             </p>
             <Link href="/auth/select-role" passHref>
-              <Button size="xl" className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-6 rounded-lg shadow-xl transform hover:scale-105 transition-transform duration-300 animate-fade-in-up animation-delay-400">
+              <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-6 rounded-lg shadow-xl transform hover:scale-105 transition-transform duration-300 animate-fade-in-up animation-delay-400">
                 <Zap className="mr-3 h-6 w-6" /> ¡Empieza a Optimizar Ahora!
               </Button>
             </Link>
@@ -118,7 +118,7 @@ export default function HomePage() {
               {features.map((feature) => (
                 <Card
                   key={feature.title}
-                  className={`text-center bg-card shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 rounded-xl overflow-hidden ${feature.delay}`}
+                  className={`text-center bg-card shadow-lg hover:shadow-2xl transition-all duration-300 transform hover:-translate-y-2 rounded-xl overflow-hidden ${feature.delay} will-animate-fade-in-up`}
                 >
                   <CardHeader className="p-6">
                     <div className="mx-auto bg-accent/10 rounded-full p-4 w-fit mb-5 border-2 border-accent/30">
@@ -147,7 +147,7 @@ export default function HomePage() {
             <div className="space-y-16 md:space-y-24">
               {benefits.map((benefit, index) => (
                 <div key={benefit.title} className={`flex flex-col md:flex-row items-center gap-8 md:gap-12 ${benefit.align === 'right' ? 'md:flex-row-reverse' : ''}`}>
-                  <div className="md:w-1/2 animate-fade-in-up">
+                  <div className="md:w-1/2 animate-fade-in-up will-animate-fade-in-up">
                     <Image
                       src={benefit.imageSrc}
                       alt={benefit.imageAlt}
@@ -157,7 +157,7 @@ export default function HomePage() {
                       data-ai-hint={benefit.dataAiHint}
                     />
                   </div>
-                  <div className={`md:w-1/2 text-center md:text-left ${benefit.align === 'right' ? 'md:text-right' : ''} animate-fade-in-up animation-delay-${(index+1)*200}`}>
+                  <div className={`md:w-1/2 text-center md:text-left ${benefit.align === 'right' ? 'md:text-right' : ''} animate-fade-in-up animation-delay-${(index+1)*200} will-animate-fade-in-up`}>
                     <h3 className="text-2xl md:text-3xl font-bold font-headline mb-4 text-primary">{benefit.title}</h3>
                     <p className="text-md md:text-lg text-foreground/80 mb-6">{benefit.description}</p>
                     <ul className={`space-y-2 mb-6 text-left inline-block ${benefit.align === 'right' ? 'md:text-right' : ''}`}>
@@ -190,7 +190,7 @@ export default function HomePage() {
               Únete a las empresas que ya están construyendo el futuro con ObraLink.
             </p>
             <Link href="/auth/select-role" passHref>
-              <Button size="xl" variant="secondary" className="text-primary hover:bg-background/90 text-lg px-10 py-6 rounded-lg shadow-xl transform hover:scale-105 transition-transform duration-300">
+              <Button size="lg" variant="secondary" className="text-primary hover:bg-background/90 text-lg px-10 py-6 rounded-lg shadow-xl transform hover:scale-105 transition-transform duration-300">
                 Accede o Regístrate
               </Button>
             </Link>
