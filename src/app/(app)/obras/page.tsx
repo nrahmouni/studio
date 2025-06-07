@@ -6,10 +6,21 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase, PlusCircle, Loader2, AlertTriangle, Eye, Edit3, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { getObrasByEmpresaId } from '@/lib/actions/obra.actions';
+import { getObrasByEmpresaId, deleteObra } from '@/lib/actions/obra.actions'; // Added deleteObra
 import type { Obra } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-// import { deleteObra } from '@/lib/actions/obra.actions'; // Placeholder for delete action
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+
 
 export default function ObrasPage() {
   const [obras, setObras] = useState<Obra[]>([]);
@@ -44,29 +55,25 @@ export default function ObrasPage() {
     fetchObras();
   }, [toast]);
 
-  // const handleDeleteObra = async (obraId: string) => {
-  //   const storedEmpresaId = localStorage.getItem('empresaId_obra_link');
-  //   if (!storedEmpresaId) {
-  //     toast({ title: "Error", description: "ID de empresa no encontrado.", variant: "destructive" });
-  //     return;
-  //   }
-  //   if (!confirm(`¿Está seguro de que desea eliminar la obra con ID ${obraId}? Esta acción no se puede deshacer.`)) {
-  //     return;
-  //   }
-  //   try {
-  //     // const result = await deleteObra(obraId, storedEmpresaId);
-  //     // if (result.success) {
-  //     //   toast({ title: "Éxito", description: result.message });
-  //     //   setObras(prevObras => prevObras.filter(obra => obra.id !== obraId));
-  //     // } else {
-  //     //   toast({ title: "Error", description: result.message, variant: "destructive" });
-  //     // }
-  //     toast({title: "Simulación", description: `La obra ${obraId} sería eliminada.`});
-  //     setObras(prevObras => prevObras.filter(obra => obra.id !== obraId)); // Simulación
-  //   } catch (error) {
-  //     toast({ title: "Error Inesperado", description: "No se pudo eliminar la obra.", variant: "destructive" });
-  //   }
-  // };
+  const handleDeleteObra = async (obraId: string) => {
+    const storedEmpresaId = localStorage.getItem('empresaId_obra_link');
+    if (!storedEmpresaId) {
+      toast({ title: "Error", description: "ID de empresa no encontrado.", variant: "destructive" });
+      return;
+    }
+  
+    try {
+      const result = await deleteObra(obraId, storedEmpresaId);
+      if (result.success) {
+        toast({ title: "Éxito", description: result.message });
+        setObras(prevObras => prevObras.filter(obra => obra.id !== obraId));
+      } else {
+        toast({ title: "Error", description: result.message, variant: "destructive" });
+      }
+    } catch (error) {
+      toast({ title: "Error Inesperado", description: "No se pudo eliminar la obra.", variant: "destructive" });
+    }
+  };
 
 
   return (
@@ -155,20 +162,37 @@ export default function ObrasPage() {
                 </CardContent>
                 <CardFooter className="flex justify-end gap-2 pt-4 border-t">
                    <Link href={`/obras/${obra.id}/edit`} passHref>
-                    <Button variant="outline" size="sm" className="text-muted-foreground hover:text-primary hover:border-primary" title="Editar Obra (Próximamente)">
+                    <Button variant="outline" size="sm" className="text-muted-foreground hover:text-primary hover:border-primary" title="Editar Obra">
                       <Edit3 className="h-4 w-4" />
                     </Button>
                   </Link>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    className="text-muted-foreground hover:text-destructive hover:border-destructive opacity-50 cursor-not-allowed" 
-                    title="Eliminar Obra (Próximamente)"
-                    // onClick={() => handleDeleteObra(obra.id)} // Funcionalidad de borrado futura
-                    disabled 
-                  >
-                    <Trash2 className="h-4 w-4" />
-                  </Button>
+                  <AlertDialog>
+                    <AlertDialogTrigger asChild>
+                      <Button 
+                        variant="outline" 
+                        size="sm" 
+                        className="text-muted-foreground hover:text-destructive hover:border-destructive" 
+                        title="Eliminar Obra"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </AlertDialogTrigger>
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          Esta acción no se puede deshacer. Esto eliminará permanentemente la obra
+                           "{obra.nombre}" y todos sus datos asociados (como partes de trabajo).
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => handleDeleteObra(obra.id)} className="bg-destructive hover:bg-destructive/90">
+                          Sí, eliminar obra
+                        </AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                   <Link href={`/obras/${obra.id}`} passHref>
                     <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                       <Eye className="mr-2 h-4 w-4" /> Ver Detalles

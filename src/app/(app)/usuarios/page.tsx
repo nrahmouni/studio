@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Users, UserPlus, Loader2, AlertTriangle, Mail, Briefcase, Edit2, ShieldCheck, ShieldOff } from "lucide-react";
-// import Link from "next/link"; // No link for new user for now
+import Link from "next/link";
 import { getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
 import type { UsuarioFirebase } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -123,9 +123,11 @@ export default function UsuariosPage() {
                    )}
                 </CardContent>
                 <CardFooter className="border-t pt-4">
-                  <Button variant="outline" className="w-full opacity-50 cursor-not-allowed" title="Funcionalidad en desarrollo">
-                    <Edit2 className="mr-2 h-4 w-4" /> Editar Usuario
-                  </Button>
+                  <Link href={`/usuarios/${usuario.id}/edit`} passHref className="w-full">
+                    <Button variant="outline" className="w-full">
+                      <Edit2 className="mr-2 h-4 w-4" /> Editar Usuario
+                    </Button>
+                  </Link>
                 </CardFooter>
               </Card>
             ))}

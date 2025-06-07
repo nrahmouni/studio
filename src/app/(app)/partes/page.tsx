@@ -60,6 +60,8 @@ export default function PartesPage() {
         fetchedObras.forEach(o => tempObrasMap[o.id] = o.nombre);
         setObrasMap(tempObrasMap);
 
+        // Sort partes by date descending
+        fetchedPartes.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
         setPartes(fetchedPartes);
 
         const userIds = new Set(fetchedPartes.map(p => p.usuarioId).concat(fetchedPartes.filter(p=>p.validadoPor).map(p => p.validadoPor!)));
@@ -111,7 +113,7 @@ export default function PartesPage() {
         <h1 className="text-3xl font-bold font-headline text-primary">
           Partes de Trabajo
         </h1>
-        <div className="flex items-center gap-4">
+        <div className="flex items-center gap-4 w-full sm:w-auto">
           <Select value={selectedObraId} onValueChange={setSelectedObraId}>
             <SelectTrigger className="w-full sm:w-[250px] bg-card">
               <Filter className="h-4 w-4 mr-2 text-muted-foreground" />
@@ -125,7 +127,7 @@ export default function PartesPage() {
             </SelectContent>
           </Select>
           <Link href="/partes/new" passHref>
-            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground whitespace-nowrap">
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground whitespace-nowrap w-full sm:w-auto">
               <PlusCircle className="mr-2 h-5 w-5" />
               Nuevo Parte
             </Button>
