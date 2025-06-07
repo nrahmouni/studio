@@ -52,7 +52,7 @@ export const ParteSchema = z.object({
   incidencias: z.string().optional(),
   validado: z.boolean().default(false),
   validadoPor: z.string().optional(), // Referencia a UsuarioFirebase.id (admin/jefeObra)
-  timestamp: z.date().default(() => new Date()),
+  timestamp: z.date(), // Removed .default() - will be set in action
   dataAIHint: z.string().optional(),
 });
 export type Parte = z.infer<typeof ParteSchema>;

@@ -22,7 +22,6 @@ import { getObraById, updateObra } from '@/lib/actions/obra.actions';
 import { ObraSchema, type Obra } from '@/lib/types';
 
 // Schema for editing an Obra. We omit fields that are system-managed or not typically edited here.
-// 'descripcion' is now part of ObraSchema, so it will be included if not omitted.
 const ObraEditFormSchema = ObraSchema.omit({ 
   id: true, 
   empresaId: true, 
@@ -49,8 +48,8 @@ export default function EditObraPage() {
       direccion: '',
       clienteNombre: '',
       fechaInicio: new Date(),
-      fechaFin: null,
-      descripcion: '', // Default to empty string
+      fechaFin: undefined, // Use undefined for optional date not initially set
+      descripcion: '', 
     },
   });
 
@@ -76,7 +75,7 @@ export default function EditObraPage() {
             direccion: fetchedObra.direccion,
             clienteNombre: fetchedObra.clienteNombre,
             fechaInicio: new Date(fetchedObra.fechaInicio),
-            fechaFin: fetchedObra.fechaFin ? new Date(fetchedObra.fechaFin) : null,
+            fechaFin: fetchedObra.fechaFin ? new Date(fetchedObra.fechaFin) : undefined, // Use undefined if null/undefined
             descripcion: fetchedObra.descripcion || '', 
           });
         } else {
@@ -97,7 +96,12 @@ export default function EditObraPage() {
     if (!obraId || !empresaId) return;
     setIsSubmitting(true);
     try {
-      const result = await updateObra(obraId, empresaId, data);
+      // Convert undefined fechaFin to null if backend expects null
+      const dataToSubmit = {
+        ...data,
+        fechaFin: data.fechaFin === undefined ? null : data.fechaFin,
+      };
+      const result = await updateObra(obraId, empresaId, dataToSubmit);
       if (result.success && result.obra) {
         toast({ title: 'Éxito', description: `Obra "${result.obra.nombre}" actualizada.` });
         router.push(`/obras/${obraId}`);
@@ -180,7 +184,7 @@ export default function EditObraPage() {
                     <Popover><PopoverTrigger asChild>
                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP", { locale: es }) : <span>Selecciona fecha</span>}
+                          {field.value ? format(new Date(field.value), "PPP", { locale: es }) : <span>Selecciona fecha</span>}
                         </Button></PopoverTrigger>
                       <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value || undefined} onSelect={(date) => field.onChange(date || null)} initialFocus locale={es} /></PopoverContent>
                     </Popover>)}/>

@@ -14,7 +14,7 @@ const CreateParteSchema = ParteSchema.omit({
   id: true, 
   validado: true, 
   validadoPor: true, 
-  timestamp: true,
+  // timestamp: true, // timestamp will be set on creation
   dataAIHint: true,
 });
 type CreateParteData = z.infer<typeof CreateParteSchema>;
@@ -65,7 +65,7 @@ export async function createParte(data: CreateParteData): Promise<{ success: boo
     ...validationResult.data,
     id: `parte-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     validado: false,
-    timestamp: new Date(),
+    timestamp: new Date(), // Explicitly set timestamp here
   };
 
   Cpartes.unshift(newParte); // Add to the beginning of the array
@@ -84,8 +84,12 @@ export async function updateParte(parteId: string, data: Partial<Omit<Parte, 'id
     return { success: false, message: 'Parte no encontrado.' };
   }
 
-  const partialSchema = CreateParteSchema.partial();
-  const validationResult = partialSchema.safeParse(data);
+  // Create a schema for update, ensuring timestamp is not directly updatable or handled carefully
+  const UpdateParteSchema = CreateParteSchema.partial().extend({
+    timestamp: ParteSchema.shape.timestamp.optional() // Allow timestamp to be optional on update, or handle separately
+  });
+  const validationResult = UpdateParteSchema.safeParse(data);
+
 
   if (!validationResult.success) {
     return { success: false, message: `Error de validación: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
@@ -126,4 +130,3 @@ export async function validateParte(parteId: string, validadorId: string): Promi
   await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true, message: 'Parte validado con éxito.', parte: Cpartes[parteIndex] };
 }
-
