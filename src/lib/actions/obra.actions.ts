@@ -8,6 +8,7 @@ import { mockObras } from '@/lib/mockData/obras';
 import { mockUsuarios } from '@/lib/mockData/usuarios'; // Import mockUsuarios
 
 let Cobras: Obra[] = [...mockObras];
+let CUsuarios: UsuarioFirebase[] = [...mockUsuarios]; // Use CUsuarios for direct modification
 
 // Schema for data coming from the "Nueva Obra" form, including jefeObraEmail
 const CreateObraFormInputSchema = ObraSchema.omit({ 
@@ -44,7 +45,7 @@ export async function createObra(data: CreateObraFormInputData, empresaId: strin
   let jefeObraIdToAssign: string | undefined = undefined;
 
   if (jefeObraEmail) {
-    const foundJefeObra = mockUsuarios.find(
+    const foundJefeObra = CUsuarios.find( // Use CUsuarios
       (user: UsuarioFirebase) => 
         user.email === jefeObraEmail && 
         user.rol === 'jefeObra' && 
@@ -53,20 +54,17 @@ export async function createObra(data: CreateObraFormInputData, empresaId: strin
     if (foundJefeObra) {
       jefeObraIdToAssign = foundJefeObra.id;
     } else {
-      // Optional: return an error or warning if email provided but no matching jefeObra found
-      // For now, we'll proceed without assigning if not found, as it's optional
       console.warn(`Jefe de Obra con email ${jefeObraEmail} no encontrado o no tiene el rol correcto.`);
     }
   }
   
   const finalObraData = {
     ...obraData,
-    empresaId, // Add empresaId from the logged-in user context
+    empresaId, 
     jefeObraId: jefeObraIdToAssign,
     costosPorCategoria: obraData.costosPorCategoria || [],
   };
 
-  // Validate the final Obra object against the main ObraSchema (excluding id)
   const obraSchemaForCreate = ObraSchema.omit({id: true, dataAIHint: true });
   const finalValidationResult = obraSchemaForCreate.safeParse(finalObraData);
 
@@ -89,15 +87,21 @@ export async function createObra(data: CreateObraFormInputData, empresaId: strin
   return { success: true, message: 'Nueva obra creada correctamente.', obra: newObra };
 }
 
-export async function updateObra(obraId: string, empresaId: string, data: Partial<Omit<Obra, 'id' | 'empresaId'>>): Promise<{ success: boolean; message: string; obra?: Obra }> {
+// Update data type to include trabajadoresAsignados
+export async function updateObra(
+  obraId: string, 
+  empresaId: string, 
+  data: Partial<Omit<Obra, 'id' | 'empresaId'> & { trabajadoresAsignados?: string[] }>
+): Promise<{ success: boolean; message: string; obra?: Obra }> {
   const obraIndex = Cobras.findIndex(o => o.id === obraId && o.empresaId === empresaId);
   if (obraIndex === -1) {
     return { success: false, message: 'Obra no encontrada.' };
   }
 
-  // Use ObraSchema.partial() to allow partial updates including costosPorCategoria
+  const { trabajadoresAsignados, ...obraCoreData } = data;
+
   const partialSchema = ObraSchema.partial().omit({ id: true, empresaId: true });
-  const validationResult = partialSchema.safeParse(data);
+  const validationResult = partialSchema.safeParse(obraCoreData);
 
   if (!validationResult.success) {
     console.error("Update validation errors:", validationResult.error.flatten().fieldErrors);
@@ -109,12 +113,33 @@ export async function updateObra(obraId: string, empresaId: string, data: Partia
       costosPorCategoria: validationResult.data.costosPorCategoria || Cobras[obraIndex].costosPorCategoria || [],
   };
 
-
   Cobras[obraIndex] = { ...Cobras[obraIndex], ...validatedDataWithCosts };
+
+  // Handle worker assignments
+  let workersUpdated = false;
+  if (trabajadoresAsignados !== undefined) { // Check if the array was provided (even if empty)
+    CUsuarios.forEach((user, index) => {
+      if (user.empresaId === empresaId && user.rol === 'trabajador') {
+        const isCurrentlyAssigned = user.obrasAsignadas?.includes(obraId);
+        const shouldBeAssigned = trabajadoresAsignados.includes(user.id);
+
+        if (shouldBeAssigned && !isCurrentlyAssigned) {
+          CUsuarios[index].obrasAsignadas = [...(CUsuarios[index].obrasAsignadas || []), obraId];
+          workersUpdated = true;
+        } else if (!shouldBeAssigned && isCurrentlyAssigned) {
+          CUsuarios[index].obrasAsignadas = (CUsuarios[index].obrasAsignadas || []).filter(id => id !== obraId);
+          workersUpdated = true;
+        }
+      }
+    });
+  }
   
   revalidatePath('/(app)/obras');
   revalidatePath(`/(app)/obras/${obraId}`); 
   revalidatePath(`/(app)/obras/${obraId}/edit`);
+  if (workersUpdated) {
+    revalidatePath('/(app)/usuarios'); // If worker assignments changed
+  }
   
   await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true, message: 'Obra actualizada con éxito.', obra: Cobras[obraIndex] };
@@ -127,9 +152,16 @@ export async function deleteObra(obraId: string, empresaId: string): Promise<{ s
   if (Cobras.length === initialLength) {
     return { success: false, message: 'Obra no encontrada para eliminar.' };
   }
+  
+  // Also remove this obraId from any worker's obrasAsignadas list
+  CUsuarios.forEach((user, index) => {
+    if (user.empresaId === empresaId && user.obrasAsignadas?.includes(obraId)) {
+      CUsuarios[index].obrasAsignadas = (CUsuarios[index].obrasAsignadas || []).filter(id => id !== obraId);
+    }
+  });
 
   revalidatePath('/(app)/obras');
+  revalidatePath('/(app)/usuarios'); 
   await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true, message: 'Obra eliminada con éxito.' };
 }
-

@@ -12,7 +12,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'empresa', 
     rol: 'admin',
     activo: true,
-    obrasAsignadas: ['obra-1-1', 'obra-1-2', 'obra-1-3'],
+    obrasAsignadas: ['obra-1-1', 'obra-1-2', 'obra-1-3'], // Admins can be "assigned" for overview
     dniAnversoURL: null,
     dniReversoURL: null,
   },
@@ -25,7 +25,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'password123',
     rol: 'jefeObra',
     activo: true,
-    obrasAsignadas: ['obra-1-1'],
+    obrasAsignadas: ['obra-1-1', 'obra-1-3'], // Jefe de obra explicitly assigned to these
     dniAnversoURL: null,
     dniReversoURL: null,
   },
@@ -38,7 +38,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'trabajador',
     rol: 'trabajador',
     activo: true,
-    obrasAsignadas: ['obra-1-1', 'obra-1-2'],
+    obrasAsignadas: ['obra-1-1', 'obra-1-3'], // Lucía assigned to Ático Sol and Fachada
     dniAnversoURL: 'https://placehold.co/300x200.png?text=DNI+Anverso',
     dniReversoURL: 'https://placehold.co/300x200.png?text=DNI+Reverso',
   },
@@ -51,7 +51,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'password123',
     rol: 'trabajador',
     activo: true,
-    obrasAsignadas: ['obra-1-2'],
+    obrasAsignadas: ['obra-1-2'], // Marcos assigned to Nave Industrial
     dniAnversoURL: null,
     dniReversoURL: null,
   },
@@ -79,7 +79,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'password123',
     rol: 'trabajador',
     activo: true,
-    obrasAsignadas: ['obra-2-1'],
+    obrasAsignadas: ['obra-2-1'], // David assigned to Local Comercial
     dniAnversoURL: null,
     dniReversoURL: null,
   },
@@ -107,7 +107,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'password123',
     rol: 'jefeObra',
     activo: true,
-    obrasAsignadas: ['obra-3-1'],
+    obrasAsignadas: ['obra-3-1'], // Miguel assigned to Edificio Residencial
     dniAnversoURL: null,
     dniReversoURL: null,
   },
@@ -120,8 +120,9 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'password123',
     rol: 'trabajador',
     activo: true,
-    obrasAsignadas: ['obra-3-1', 'obra-3-2'],
+    obrasAsignadas: ['obra-3-1', 'obra-3-2'], // Laura assigned to both
     dniAnversoURL: null,
     dniReversoURL: null,
   },
 ];
+

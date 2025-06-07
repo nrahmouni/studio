@@ -6,14 +6,15 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Briefcase, CalendarDays, User, Building, Edit3, ArrowLeft, AlertTriangle, DollarSign, Tag, FileText as NotesIcon } from "lucide-react";
+import { Loader2, Briefcase, CalendarDays, User, Building, Edit3, ArrowLeft, AlertTriangle, DollarSign, Tag, FileText as NotesIcon, Users } from "lucide-react";
 import { getObraById } from '@/lib/actions/obra.actions';
-import { getUsuarioById } from '@/lib/actions/user.actions';
+import { getUsuarioById, getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
 import type { Obra, UsuarioFirebase, CostoCategoria } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import Image from 'next/image';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from '@/components/ui/badge';
 
 export default function ObraDetailPage() {
   const params = useParams();
@@ -23,6 +24,7 @@ export default function ObraDetailPage() {
 
   const [obra, setObra] = useState<Obra | null>(null);
   const [jefeObra, setJefeObra] = useState<UsuarioFirebase | null>(null);
+  const [assignedWorkers, setAssignedWorkers] = useState<UsuarioFirebase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -47,6 +49,14 @@ export default function ObraDetailPage() {
             const fetchedJefe = await getUsuarioById(fetchedObra.jefeObraId);
             setJefeObra(fetchedJefe);
           }
+
+          // Fetch all users for the company to filter assigned workers
+          const allCompanyUsers = await getUsuariosByEmpresaId(storedEmpresaId);
+          const workersForThisObra = allCompanyUsers.filter(
+            user => user.rol === 'trabajador' && user.obrasAsignadas?.includes(fetchedObra.id)
+          );
+          setAssignedWorkers(workersForThisObra);
+
         } else {
           setError("Obra no encontrada o no tienes acceso a ella.");
           toast({ title: "Error", description: "Obra no encontrada.", variant: "destructive" });
@@ -148,6 +158,32 @@ export default function ObraDetailPage() {
             </p>
           </div>
 
+          {assignedWorkers.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-md mb-3 text-primary/90 flex items-center">
+                <Users className="mr-2 text-accent h-5 w-5" />
+                Trabajadores Asignados
+              </h4>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                {assignedWorkers.map(worker => (
+                  <Badge key={worker.id} variant="secondary" className="py-1.5 px-3 text-sm">
+                    <User className="mr-2 h-4 w-4 text-primary/70"/> {worker.nombre}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+           {assignedWorkers.length === 0 && (
+             <div>
+              <h4 className="font-semibold text-md mb-3 text-primary/90 flex items-center">
+                <Users className="mr-2 text-accent h-5 w-5" />
+                Trabajadores Asignados
+              </h4>
+                <p className="text-sm text-muted-foreground">No hay trabajadores asignados a esta obra actualmente.</p>
+            </div>
+          )}
+
+
           {costosPorCategoria.length > 0 && (
             <div>
               <h4 className="font-semibold text-md mb-3 text-primary/90 flex items-center">
@@ -205,4 +241,3 @@ function InfoItem({ icon, label, value }: InfoItemProps) {
     </div>
   );
 }
-

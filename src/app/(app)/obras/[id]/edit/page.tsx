@@ -14,13 +14,14 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, Loader2, Briefcase, ArrowLeft, Save, AlertTriangle, PlusCircle, Trash2, DollarSign } from 'lucide-react';
+import { CalendarIcon, Loader2, Briefcase, ArrowLeft, Save, AlertTriangle, PlusCircle, Trash2, DollarSign, Users } from 'lucide-react';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { getObraById, updateObra } from '@/lib/actions/obra.actions';
-import { getUsuarioById } from '@/lib/actions/user.actions';
+import { getUsuarioById, getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
 import { ObraSchema, CostoCategoriaSchema, type Obra, type UsuarioFirebase } from '@/lib/types';
 
 const ObraEditFormSchema = ObraSchema.omit({ 
@@ -28,7 +29,7 @@ const ObraEditFormSchema = ObraSchema.omit({
   empresaId: true, 
   dataAIHint: true, 
 }).extend({
-  // costosPorCategoria is already optional in ObraSchema, but defined via CostoCategoriaSchema
+  trabajadoresAsignados: z.array(z.string()).optional().default([]), // For managing worker assignments
 });
 type ObraEditFormData = z.infer<typeof ObraEditFormSchema>;
 
@@ -40,6 +41,7 @@ export default function EditObraPage() {
 
   const [obraData, setObraData] = useState<Obra | null>(null);
   const [currentUser, setCurrentUser] = useState<UsuarioFirebase | null>(null);
+  const [companyWorkers, setCompanyWorkers] = useState<UsuarioFirebase[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -56,6 +58,7 @@ export default function EditObraPage() {
       descripcion: '', 
       jefeObraId: undefined,
       costosPorCategoria: [],
+      trabajadoresAsignados: [],
     },
   });
 
@@ -79,14 +82,26 @@ export default function EditObraPage() {
         getUsuarioById(storedUsuarioId).then(setCurrentUser).catch(console.error);
     }
 
-    const fetchObra = async () => {
+    const fetchData = async () => {
       if (!obraId || !storedEmpresaId) return;
       setIsLoading(true);
       setError(null);
       try {
-        const fetchedObra = await getObraById(obraId, storedEmpresaId);
+        const [fetchedObra, fetchedWorkers] = await Promise.all([
+          getObraById(obraId, storedEmpresaId),
+          getUsuariosByEmpresaId(storedEmpresaId)
+        ]);
+        
+        const activeTrabajadores = fetchedWorkers.filter(u => u.rol === 'trabajador' && u.activo);
+        setCompanyWorkers(activeTrabajadores);
+
         if (fetchedObra) {
           setObraData(fetchedObra);
+          // Determine initially assigned workers for this obra
+          const initialAssignedWorkerIds = activeTrabajadores
+            .filter(worker => worker.obrasAsignadas?.includes(fetchedObra.id))
+            .map(worker => worker.id);
+
           form.reset({
             nombre: fetchedObra.nombre,
             direccion: fetchedObra.direccion,
@@ -96,19 +111,20 @@ export default function EditObraPage() {
             descripcion: fetchedObra.descripcion || '', 
             jefeObraId: fetchedObra.jefeObraId || undefined,
             costosPorCategoria: fetchedObra.costosPorCategoria || [],
+            trabajadoresAsignados: initialAssignedWorkerIds,
           });
         } else {
           setError("Obra no encontrada o no tienes acceso.");
           toast({ title: "Error", description: "Obra no encontrada.", variant: "destructive" });
         }
       } catch (err) {
-        setError("Error al cargar la obra.");
-        toast({ title: "Error de Carga", description: "No se pudo cargar la obra.", variant: "destructive" });
+        setError("Error al cargar los datos.");
+        toast({ title: "Error de Carga", description: "No se pudo cargar la obra o los trabajadores.", variant: "destructive" });
       } finally {
         setIsLoading(false);
       }
     };
-    fetchObra();
+    fetchData();
   }, [obraId, form, router, toast]);
 
   const onSubmit = async (data: ObraEditFormData) => {
@@ -119,7 +135,9 @@ export default function EditObraPage() {
         ...data,
         fechaFin: data.fechaFin === undefined ? null : data.fechaFin,
         costosPorCategoria: data.costosPorCategoria?.map(c => ({...c, costo: Number(c.costo)})) || [],
+        trabajadoresAsignados: data.trabajadoresAsignados || [], // Ensure it's always an array
       };
+      // The updateObra action now also handles worker assignments
       const result = await updateObra(obraId, empresaId, dataToSubmit);
       if (result.success && result.obra) {
         toast({ title: 'Éxito', description: `Obra "${result.obra.nombre}" actualizada.` });
@@ -134,10 +152,10 @@ export default function EditObraPage() {
     }
   };
 
-  const canEditCosts = currentUser && obraData && (currentUser.rol === 'admin' || currentUser.id === obraData.jefeObraId);
+  const canEditCostsOrWorkers = currentUser && obraData && (currentUser.rol === 'admin' || currentUser.id === obraData.jefeObraId);
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando obra...</p></div>;
+    return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando datos...</p></div>;
   }
 
   if (error) {
@@ -160,7 +178,7 @@ export default function EditObraPage() {
             <Briefcase className="h-8 w-8 text-primary" />
             <div>
               <CardTitle className="text-2xl font-bold font-headline text-primary">Editar Obra</CardTitle>
-              <CardDescription className="text-md text-muted-foreground">Modifica los detalles del proyecto y gestiona sus costos.</CardDescription>
+              <CardDescription className="text-md text-muted-foreground">Modifica los detalles, gestiona costos y asigna trabajadores.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -243,7 +261,7 @@ export default function EditObraPage() {
             </div>
             
             {/* Sección de Costos por Categoría */}
-            {canEditCosts && (
+            {canEditCostsOrWorkers && (
             <Card className="border-dashed border-accent/50">
               <CardHeader>
                 <CardTitle className="text-xl font-headline text-accent flex items-center">
@@ -303,10 +321,50 @@ export default function EditObraPage() {
               </CardContent>
             </Card>
             )}
+
+            {/* Sección de Asignar Trabajadores */}
+            {canEditCostsOrWorkers && companyWorkers.length > 0 && (
+              <Card className="border-dashed border-primary/50">
+                <CardHeader>
+                  <CardTitle className="text-xl font-headline text-primary flex items-center">
+                    <Users className="mr-2 h-6 w-6" /> Asignar Trabajadores a esta Obra
+                  </CardTitle>
+                  <CardDescription>Selecciona los trabajadores que participarán en este proyecto.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 max-h-60 overflow-y-auto p-4">
+                  <Controller
+                    name="trabajadoresAsignados"
+                    control={form.control}
+                    render={({ field }) => (
+                      <>
+                        {companyWorkers.map((worker) => (
+                          <div key={worker.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded-md">
+                            <Checkbox
+                              id={`worker-${worker.id}`}
+                              checked={field.value?.includes(worker.id)}
+                              onCheckedChange={(checked) => {
+                                const newValue = checked
+                                  ? [...(field.value || []), worker.id]
+                                  : (field.value || []).filter((id) => id !== worker.id);
+                                field.onChange(newValue);
+                              }}
+                            />
+                            <Label htmlFor={`worker-${worker.id}`} className="font-normal cursor-pointer">
+                              {worker.nombre} <span className="text-xs text-muted-foreground">({worker.email})</span>
+                            </Label>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  />
+                  {form.formState.errors.trabajadoresAsignados && <p className="text-sm text-destructive mt-1">{form.formState.errors.trabajadoresAsignados.message}</p>}
+                </CardContent>
+              </Card>
+            )}
             
             <div className="flex justify-end space-x-3 pt-4">
               <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
-              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting || isLoading}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <><Save className="mr-2 h-4 w-4" /> Guardar Cambios</>}
               </Button>
             </div>
