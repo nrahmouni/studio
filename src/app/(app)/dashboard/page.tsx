@@ -1,9 +1,10 @@
+
 'use client';
 import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Briefcase, Users, FileText, Wrench, BarChart3, UserCircle } from 'lucide-react';
+import { Briefcase, Users, FileText, Wrench, BarChart3, UserCircle, Building } from 'lucide-react'; // Added Building icon
 
 interface UserInfo {
   empresaId: string | null;
@@ -29,63 +30,76 @@ export default function DashboardPage() {
     return <div className="flex items-center justify-center h-screen"><p>Cargando dashboard...</p></div>;
   }
   
-  // For now, dashboard content is generic. Can be personalized later using userInfo.
-  // e.g., if (userInfo?.role === 'trabajador') { show worker view } else { show company admin view }
+  const isAdminOrEmpresa = userInfo?.role === 'empresa' || userInfo?.role === 'admin' || userInfo?.role === 'jefeObra';
+  const isTrabajador = userInfo?.role === 'trabajador';
 
   return (
     <div className="container mx-auto py-8 px-4">
       <h1 className="text-3xl font-bold mb-8 text-primary font-headline">Panel de Control</h1>
       
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        <DashboardCard
-          title="Obras"
-          description="Gestiona tus proyectos y sitios de trabajo."
-          icon={<Briefcase className="w-8 h-8 text-primary" />}
-          link="/obras"
-          actionText="Ver Obras"
-        />
+        {/* Cards visible to all roles */}
         <DashboardCard
           title="Partes de Trabajo"
-          description="Crea y revisa los partes diarios."
+          description={isAdminOrEmpresa ? "Crea y revisa los partes diarios." : "Registra y consulta tus partes."}
           icon={<FileText className="w-8 h-8 text-primary" />}
           link="/partes"
-          actionText="Ver Partes"
+          actionText={isAdminOrEmpresa ? "Ver Partes" : "Mis Partes"}
         />
         <DashboardCard
-          title="Usuarios"
-          description="Administra los usuarios de tu empresa."
-          icon={<Users className="w-8 h-8 text-primary" />}
-          link="/usuarios" // Placeholder, page to be created
-          actionText="Gestionar Usuarios"
+            title="Obras"
+            description={isAdminOrEmpresa ? "Gestiona tus proyectos y sitios de trabajo." : "Consulta las obras asignadas."}
+            icon={<Briefcase className="w-8 h-8 text-primary" />}
+            link="/obras"
+            actionText={isAdminOrEmpresa ? "Ver Obras" : "Consultar Obras"}
         />
-         <DashboardCard
-          title="Perfil de Empresa"
-          description="Actualiza los datos de tu empresa."
-          icon={<UserCircle className="w-8 h-8 text-primary" />}
-          link="/company-profile"
-          actionText="Ver Perfil"
-        />
-        <DashboardCard
-          title="Recursos IA"
-          description="Optimiza la asignación de recursos."
-          icon={<Wrench className="w-8 h-8 text-primary" />}
-          link="/resource-allocation"
-          actionText="Analizar Recursos"
-        />
-        <DashboardCard
-          title="Informes"
-          description="Genera informes y estadísticas."
-          icon={<BarChart3 className="w-8 h-8 text-primary" />}
-          link="/reports" // Placeholder, page to be created
-          actionText="Ver Informes"
-        />
+
+        {/* Cards for Empresa/Admin/JefeObra */}
+        {isAdminOrEmpresa && (
+          <>
+            <DashboardCard
+              title="Usuarios"
+              description="Administra los usuarios de tu empresa."
+              icon={<Users className="w-8 h-8 text-primary" />}
+              link="/usuarios" 
+              actionText="Gestionar Usuarios"
+            />
+            <DashboardCard
+              title="Perfil de Empresa"
+              description="Actualiza los datos de tu empresa."
+              icon={<Building className="w-8 h-8 text-primary" />} // Changed icon for clarity
+              link="/company-profile"
+              actionText="Ver Perfil"
+            />
+            <DashboardCard
+              title="Recursos IA"
+              description="Optimiza la asignación de recursos."
+              icon={<Wrench className="w-8 h-8 text-primary" />}
+              link="/resource-allocation"
+              actionText="Analizar Recursos"
+            />
+            <DashboardCard
+              title="Informes"
+              description="Genera informes y estadísticas."
+              icon={<BarChart3 className="w-8 h-8 text-primary" />}
+              link="/reports" 
+              actionText="Ver Informes"
+            />
+          </>
+        )}
+
+        {/* Cards specifically for Trabajador (if any in the future beyond common ones) */}
+        {/* {isTrabajador && (
+          // Example: <DashboardCard title="Mis Fichajes" ... />
+        )} */}
+
       </div>
 
-      {userInfo && (userInfo.role === 'empresa' || userInfo.role === 'admin') && (
+      {isAdminOrEmpresa && (
          <Card className="mt-10 bg-primary/5 border-primary/20">
           <CardHeader>
-            <CardTitle className="text-primary font-headline">Acceso Rápido para Administradores</CardTitle>
-            <CardDescription>Funciones clave para la gestión de tu empresa.</CardDescription>
+            <CardTitle className="text-primary font-headline">Acceso Rápido para Gestores</CardTitle>
+            <CardDescription>Funciones clave para la administración.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link href="/obras/new" passHref><Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">Crear Nueva Obra</Button></Link>
@@ -95,7 +109,7 @@ export default function DashboardPage() {
         </Card>
       )}
 
-       {userInfo && userInfo.role === 'trabajador' && (
+       {isTrabajador && (
          <Card className="mt-10 bg-primary/5 border-primary/20">
           <CardHeader>
             <CardTitle className="text-primary font-headline">Acceso Rápido para Trabajadores</CardTitle>
