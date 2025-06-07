@@ -1,4 +1,4 @@
-// src/app/(app)/usuarios/page.tsx
+
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -10,6 +10,15 @@ import { getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
 import type { UsuarioFirebase } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
+
+const getRolDisplay = (rol: UsuarioFirebase['rol']): string => {
+  switch (rol) {
+    case 'admin': return 'Administrador';
+    case 'jefeObra': return 'Jefe de Obra';
+    case 'trabajador': return 'Trabajador';
+    default: return rol;
+  }
+};
 
 export default function UsuariosPage() {
   const [usuarios, setUsuarios] = useState<UsuarioFirebase[]>([]);
@@ -32,8 +41,8 @@ export default function UsuariosPage() {
       try {
         const fetchedUsuarios = await getUsuariosByEmpresaId(storedEmpresaId);
         setUsuarios(fetchedUsuarios);
-      } catch (err: any) { // Explicitly type err
-        console.error("Error fetching usuarios:", err); // It's good practice to log the actual error
+      } catch (err: any) {
+        console.error("Error fetching usuarios:", err);
         setError("No se pudieron cargar los usuarios. Inténtelo de nuevo más tarde.");
         toast({ title: "Error de Carga", description: "No se pudieron cargar los usuarios.", variant: "destructive" });
       } finally {
@@ -43,15 +52,6 @@ export default function UsuariosPage() {
 
     fetchUsuarios();
   }, [toast]);
-
-  const getRolDisplay = (rol: UsuarioFirebase['rol']) => {
-    switch (rol) {
-      case 'admin': return 'Administrador';
-      case 'jefeObra': return 'Jefe de Obra';
-      case 'trabajador': return 'Trabajador';
-      default: return rol;
-    }
-  };
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -117,7 +117,7 @@ export default function UsuariosPage() {
                   </CardHeader>
                   <CardContent className="flex-grow space-y-2 text-sm">
                     <div className="flex items-center">
-                      <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" /> 
+                      <Briefcase className="mr-2 h-4 w-4 text-muted-foreground" />
                       <span className="font-medium">Rol:</span>&nbsp;{getRolDisplay(usuario.rol)}
                     </div>
                     {obrasAsignadasCurrent && obrasAsignadasCurrent.length > 0 && (
