@@ -1,3 +1,4 @@
+
 import { EmpresaLoginForm } from "@/components/auth/EmpresaLoginForm";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
@@ -17,7 +18,7 @@ export default function EmpresaLoginPage() {
         <Link href="/" className="text-3xl font-bold font-headline text-primary hover:text-primary/80 transition-colors">
           ObraLink
         </Link>
-         <p className="text-muted-foreground mt-1">Acceso para Empresas</p>
+         <p className="text-muted-foreground mt-1">Acceso para Administradores y Encargados de Obra</p>
       </div>
       <EmpresaLoginForm />
       <p className="mt-8 text-center text-sm text-muted-foreground">

@@ -1,6 +1,7 @@
+
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, User } from "lucide-react";
+import { Building, User, HardHat } from "lucide-react";
 import Link from "next/link";
 
 export default function SelectRolePage() {
@@ -18,13 +19,19 @@ export default function SelectRolePage() {
           <CardDescription>Selecciona tu rol para continuar.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Link href="/auth/login/empresa">
+          <Link href="/auth/login/empresa" passHref>
             <Button variant="outline" className="w-full h-16 text-lg border-primary text-primary hover:bg-primary/5">
               <Building className="mr-3 h-6 w-6" />
-              Soy Empresa
+              Soy Admin de Empresa
             </Button>
           </Link>
-          <Link href="/auth/login/trabajador">
+           <Link href="/auth/login/empresa" passHref>
+            <Button variant="outline" className="w-full h-16 text-lg border-primary text-primary hover:bg-primary/5">
+              <HardHat className="mr-3 h-6 w-6" />
+              Soy Encargado de Obra
+            </Button>
+          </Link>
+          <Link href="/auth/login/trabajador" passHref>
             <Button variant="outline" className="w-full h-16 text-lg border-primary text-primary hover:bg-primary/5">
               <User className="mr-3 h-6 w-6" />
               Soy Trabajador
