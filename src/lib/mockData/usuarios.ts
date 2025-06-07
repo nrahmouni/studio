@@ -5,9 +5,9 @@ export const mockUsuarios: UsuarioFirebase[] = [
   {
     id: 'user-1-admin',
     empresaId: 'empresa-1',
-    nombre: 'Ana Pérez (Admin CM)',
-    email: 'admin.cm@example.com',
-    password: 'password123', // En un caso real, esto estaría hasheado
+    nombre: 'Administrador Principal',
+    email: 'admin@example.com', // Email actualizado
+    password: 'admin', // Contraseña actualizada
     rol: 'admin',
     activo: true,
     obrasAsignadas: ['obra-1-1', 'obra-1-2'],
