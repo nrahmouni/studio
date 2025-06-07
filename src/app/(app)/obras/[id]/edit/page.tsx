@@ -94,12 +94,17 @@ export default function EditObraPage() {
         
         const activeTrabajadores = fetchedWorkers.filter(u => u.rol === 'trabajador' && u.activo);
         setCompanyWorkers(activeTrabajadores);
+        console.log("*** EditObraPage Debug: Company Workers Loaded ***", activeTrabajadores);
+
 
         if (fetchedObra) {
           setObraData(fetchedObra);
           const initialAssignedWorkerIds = activeTrabajadores
             .filter(worker => worker.obrasAsignadas?.includes(fetchedObra.id))
             .map(worker => worker.id);
+          
+          console.log("*** EditObraPage Debug: Fetched Obra ***", fetchedObra);
+          console.log("*** EditObraPage Debug: Initial Assigned Worker IDs ***", initialAssignedWorkerIds);
 
           form.reset({
             nombre: fetchedObra.nombre,
@@ -151,6 +156,22 @@ export default function EditObraPage() {
   };
 
   const canEditCostsOrWorkers = currentUser && obraData && (currentUser.rol === 'admin' || currentUser.id === obraData.jefeObraId);
+  
+  // --- DEBUG INFO ---
+  const debugInfo = {
+    isLoading,
+    error,
+    currentUserExists: !!currentUser,
+    currentUserRol: currentUser?.rol,
+    currentUserId: currentUser?.id,
+    obraDataExists: !!obraData,
+    obraJefeObraId: obraData?.jefeObraId,
+    canEditCostsOrWorkers,
+    companyWorkersCount: companyWorkers.length,
+    formTrabajadoresAsignados: form.getValues("trabajadoresAsignados"),
+  };
+  // --- END DEBUG INFO ---
+
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando datos...</p></div>;
@@ -170,6 +191,17 @@ export default function EditObraPage() {
        <Button variant="outline" onClick={() => router.push(`/obras/${obraId}`)} className="mb-6 animate-fade-in-down">
         <ArrowLeft className="mr-2 h-4 w-4" /> Volver a Detalles de Obra
       </Button>
+      
+      {/* --- DEBUG INFO DISPLAY --- */}
+      <Card className="my-4 p-4 bg-yellow-100 border-yellow-300 text-yellow-800 text-xs">
+        <CardHeader><CardTitle>Información de Depuración (Temporal)</CardTitle></CardHeader>
+        <CardContent>
+          <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
+          <p className="mt-2">Pathname: {params.id ? `/obras/${params.id}/edit` : 'Unknown'}</p>
+        </CardContent>
+      </Card>
+      {/* --- END DEBUG INFO DISPLAY --- */}
+      
       <Card className="max-w-3xl mx-auto shadow-lg animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
           <div className="flex items-center space-x-3">
@@ -382,4 +414,3 @@ export default function EditObraPage() {
     </div>
   );
 }
-
