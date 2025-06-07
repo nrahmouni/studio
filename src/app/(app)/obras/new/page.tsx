@@ -46,6 +46,7 @@ export default function NuevaObraPage() {
       fechaInicio: new Date(),
       fechaFinEstimada: null,
       jefeObraEmail: '',
+      descripcion: '',
     },
   });
 
@@ -179,7 +180,7 @@ export default function NuevaObraPage() {
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={field.value}
+                          selected={field.value || undefined}
                           onSelect={(date) => field.onChange(date || null)} // Ensure null is passed if date is undefined
                           initialFocus
                           locale={es}
@@ -196,6 +197,11 @@ export default function NuevaObraPage() {
               <Input id="jefeObraEmail" type="email" {...form.register('jefeObraEmail')} className="mt-1" placeholder="jefe.obra@ejemplo.com" />
               {form.formState.errors.jefeObraEmail && <p className="text-sm text-destructive mt-1">{form.formState.errors.jefeObraEmail.message}</p>}
                <p className="text-xs text-muted-foreground mt-1">Si se proporciona, se intentará asignar al usuario correspondiente.</p>
+            </div>
+            <div>
+              <Label htmlFor="descripcion" className="font-semibold">Descripción Adicional (Opcional)</Label>
+              <Textarea id="descripcion" {...form.register('descripcion')} className="mt-1" placeholder="Notas, especificaciones adicionales..." rows={3}/>
+              {form.formState.errors.descripcion && <p className="text-sm text-destructive mt-1">{form.formState.errors.descripcion.message}</p>}
             </div>
 
 
