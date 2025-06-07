@@ -87,6 +87,7 @@ export default function EditObraPage() {
       setIsLoading(true);
       setError(null);
       try {
+        console.log("[EDIT OBRA FETCH] Iniciando carga de datos para obraId:", obraId);
         const [fetchedObra, fetchedWorkers] = await Promise.all([
           getObraById(obraId, storedEmpresaId),
           getUsuariosByEmpresaId(storedEmpresaId)
@@ -94,8 +95,7 @@ export default function EditObraPage() {
         
         const activeTrabajadores = fetchedWorkers.filter(u => u.rol === 'trabajador' && u.activo);
         setCompanyWorkers(activeTrabajadores);
-        console.log("*** EditObraPage Debug: Company Workers Loaded ***", activeTrabajadores);
-
+        console.log("[EDIT OBRA FETCH] Trabajadores activos de la empresa:", activeTrabajadores);
 
         if (fetchedObra) {
           setObraData(fetchedObra);
@@ -103,8 +103,8 @@ export default function EditObraPage() {
             .filter(worker => worker.obrasAsignadas?.includes(fetchedObra.id))
             .map(worker => worker.id);
           
-          console.log("*** EditObraPage Debug: Fetched Obra ***", fetchedObra);
-          console.log("*** EditObraPage Debug: Initial Assigned Worker IDs ***", initialAssignedWorkerIds);
+          console.log("[EDIT OBRA FETCH] Datos de la obra cargados:", fetchedObra);
+          console.log("[EDIT OBRA FETCH] IDs de trabajadores asignados inicialmente:", initialAssignedWorkerIds);
 
           form.reset({
             nombre: fetchedObra.nombre,
@@ -123,13 +123,15 @@ export default function EditObraPage() {
         }
       } catch (err) {
         setError("Error al cargar los datos.");
+        console.error("[EDIT OBRA FETCH] Error cargando datos:", err);
         toast({ title: "Error de Carga", description: "No se pudo cargar la obra o los trabajadores.", variant: "destructive" });
       } finally {
         setIsLoading(false);
+        console.log("[EDIT OBRA FETCH] Carga de datos finalizada.");
       }
     };
     fetchData();
-  }, [obraId, form, router, toast]);
+  }, [obraId, router, toast]); // Removido 'form' de las dependencias para evitar re-renders innecesarios.
 
   const onSubmit = async (data: ObraEditFormData) => {
     if (!obraId || !empresaId) return;
@@ -141,6 +143,7 @@ export default function EditObraPage() {
         costosPorCategoria: data.costosPorCategoria?.map(c => ({...c, costo: Number(c.costo)})) || [],
         trabajadoresAsignados: data.trabajadoresAsignados || [],
       };
+      console.log("[EDIT OBRA SUBMIT] Enviando datos para actualizar:", dataToSubmit);
       const result = await updateObra(obraId, empresaId, dataToSubmit);
       if (result.success && result.obra) {
         toast({ title: 'Éxito', description: `Obra "${result.obra.nombre}" actualizada.` });
@@ -150,6 +153,7 @@ export default function EditObraPage() {
       }
     } catch (error) {
       toast({ title: 'Error Inesperado', description: 'Ocurrió un error al guardar.', variant: 'destructive' });
+       console.error("[EDIT OBRA SUBMIT] Error inesperado:", error);
     } finally {
       setIsSubmitting(false);
     }
@@ -157,22 +161,6 @@ export default function EditObraPage() {
 
   const canEditCostsOrWorkers = currentUser && obraData && (currentUser.rol === 'admin' || currentUser.id === obraData.jefeObraId);
   
-  // --- DEBUG INFO ---
-  const debugInfo = {
-    isLoading,
-    error,
-    currentUserExists: !!currentUser,
-    currentUserRol: currentUser?.rol,
-    currentUserId: currentUser?.id,
-    obraDataExists: !!obraData,
-    obraJefeObraId: obraData?.jefeObraId,
-    canEditCostsOrWorkers,
-    companyWorkersCount: companyWorkers.length,
-    formTrabajadoresAsignados: form.getValues("trabajadoresAsignados"),
-  };
-  // --- END DEBUG INFO ---
-
-
   if (isLoading) {
     return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando datos...</p></div>;
   }
@@ -191,16 +179,6 @@ export default function EditObraPage() {
        <Button variant="outline" onClick={() => router.push(`/obras/${obraId}`)} className="mb-6 animate-fade-in-down">
         <ArrowLeft className="mr-2 h-4 w-4" /> Volver a Detalles de Obra
       </Button>
-      
-      {/* --- DEBUG INFO DISPLAY --- */}
-      <Card className="my-4 p-4 bg-yellow-100 border-yellow-300 text-yellow-800 text-xs">
-        <CardHeader><CardTitle>Información de Depuración (Temporal)</CardTitle></CardHeader>
-        <CardContent>
-          <pre>{JSON.stringify(debugInfo, null, 2)}</pre>
-          <p className="mt-2">Pathname: {params.id ? `/obras/${params.id}/edit` : 'Unknown'}</p>
-        </CardContent>
-      </Card>
-      {/* --- END DEBUG INFO DISPLAY --- */}
       
       <Card className="max-w-3xl mx-auto shadow-lg animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
@@ -289,6 +267,7 @@ export default function EditObraPage() {
               {form.formState.errors.descripcion && <p className="text-sm text-destructive mt-1">{form.formState.errors.descripcion.message}</p>}
             </div>
             
+            {console.log("[EDIT OBRA RENDER] Checkpoint A: About to render Costs. canEditCostsOrWorkers =", canEditCostsOrWorkers)}
             {canEditCostsOrWorkers && (
             <Card className="border-dashed border-accent/50">
               <CardHeader>
@@ -349,46 +328,54 @@ export default function EditObraPage() {
               </CardContent>
             </Card>
             )}
+            {console.log("[EDIT OBRA RENDER] Checkpoint B: About to render Worker Assignment. canEditCostsOrWorkers =", canEditCostsOrWorkers, "companyWorkers.length =", companyWorkers.length)}
 
+            {/* Worker Assignment Section START */}
             {canEditCostsOrWorkers && companyWorkers.length > 0 && (
-              <Card className="border-dashed border-primary/50 mt-6">
-                <CardHeader>
-                  <CardTitle className="text-xl font-headline text-primary flex items-center">
-                    <Users className="mr-2 h-6 w-6" /> Asignar Trabajadores a esta Obra
-                  </CardTitle>
-                  <CardDescription>Selecciona los trabajadores que participarán en este proyecto.</CardDescription>
-                </CardHeader>
-                <CardContent className="space-y-3 max-h-60 overflow-y-auto p-4">
-                  <Controller
-                    name="trabajadoresAsignados"
-                    control={form.control}
-                    render={({ field }) => (
-                      <>
-                        {companyWorkers.map((worker) => (
-                          <div key={worker.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded-md">
-                            <Checkbox
-                              id={`worker-${worker.id}`}
-                              checked={field.value?.includes(worker.id)}
-                              onCheckedChange={(checked) => {
-                                const newValue = checked
-                                  ? [...(field.value || []), worker.id]
-                                  : (field.value || []).filter((id) => id !== worker.id);
-                                field.onChange(newValue);
-                              }}
-                            />
-                            <Label htmlFor={`worker-${worker.id}`} className="font-normal cursor-pointer">
-                              {worker.nombre} <span className="text-xs text-muted-foreground">({worker.email})</span>
-                            </Label>
-                          </div>
-                        ))}
-                      </>
-                    )}
-                  />
-                  {form.formState.errors.trabajadoresAsignados && <p className="text-sm text-destructive mt-1">{form.formState.errors.trabajadoresAsignados.message}</p>}
-                </CardContent>
-              </Card>
+              <>
+                {console.log("[EDIT OBRA RENDER] >>> Rendering WORKER ASSIGNMENT SECTION (with workers) <<<")}
+                <Card className="border-dashed border-primary/50 mt-6">
+                  <CardHeader>
+                    <CardTitle className="text-xl font-headline text-primary flex items-center">
+                      <Users className="mr-2 h-6 w-6" /> Asignar Trabajadores a esta Obra
+                    </CardTitle>
+                    <CardDescription>Selecciona los trabajadores que participarán en este proyecto.</CardDescription>
+                  </CardHeader>
+                  <CardContent className="space-y-3 max-h-60 overflow-y-auto p-4">
+                    <Controller
+                      name="trabajadoresAsignados"
+                      control={form.control}
+                      render={({ field }) => (
+                        <>
+                          {companyWorkers.map((worker) => (
+                            <div key={worker.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded-md">
+                              <Checkbox
+                                id={`worker-${worker.id}`}
+                                checked={field.value?.includes(worker.id)}
+                                onCheckedChange={(checked) => {
+                                  const newValue = checked
+                                    ? [...(field.value || []), worker.id]
+                                    : (field.value || []).filter((id) => id !== worker.id);
+                                  field.onChange(newValue);
+                                  console.log("[EDIT OBRA CHECKBOX] New trabajadoresAsignados:", newValue);
+                                }}
+                              />
+                              <Label htmlFor={`worker-${worker.id}`} className="font-normal cursor-pointer">
+                                {worker.nombre} <span className="text-xs text-muted-foreground">({worker.email})</span>
+                              </Label>
+                            </div>
+                          ))}
+                        </>
+                      )}
+                    />
+                    {form.formState.errors.trabajadoresAsignados && <p className="text-sm text-destructive mt-1">{form.formState.errors.trabajadoresAsignados.message}</p>}
+                  </CardContent>
+                </Card>
+              </>
             )}
-             {canEditCostsOrWorkers && companyWorkers.length === 0 && (
+            {canEditCostsOrWorkers && companyWorkers.length === 0 && (
+              <>
+                {console.log("[EDIT OBRA RENDER] >>> Rendering WORKER ASSIGNMENT SECTION (NO workers) <<<")}
                 <Card className="border-dashed border-primary/50 mt-6">
                     <CardHeader>
                         <CardTitle className="text-xl font-headline text-primary flex items-center">
@@ -400,7 +387,10 @@ export default function EditObraPage() {
                         <p className="text-xs text-muted-foreground mt-1">Puedes registrar nuevos trabajadores desde la sección "Perfil de Empresa".</p>
                     </CardContent>
                 </Card>
+              </>
             )}
+            {console.log("[EDIT OBRA RENDER] Checkpoint C: After Worker Assignment section conditions.")}
+            {/* Worker Assignment Section END */}
             
             <div className="flex justify-end space-x-3 pt-4">
               <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
@@ -414,3 +404,4 @@ export default function EditObraPage() {
     </div>
   );
 }
+
