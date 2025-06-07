@@ -1,10 +1,11 @@
+
 "use client";
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Briefcase, FileText, Users, Settings, Cpu, Building, BarChart3, Wrench, UserCircle } from "lucide-react";
+import { Home, Briefcase, FileText, Users, Settings, Cpu, Building, BarChart3, Clock, UserCircle } from "lucide-react"; // Added Clock
 
 const navItems = [
   { href: "/dashboard", label: "Panel Principal", icon: Home },
@@ -12,7 +13,7 @@ const navItems = [
   { href: "/obras", label: "Obras", icon: Briefcase },
   { href: "/partes", label: "Partes", icon: FileText },
   { href: "/usuarios", label: "Usuarios", icon: Users },
-  // { href: "/fichajes", label: "Fichajes", icon: Clock }, // Placeholder
+  { href: "/fichajes", label: "Fichajes", icon: Clock },
   { href: "/resource-allocation", label: "Optimización IA", icon: Cpu },
   { href: "/reports", label: "Informes", icon: BarChart3 },
   { href: "/settings", label: "Configuración", icon: Settings },

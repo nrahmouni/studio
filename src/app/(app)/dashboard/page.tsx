@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Briefcase, Users, FileText, Wrench, BarChart3, Building } from 'lucide-react';
+import { Briefcase, Users, FileText, Wrench, BarChart3, Building, Clock } from 'lucide-react';
 
 interface UserInfo {
   empresaId: string | null;
@@ -33,19 +33,27 @@ export default function DashboardPage() {
   const isAdminOrEmpresa = userInfo?.role === 'empresa' || userInfo?.role === 'admin' || userInfo?.role === 'jefeObra';
   const isTrabajador = userInfo?.role === 'trabajador';
 
-  const commonCards = [
-    { title: "Partes de Trabajo", description: isAdminOrEmpresa ? "Crea y revisa los partes diarios." : "Registra y consulta tus partes.", icon: <FileText className="w-8 h-8 text-primary" />, link: "/partes", actionText: isAdminOrEmpresa ? "Ver Partes" : "Mis Partes" },
-    { title: "Obras", description: isAdminOrEmpresa ? "Gestiona tus proyectos y sitios de trabajo." : "Consulta las obras asignadas.", icon: <Briefcase className="w-8 h-8 text-primary" />, link: "/obras", actionText: isAdminOrEmpresa ? "Ver Obras" : "Consultar Obras" },
+  const commonCardsBase = [
+    { title: "Partes de Trabajo", description: "Registra y consulta tus partes.", icon: <FileText className="w-8 h-8 text-primary" />, link: "/partes", actionText: "Mis Partes" },
+    { title: "Obras", description: "Consulta las obras asignadas.", icon: <Briefcase className="w-8 h-8 text-primary" />, link: "/obras", actionText: "Consultar Obras" },
+  ];
+  
+  const trabajadorCards = [
+    { title: "Fichaje", description: "Registra tu entrada, salida y descansos.", icon: <Clock className="w-8 h-8 text-primary" />, link: "/fichajes", actionText: "Ir a Fichajes" },
+    ...commonCardsBase,
   ];
 
-  const adminCards = [
+  const adminCardsBase = [
+    { title: "Partes de Trabajo", description: "Crea y revisa los partes diarios.", icon: <FileText className="w-8 h-8 text-primary" />, link: "/partes", actionText: "Ver Partes" },
+    { title: "Obras", description: "Gestiona tus proyectos y sitios de trabajo.", icon: <Briefcase className="w-8 h-8 text-primary" />, link: "/obras", actionText: "Ver Obras" },
     { title: "Usuarios", description: "Administra los usuarios de tu empresa.", icon: <Users className="w-8 h-8 text-primary" />, link: "/usuarios", actionText: "Gestionar Usuarios" },
     { title: "Perfil de Empresa", description: "Actualiza los datos de tu empresa.", icon: <Building className="w-8 h-8 text-primary" />, link: "/company-profile", actionText: "Ver Perfil" },
     { title: "Recursos IA", description: "Optimiza la asignación de recursos.", icon: <Wrench className="w-8 h-8 text-primary" />, link: "/resource-allocation", actionText: "Analizar Recursos" },
     { title: "Informes", description: "Genera informes y estadísticas.", icon: <BarChart3 className="w-8 h-8 text-primary" />, link: "/reports", actionText: "Ver Informes" },
+     { title: "Fichajes (Admin)", description: "Consulta registros de fichajes.", icon: <Clock className="w-8 h-8 text-primary" />, link: "/fichajes", actionText: "Ver Fichajes" },
   ];
 
-  const cardsToDisplay = isAdminOrEmpresa ? [...commonCards, ...adminCards] : commonCards;
+  const cardsToDisplay = isTrabajador ? trabajadorCards : (isAdminOrEmpresa ? adminCardsBase : commonCardsBase) ;
 
 
   return (
@@ -86,6 +94,7 @@ export default function DashboardPage() {
             <CardDescription>Tus herramientas diarias.</CardDescription>
           </CardHeader>
           <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+             <Link href="/fichajes" passHref><Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">Fichar / Ver Mi Estado</Button></Link>
             <Link href="/partes/new" passHref><Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">Registrar Nuevo Parte</Button></Link>
           </CardContent>
         </Card>

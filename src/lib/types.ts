@@ -32,7 +32,7 @@ export const ObraSchema = z.object({
   jefeObraId: z.string().optional(), // Referencia a UsuarioFirebase.id
   descripcion: z.string().optional(),
   costosPorCategoria: z.array(CostoCategoriaSchema).optional(),
-  dataAIHint: z.string().optional(), 
+  dataAIHint: z.string().optional(),
 });
 export type Obra = z.infer<typeof ObraSchema>;
 
@@ -42,10 +42,10 @@ export const UsuarioFirebaseSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
   email: z.string().email("Email inválido"),
   dni: z.string().min(1, "El DNI es requerido").regex(/^[0-9XYZxyz][0-9]{7}[A-HJ-NP-TV-Z]$/i, "Formato de DNI/NIE inválido (e.g., 12345678A o X1234567B)"),
-  password: z.string().min(1, "Contraseña requerida para simulación"), 
+  password: z.string().min(1, "Contraseña requerida para simulación"),
   rol: z.enum(["admin", "trabajador", "jefeObra"]),
   activo: z.boolean().default(true),
-  obrasAsignadas: z.array(z.string()).optional(), 
+  obrasAsignadas: z.array(z.string()).optional(),
   empresaId: z.string(),
   dniAnversoURL: z.string().url("URL de foto de anverso de DNI inválida").optional().nullable(),
   dniReversoURL: z.string().url("URL de foto de reverso de DNI inválida").optional().nullable(),
@@ -55,8 +55,8 @@ export type UsuarioFirebase = z.infer<typeof UsuarioFirebaseSchema>;
 
 export const ParteSchema = z.object({
   id: z.string(),
-  usuarioId: z.string().min(1, "El ID de usuario es requerido"), 
-  obraId: z.string().min(1, "El ID de obra es requerido"), 
+  usuarioId: z.string().min(1, "El ID de usuario es requerido"),
+  obraId: z.string().min(1, "El ID de obra es requerido"),
   fecha: z.date({ required_error: "La fecha es requerida."}),
   tareasRealizadas: z.string().min(1, "Las tareas realizadas son requeridas"),
   horasTrabajadas: z.number().positive("Las horas deben ser positivas y mayores que cero.").optional().nullable(),
@@ -65,22 +65,20 @@ export const ParteSchema = z.object({
   firmaURL: z.string().url("URL de firma inválida").optional().nullable(),
   incidencias: z.string().optional(),
   validado: z.boolean().default(false),
-  validadoPor: z.string().optional(), 
-  timestamp: z.date(), 
+  validadoPor: z.string().optional(),
+  timestamp: z.date(),
   dataAIHint: z.string().optional(),
 });
 export type Parte = z.infer<typeof ParteSchema>;
 
 export const FichajeSchema = z.object({
   id: z.string(),
-  usuarioId: z.string(), 
-  obraId: z.string(), 
-  tipo: z.enum(["entrada", "salida"]),
-  ubicacion: z.object({
-    lat: z.number(),
-    lon: z.number(),
-  }).optional(),
-  timestamp: z.date().default(() => new Date()),
+  usuarioId: z.string(),
+  obraId: z.string(),
+  tipo: z.enum(["entrada", "salida", "inicioDescanso", "finDescanso"]),
+  timestamp: z.date(),
+  // ubicacion: z.object({ lat: z.number(), lon: z.number(),}).optional(), // For future use
 });
 export type Fichaje = z.infer<typeof FichajeSchema>;
+export type FichajeTipo = z.infer<typeof FichajeSchema.shape.tipo>;
 
