@@ -128,6 +128,8 @@ export default function EditUsuarioPage() {
       </div>
     );
   }
+  
+  const obrasAsignadasCurrent = form.getValues("obrasAsignadas");
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -200,11 +202,11 @@ export default function EditUsuarioPage() {
             </div>
             
             {/* Obras asignadas (Display only for now) */}
-            {form.getValues("obrasAsignadas") && form.getValues("obrasAsignadas").length > 0 && (
+            {obrasAsignadasCurrent && obrasAsignadasCurrent.length > 0 && (
                 <div>
                     <Label className="font-semibold">Obras Asignadas (Informativo)</Label>
                     <p className="text-sm text-muted-foreground mt-1">
-                        {form.getValues("obrasAsignadas").join(', ')}
+                        {obrasAsignadasCurrent.join(', ')}
                         {/* In a real app, this would be a multi-select or link to manage assignments */}
                     </p>
                 </div>
