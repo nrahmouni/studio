@@ -5,12 +5,12 @@ export const mockUsuarios: UsuarioFirebase[] = [
   {
     id: 'user-1-admin',
     empresaId: 'empresa-1',
-    nombre: 'Administrador Principal',
-    email: 'admin@example.com', // Email actualizado
-    password: 'admin', // Contraseña actualizada
+    nombre: 'Administrador Principal (Empresa Demo)',
+    email: 'empresa@example.com', 
+    password: 'empresa', 
     rol: 'admin',
     activo: true,
-    obrasAsignadas: ['obra-1-1', 'obra-1-2'],
+    obrasAsignadas: ['obra-1-1', 'obra-1-2', 'obra-1-3'],
   },
   {
     id: 'user-1-jefeobra',
@@ -25,12 +25,12 @@ export const mockUsuarios: UsuarioFirebase[] = [
   {
     id: 'user-1-trabajador-1',
     empresaId: 'empresa-1',
-    nombre: 'Lucía Fernández (Trabajador CM)',
-    email: 'lucia.f@example.com',
-    password: 'password123',
+    nombre: 'Lucía Fernández (Trabajador Demo)',
+    email: 'trabajador@example.com',
+    password: 'trabajador',
     rol: 'trabajador',
     activo: true,
-    obrasAsignadas: ['obra-1-1'],
+    obrasAsignadas: ['obra-1-1', 'obra-1-2'],
   },
   {
     id: 'user-1-trabajador-2',

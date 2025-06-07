@@ -1,5 +1,5 @@
 // src/app/(app)/obras/new/page.tsx
-'use client'; // Marcado como Client Component para usar hooks como useForm
+'use client'; 
 
 import { useRouter } from 'next/navigation';
 import { useForm, Controller } from 'react-hook-form';
@@ -9,24 +9,25 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea'; // Asumiendo que Textarea existe o será creada
-import { Calendar } from "@/components/ui/calendar"; // Asumiendo Calendar de ShadCN
+import { Textarea } from '@/components/ui/textarea';
+import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from '@/hooks/use-toast';
 import { CalendarIcon, Loader2, Briefcase } from 'lucide-react';
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-// import { createObra } from '@/lib/actions/obra.actions'; // Acción a implementar
+import { createObra } from '@/lib/actions/obra.actions'; 
 import { useState, useEffect } from 'react';
+import { ObraSchema } from '@/lib/types'; // Import full ObraSchema
 
-// Esquema de validación (simplificado)
-const ObraFormSchema = z.object({
-  nombre: z.string().min(3, 'El nombre debe tener al menos 3 caracteres.'),
-  direccion: z.string().min(5, 'La dirección es requerida.'),
-  clienteNombre: z.string().min(2, 'El nombre del cliente es requerido.'),
-  fechaInicio: z.date({ required_error: "La fecha de inicio es requerida." }),
-  // Otros campos como fechaFin, jefeObraId se pueden añadir
-});
+// Schema for the form, omitting id (auto-generated) and empresaId (from context)
+const ObraFormSchema = ObraSchema.omit({ id: true, empresaId: true, dataAIHint: true, jefeObraId: true, fechaFin: true })
+  .extend({
+    fechaFinEstimada: z.date().optional().nullable(), // For user input, can be optional
+    jefeObraEmail: z.string().email("Email del jefe de obra inválido").optional().or(z.literal('')), // Optional field
+  });
+
 
 type ObraFormData = z.infer<typeof ObraFormSchema>;
 
@@ -43,6 +44,8 @@ export default function NuevaObraPage() {
       direccion: '',
       clienteNombre: '',
       fechaInicio: new Date(),
+      fechaFinEstimada: null,
+      jefeObraEmail: '',
     },
   });
 
@@ -66,21 +69,25 @@ export default function NuevaObraPage() {
        return;
     }
     setIsSubmitting(true);
-    // Simulación de creación de obra
-    console.log("Datos de la nueva obra:", { ...data, empresaId });
-    // const result = await createObra({ ...data, empresaId });
-    // if (result.success) {
-    //   toast({ title: 'Éxito', description: 'Nueva obra creada correctamente.' });
-    //   router.push('/obras');
-    // } else {
-    //   toast({ title: 'Error', description: result.message || 'No se pudo crear la obra.', variant: 'destructive' });
-    // }
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simular llamada a API
-    toast({
-      title: 'Simulación Exitosa',
-      description: `Obra "${data.nombre}" sería creada para la empresa ${empresaId}.`,
-    });
-    router.push('/obras'); // Redirigir a la lista de obras después de la simulación
+    
+    // Prepare data for createObra, mapping fechaFinEstimada to fechaFin
+    const obraToCreate = {
+      ...data,
+      empresaId: empresaId,
+      fechaFin: data.fechaFinEstimada, // Use fechaFinEstimada as fechaFin for the backend
+      // jefeObraId would be resolved from jefeObraEmail on the backend in a real scenario
+    };
+    // Remove fields not in the backend schema before sending
+    const { fechaFinEstimada, jefeObraEmail, ...finalData } = obraToCreate;
+
+
+    const result = await createObra(finalData);
+    if (result.success && result.obra) {
+      toast({ title: 'Éxito', description: `Nueva obra "${result.obra.nombre}" creada correctamente.` });
+      router.push('/obras');
+    } else {
+      toast({ title: 'Error', description: result.message || 'No se pudo crear la obra.', variant: 'destructive' });
+    }
     setIsSubmitting(false);
   };
 
@@ -116,40 +123,83 @@ export default function NuevaObraPage() {
               {form.formState.errors.clienteNombre && <p className="text-sm text-destructive mt-1">{form.formState.errors.clienteNombre.message}</p>}
             </div>
 
-            <div>
-              <Label htmlFor="fechaInicio" className="font-semibold block mb-1">Fecha de Inicio</Label>
-              <Controller
-                control={form.control}
-                name="fechaInicio"
-                render={({ field }) => (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? format(field.value, "PPP") : <span>Selecciona una fecha</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={field.value}
-                        onSelect={field.onChange}
-                        initialFocus
-                      />
-                    </PopoverContent>
-                  </Popover>
-                )}
-              />
-              {form.formState.errors.fechaInicio && <p className="text-sm text-destructive mt-1">{form.formState.errors.fechaInicio.message}</p>}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="fechaInicio" className="font-semibold block mb-1">Fecha de Inicio</Label>
+                <Controller
+                  control={form.control}
+                  name="fechaInicio"
+                  render={({ field }) => (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? format(field.value, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={field.onChange}
+                          initialFocus
+                          locale={es}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {form.formState.errors.fechaInicio && <p className="text-sm text-destructive mt-1">{form.formState.errors.fechaInicio.message}</p>}
+              </div>
+               <div>
+                <Label htmlFor="fechaFinEstimada" className="font-semibold block mb-1">Fecha Fin Estimada (Opcional)</Label>
+                <Controller
+                  control={form.control}
+                  name="fechaFinEstimada"
+                  render={({ field }) => (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? format(field.value, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={field.value}
+                          onSelect={(date) => field.onChange(date || null)} // Ensure null is passed if date is undefined
+                          initialFocus
+                          locale={es}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {form.formState.errors.fechaFinEstimada && <p className="text-sm text-destructive mt-1">{form.formState.errors.fechaFinEstimada.message}</p>}
+              </div>
+            </div>
+             <div>
+              <Label htmlFor="jefeObraEmail" className="font-semibold">Email Jefe de Obra (Opcional)</Label>
+              <Input id="jefeObraEmail" type="email" {...form.register('jefeObraEmail')} className="mt-1" placeholder="jefe.obra@ejemplo.com" />
+              {form.formState.errors.jefeObraEmail && <p className="text-sm text-destructive mt-1">{form.formState.errors.jefeObraEmail.message}</p>}
+               <p className="text-xs text-muted-foreground mt-1">Si se proporciona, se intentará asignar al usuario correspondiente.</p>
             </div>
 
-            <div className="flex justify-end space-x-3">
+
+            <div className="flex justify-end space-x-3 pt-4">
               <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
                 Cancelar
               </Button>

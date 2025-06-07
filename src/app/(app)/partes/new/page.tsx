@@ -7,7 +7,6 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input'; // Assuming you might need it
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -16,28 +15,31 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { useToast } from '@/hooks/use-toast';
 import { CalendarIcon, Loader2, FileText, UploadCloud, Send } from 'lucide-react';
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-// import { createParte } from '@/lib/actions/parte.actions'; // Acción a implementar
-// import { getObrasActivasPorEmpresa, getUsuariosPorEmpresa } from '@/lib/actions'; // Acciones para popular selects
+import { createParte } from '@/lib/actions/parte.actions';
+import { getObrasByEmpresaId } from '@/lib/actions/obra.actions';
+import type { Obra } from '@/lib/types';
 import { useState, useEffect } from 'react';
+import { ParteSchema } from '@/lib/types';
 
-// Esquema de validación (simplificado)
-const ParteFormSchema = z.object({
-  obraId: z.string().min(1, 'Debes seleccionar una obra.'),
-  fecha: z.date({ required_error: "La fecha es requerida." }),
-  tareasRealizadas: z.string().min(10, 'Describe las tareas realizadas (mínimo 10 caracteres).'),
-  incidencias: z.string().optional(),
-  // fotosURLs: z.array(z.string().url()).optional(), // Para futura carga de imágenes
+// Schema for the form
+const ParteFormSchema = ParteSchema.omit({ 
+  id: true, 
+  validado: true, 
+  validadoPor: true, 
+  timestamp: true, 
+  dataAIHint: true,
+  usuarioId: true, // Will be added from localStorage
+  fotosURLs: true, // For now, simplify and don't handle file uploads
+  firmaURL: true,
+})
+.extend({
+  // Add any specific fields for the form if needed, for now, it's quite direct
 });
 
-type ParteFormData = z.infer<typeof ParteFormSchema>;
 
-// Datos simulados para los selects
-const mockObras = [
-  { id: 'obra-1-1', nombre: 'Reforma Integral Piso Centro' },
-  { id: 'obra-1-2', nombre: 'Construcción Nave Industrial Polígono Sur' },
-  { id: 'obra-2-1', nombre: 'Fachada Edificio Sol' },
-];
+type ParteFormData = z.infer<typeof ParteFormSchema>;
 
 export default function NuevoPartePage() {
   const router = useRouter();
@@ -45,6 +47,8 @@ export default function NuevoPartePage() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [usuarioId, setUsuarioId] = useState<string | null>(null);
   const [empresaId, setEmpresaId] = useState<string | null>(null);
+  const [obras, setObras] = useState<Obra[]>([]);
+  const [isLoadingObras, setIsLoadingObras] = useState(true);
 
   const form = useForm<ParteFormData>({
     resolver: zodResolver(ParteFormSchema),
@@ -53,6 +57,7 @@ export default function NuevoPartePage() {
       fecha: new Date(),
       tareasRealizadas: '',
       incidencias: '',
+      tareasSeleccionadas: [],
     },
   });
 
@@ -61,47 +66,77 @@ export default function NuevoPartePage() {
     const storedEmpresaId = localStorage.getItem('empresaId_obra_link');
     const userRole = localStorage.getItem('userRole_obra_link');
 
-    if (storedUsuarioId && storedEmpresaId) {
-      setUsuarioId(storedUsuarioId);
-      setEmpresaId(storedEmpresaId);
-    } else if (userRole === 'empresa' && storedEmpresaId) {
-      // Admin/Jefe de obra creando parte, no tienen usuarioId directo en este contexto,
-      // pero se necesita para la creación del parte (podría ser un select o autoasignado)
-      setUsuarioId('admin_or_jefe_obra_placeholder'); // Placeholder, necesitaría lógica real
-      setEmpresaId(storedEmpresaId);
-      toast({title: "Nota", description: "Como administrador, selecciona el trabajador si es necesario (funcionalidad futura)."});
+    if (storedUsuarioId) setUsuarioId(storedUsuarioId);
+    if (storedEmpresaId) setEmpresaId(storedEmpresaId);
+    
+    if (!storedUsuarioId && userRole !== 'empresa') {
+        toast({title: "Error", description: "Usuario no identificado.", variant: "destructive"});
+        router.push('/auth/select-role');
+        return;
     }
-    else {
-      toast({
-        title: "Error de autenticación",
-        description: "No se pudo identificar al usuario o la empresa. Serás redirigido.",
-        variant: "destructive",
-      });
-      router.push('/auth/select-role');
+    if (!storedEmpresaId) {
+        toast({title: "Error", description: "Empresa no identificada.", variant: "destructive"});
+        router.push('/auth/select-role');
+        return;
     }
+    
+    // If user is admin/jefeobra and no specific usuarioId is set (meaning they are creating a part for someone else, or for general record)
+    // We might need a way to select a user in the form itself. For now, if 'empresa' role and no 'usuarioId_obra_link',
+    // this means an admin is creating a part, potentially for themselves or it's a general part.
+    // The backend `createParte` action expects a `usuarioId`.
+    // A simple solution for now: if role is 'empresa' and no specific 'usuarioId_obra_link',
+    // use a placeholder or prompt. Let's assume for now `usuarioId` must be the logged-in worker or selected.
+    // The current logic correctly uses `storedUsuarioId` if available.
+
+    const fetchObras = async () => {
+      if (storedEmpresaId) {
+        setIsLoadingObras(true);
+        try {
+          const fetchedObras = await getObrasByEmpresaId(storedEmpresaId);
+          setObras(fetchedObras.filter(o => !o.fechaFin || new Date(o.fechaFin) >= new Date())); // Solo obras activas
+        } catch (error) {
+          toast({ title: 'Error', description: 'No se pudieron cargar las obras.', variant: 'destructive' });
+        } finally {
+          setIsLoadingObras(false);
+        }
+      }
+    };
+    fetchObras();
+
   }, [router, toast]);
 
   const onSubmit = async (data: ParteFormData) => {
-    if (!usuarioId || !empresaId) {
-      toast({ title: 'Error', description: 'Falta información de usuario o empresa.', variant: 'destructive' });
+    if (!usuarioId && localStorage.getItem('userRole_obra_link') !== 'empresa') {
+      // This case should be handled by useEffect redirect, but as a safeguard
+      toast({ title: 'Error', description: 'ID de trabajador no encontrado.', variant: 'destructive' });
       return;
     }
+    // If admin is creating, a 'usuarioId' is still needed.
+    // This simulation assumes 'usuarioId' from localStorage is the creator.
+    // For a real app, if an admin creates a part, they might select a worker.
+    const finalUsuarioId = usuarioId || localStorage.getItem('usuarioId_obra_link') || 'admin_placeholder_id';
+
+
+    if (!empresaId) {
+      toast({ title: 'Error', description: 'ID de empresa no encontrado.', variant: 'destructive' });
+      return;
+    }
+
     setIsSubmitting(true);
-    // Simulación de creación de parte
-    console.log("Datos del nuevo parte:", { ...data, usuarioId, empresaId });
-    // const result = await createParte({ ...data, usuarioId, empresaId });
-    // if (result.success) {
-    //   toast({ title: 'Éxito', description: 'Nuevo parte de trabajo registrado.' });
-    //   router.push('/partes');
-    // } else {
-    //   toast({ title: 'Error', description: result.message || 'No se pudo registrar el parte.', variant: 'destructive' });
-    // }
-    await new Promise(resolve => setTimeout(resolve, 1500)); // Simular llamada a API
-     toast({
-      title: 'Simulación Exitosa',
-      description: `Parte de trabajo para la obra "${mockObras.find(o => o.id === data.obraId)?.nombre}" sería creado.`,
-    });
-    router.push('/partes');
+    
+    const parteToCreate = {
+      ...data,
+      usuarioId: finalUsuarioId, // This should be the actual user ID
+      // empresaId is not directly part of ParteSchema but is used by actions; not needed in form data itself
+    };
+
+    const result = await createParte(parteToCreate);
+    if (result.success && result.parte) {
+      toast({ title: 'Éxito', description: 'Nuevo parte de trabajo registrado.' });
+      router.push('/partes');
+    } else {
+      toast({ title: 'Error', description: result.message || 'No se pudo registrar el parte.', variant: 'destructive' });
+    }
     setIsSubmitting(false);
   };
 
@@ -125,12 +160,13 @@ export default function NuevoPartePage() {
                 name="obraId"
                 control={form.control}
                 render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
+                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingObras}>
                     <SelectTrigger className="w-full mt-1">
-                      <SelectValue placeholder="Selecciona una obra" />
+                      <SelectValue placeholder={isLoadingObras ? "Cargando obras..." : "Selecciona una obra"} />
                     </SelectTrigger>
                     <SelectContent>
-                      {mockObras.map(obra => ( // Usar mockObras o las cargadas dinámicamente
+                      {!isLoadingObras && obras.length === 0 && <SelectItem value="no-obras" disabled>No hay obras activas</SelectItem>}
+                      {obras.map(obra => (
                         <SelectItem key={obra.id} value={obra.id}>{obra.nombre}</SelectItem>
                       ))}
                     </SelectContent>
@@ -156,7 +192,7 @@ export default function NuevoPartePage() {
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? format(field.value, "PPP") : <span>Selecciona una fecha</span>}
+                        {field.value ? format(field.value, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
@@ -165,6 +201,7 @@ export default function NuevoPartePage() {
                         selected={field.value}
                         onSelect={field.onChange}
                         initialFocus
+                        locale={es}
                       />
                     </PopoverContent>
                   </Popover>
@@ -196,23 +233,15 @@ export default function NuevoPartePage() {
               />
             </div>
 
-            {/* Futura sección para adjuntar fotos 
-            <div>
-              <Label className="font-semibold">Adjuntar Fotos (opcional)</Label>
-              <Button type="button" variant="outline" className="w-full mt-1 flex items-center justify-center">
-                <UploadCloud className="mr-2 h-5 w-5" />
-                Seleccionar Imágenes
-              </Button>
-              <p className="text-xs text-muted-foreground mt-1">Puedes adjuntar varias imágenes del progreso o incidencias.</p>
-            </div>
-            */}
+            {/* TODO: Tareas Seleccionadas (Checkbox group or similar) */}
+            {/* TODO: Fotos (File input) */}
 
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>
                 Cancelar
               </Button>
-              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting}>
+              <Button type="submit" className="bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSubmitting || isLoadingObras}>
                 {isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <><Send className="mr-2 h-4 w-4" /> Registrar Parte</>}
               </Button>
             </div>
