@@ -29,7 +29,7 @@ const ObraEditFormSchema = ObraSchema.omit({
   empresaId: true, 
   dataAIHint: true, 
 }).extend({
-  trabajadoresAsignados: z.array(z.string()).optional().default([]), // For managing worker assignments
+  trabajadoresAsignados: z.array(z.string()).optional().default([]),
 });
 type ObraEditFormData = z.infer<typeof ObraEditFormSchema>;
 
@@ -97,7 +97,6 @@ export default function EditObraPage() {
 
         if (fetchedObra) {
           setObraData(fetchedObra);
-          // Determine initially assigned workers for this obra
           const initialAssignedWorkerIds = activeTrabajadores
             .filter(worker => worker.obrasAsignadas?.includes(fetchedObra.id))
             .map(worker => worker.id);
@@ -135,9 +134,8 @@ export default function EditObraPage() {
         ...data,
         fechaFin: data.fechaFin === undefined ? null : data.fechaFin,
         costosPorCategoria: data.costosPorCategoria?.map(c => ({...c, costo: Number(c.costo)})) || [],
-        trabajadoresAsignados: data.trabajadoresAsignados || [], // Ensure it's always an array
+        trabajadoresAsignados: data.trabajadoresAsignados || [],
       };
-      // The updateObra action now also handles worker assignments
       const result = await updateObra(obraId, empresaId, dataToSubmit);
       if (result.success && result.obra) {
         toast({ title: 'Éxito', description: `Obra "${result.obra.nombre}" actualizada.` });
@@ -153,6 +151,17 @@ export default function EditObraPage() {
   };
 
   const canEditCostsOrWorkers = currentUser && obraData && (currentUser.rol === 'admin' || currentUser.id === obraData.jefeObraId);
+
+  // Debug log
+  if (currentUser && obraData) {
+    console.log("EditObraPage Debug:", {
+      canEdit: canEditCostsOrWorkers,
+      currentUserRole: currentUser.rol,
+      currentUserId: currentUser.id,
+      obraJefeId: obraData.jefeObraId,
+      companyWorkersCount: companyWorkers.length,
+    });
+  }
 
   if (isLoading) {
     return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando datos...</p></div>;
@@ -184,7 +193,6 @@ export default function EditObraPage() {
         </CardHeader>
         <CardContent className="p-6">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Campos existentes de la obra */}
             <div>
               <Label htmlFor="nombre" className="font-semibold">Nombre de la Obra</Label>
               <Input id="nombre" {...form.register('nombre')} className="mt-1" />
@@ -260,7 +268,21 @@ export default function EditObraPage() {
               {form.formState.errors.descripcion && <p className="text-sm text-destructive mt-1">{form.formState.errors.descripcion.message}</p>}
             </div>
             
-            {/* Sección de Costos por Categoría */}
+            {/* --- DEBUG INFO START --- */}
+            {currentUser && obraData && (
+              <div className="my-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-md text-xs">
+                <p className="font-bold mb-1">Debug Info (Temporal):</p>
+                <p>Puede editar Trabajadores/Costos: <span className="font-semibold">{canEditCostsOrWorkers ? 'Sí' : 'No'}</span></p>
+                <p>Trabajadores en la empresa: <span className="font-semibold">{companyWorkers.length}</span></p>
+                <p>Rol Actual: <span className="font-semibold">{currentUser.rol}</span></p>
+                <p>Es Admin: <span className="font-semibold">{currentUser.rol === 'admin' ? 'Sí' : 'No'}</span></p>
+                <p>Es Jefe de Obra Asignado: <span className="font-semibold">{currentUser.id === obraData.jefeObraId ? 'Sí' : 'No'}</span></p>
+                <p>ID Jefe de Obra (Obra): <span className="font-semibold">{obraData.jefeObraId || 'No asignado'}</span></p>
+                <p>ID Usuario Actual: <span className="font-semibold">{currentUser.id}</span></p>
+              </div>
+            )}
+            {/* --- DEBUG INFO END --- */}
+            
             {canEditCostsOrWorkers && (
             <Card className="border-dashed border-accent/50">
               <CardHeader>
@@ -322,7 +344,6 @@ export default function EditObraPage() {
             </Card>
             )}
 
-            {/* Sección de Asignar Trabajadores */}
             {canEditCostsOrWorkers && companyWorkers.length > 0 && (
               <Card className="border-dashed border-primary/50">
                 <CardHeader>
@@ -361,6 +382,19 @@ export default function EditObraPage() {
                 </CardContent>
               </Card>
             )}
+             {canEditCostsOrWorkers && companyWorkers.length === 0 && (
+                <Card className="border-dashed border-primary/50">
+                    <CardHeader>
+                        <CardTitle className="text-xl font-headline text-primary flex items-center">
+                            <Users className="mr-2 h-6 w-6" /> Asignar Trabajadores
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-muted-foreground">No hay trabajadores activos en la empresa para asignar a esta obra.</p>
+                        <p className="text-xs text-muted-foreground mt-1">Puedes registrar nuevos trabajadores desde la sección "Perfil de Empresa".</p>
+                    </CardContent>
+                </Card>
+            )}
             
             <div className="flex justify-end space-x-3 pt-4">
               <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>Cancelar</Button>
@@ -374,3 +408,4 @@ export default function EditObraPage() {
     </div>
   );
 }
+
