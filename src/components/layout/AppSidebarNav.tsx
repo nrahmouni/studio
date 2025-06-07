@@ -4,17 +4,18 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Briefcase, FileText, Users, Settings, Cpu, Building } from "lucide-react";
+import { Home, Briefcase, FileText, Users, Settings, Cpu, Building, BarChart3, Wrench, UserCircle } from "lucide-react";
 
 const navItems = [
   { href: "/dashboard", label: "Panel Principal", icon: Home },
   { href: "/company-profile", label: "Perfil Empresa", icon: Building },
   { href: "/obras", label: "Obras", icon: Briefcase },
   { href: "/partes", label: "Partes", icon: FileText },
-  // { href: "/usuarios", label: "Usuarios", icon: Users }, // Placeholder
+  { href: "/usuarios", label: "Usuarios", icon: Users },
   // { href: "/fichajes", label: "Fichajes", icon: Clock }, // Placeholder
   { href: "/resource-allocation", label: "Optimización IA", icon: Cpu },
-  // { href: "/settings", label: "Configuración", icon: Settings }, // Placeholder
+  { href: "/reports", label: "Informes", icon: BarChart3 },
+  { href: "/settings", label: "Configuración", icon: Settings },
 ];
 
 export function AppSidebarNav() {
@@ -25,7 +26,7 @@ export function AppSidebarNav() {
       {navItems.map((item) => {
         const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
         return (
-          <Link href={item.href} key={item.label} passHref>
+          <Link href={item.href} key={item.label}>
             <Button
               variant={isActive ? "secondary" : "ghost"}
               className={cn(
