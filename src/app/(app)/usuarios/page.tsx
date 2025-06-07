@@ -4,7 +4,7 @@
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Users, UserPlus, Loader2, AlertTriangle, Mail, Briefcase, Edit2, ShieldCheck, ShieldOff } from "lucide-react";
+import { Users, UserPlus, Loader2, AlertTriangle, Mail, Briefcase, Edit2, ShieldCheck, ShieldOff, Fingerprint } from "lucide-react";
 import Link from "next/link";
 import { getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
 import type { UsuarioFirebase } from '@/lib/types';
@@ -12,15 +12,13 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from "@/lib/utils";
 
-// Helper function to get display name for rol
+
 const getRolDisplay = (rol: UsuarioFirebase['rol']): string => {
   switch (rol) {
     case 'admin': return 'Administrador';
     case 'jefeObra': return 'Jefe de Obra';
     case 'trabajador': return 'Trabajador';
     default:
-      // This ensures exhaustive checking if new roles are added.
-      // TypeScript will error here if a case is missed.
       const exhaustiveCheck: never = rol;
       return exhaustiveCheck;
   }
@@ -149,6 +147,10 @@ export default function UsuariosPage() {
                     </CardDescription>
                   </CardHeader>
                   <CardContent className="p-5 flex-grow space-y-3 text-sm">
+                    <div className="flex items-center text-foreground/90">
+                      <Fingerprint className="mr-2 h-4 w-4 text-accent" />
+                      <span className="font-medium">DNI:</span>&nbsp;{usuario.dni}
+                    </div>
                     <div className="flex items-center text-foreground/90">
                       <Briefcase className="mr-2 h-4 w-4 text-accent" />
                       <span className="font-medium">Rol:</span>&nbsp;{getRolDisplay(usuario.rol)}

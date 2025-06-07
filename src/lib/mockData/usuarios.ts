@@ -6,7 +6,8 @@ export const mockUsuarios: UsuarioFirebase[] = [
     id: 'user-1-admin',
     empresaId: 'empresa-1',
     nombre: 'Administrador Principal (Empresa Demo)',
-    email: 'empresa@example.com', 
+    email: 'empresa@example.com',
+    dni: 'A00000000', // DNI para admin
     password: 'empresa', 
     rol: 'admin',
     activo: true,
@@ -17,6 +18,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-1',
     nombre: 'Carlos López (Jefe Obra CM)',
     email: 'jefeobra.cm@example.com',
+    dni: 'B11111111', // DNI para jefe de obra
     password: 'password123',
     rol: 'jefeObra',
     activo: true,
@@ -27,6 +29,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-1',
     nombre: 'Lucía Fernández (Trabajador Demo)',
     email: 'trabajador@example.com',
+    dni: '12345678A', // DNI para trabajador
     password: 'trabajador',
     rol: 'trabajador',
     activo: true,
@@ -37,6 +40,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-1',
     nombre: 'Marcos García (Trabajador CM)',
     email: 'marcos.g@example.com',
+    dni: '87654321B', // DNI para trabajador
     password: 'password123',
     rol: 'trabajador',
     activo: true,
@@ -49,6 +53,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-2',
     nombre: 'Sofía Ramírez (Admin Alfa)',
     email: 'admin.alfa@example.com',
+    dni: 'C22222222', // DNI para admin
     password: 'password123',
     rol: 'admin',
     activo: true,
@@ -59,6 +64,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-2',
     nombre: 'David Sanz (Trabajador Alfa)',
     email: 'david.s@example.com',
+    dni: '11223344C', // DNI para trabajador
     password: 'password123',
     rol: 'trabajador',
     activo: true,
@@ -71,6 +77,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-3',
     nombre: 'Elena Vazquez (Admin Edifica)',
     email: 'admin.edifica@example.com',
+    dni: 'D33333333', // DNI para admin
     password: 'password123',
     rol: 'admin',
     activo: true,
@@ -81,6 +88,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-3',
     nombre: 'Miguel Torres (Jefe Obra Edifica)',
     email: 'jefeobra.edifica@example.com',
+    dni: 'E44444444', // DNI para jefe de obra
     password: 'password123',
     rol: 'jefeObra',
     activo: true,
@@ -91,6 +99,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-3',
     nombre: 'Laura Jimenez (Trabajador Edifica)',
     email: 'laura.j@example.com',
+    dni: '55667788D', // DNI para trabajador
     password: 'password123',
     rol: 'trabajador',
     activo: true,

@@ -31,6 +31,7 @@ export const UsuarioFirebaseSchema = z.object({
   id: z.string(),
   nombre: z.string().min(1, "El nombre es requerido"),
   email: z.string().email("Email inválido"),
+  dni: z.string().min(1, "El DNI es requerido").regex(/^[0-9XYZxyz][0-9]{7}[A-HJ-NP-TV-Z]$/i, "Formato de DNI/NIE inválido (e.g., 12345678A o X1234567B)"),
   password: z.string().min(1, "Contraseña requerida para simulación"), // Added for mock auth
   rol: z.enum(["admin", "trabajador", "jefeObra"]),
   activo: z.boolean().default(true),

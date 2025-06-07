@@ -13,7 +13,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, UserCog, ArrowLeft, Save, AlertTriangle } from 'lucide-react';
+import { Loader2, UserCog, ArrowLeft, Save, AlertTriangle, Fingerprint } from 'lucide-react';
 import { getUsuarioById, updateUsuario } from '@/lib/actions/user.actions';
 import { UsuarioFirebaseSchema, type UsuarioFirebase } from '@/lib/types';
 
@@ -23,10 +23,7 @@ const UsuarioEditFormSchema = UsuarioFirebaseSchema.omit({
   empresaId: true, 
   password: true 
 }).extend({
-  // obrasAsignadas could be a multi-select in a real app, for now, not directly editable here
-  // It might be managed through a separate interface or based on obra assignments.
-  // For this form, we'll mainly focus on nombre, email, rol, activo.
-  obrasAsignadas: z.array(z.string()).optional(), // Keep it for display, but not primary focus of edit
+  obrasAsignadas: z.array(z.string()).optional(), 
 });
 type UsuarioEditFormData = z.infer<typeof UsuarioEditFormSchema>;
 
@@ -46,7 +43,8 @@ export default function EditUsuarioPage() {
     defaultValues: {
       nombre: '',
       email: '',
-      rol: 'trabajador', // Default role
+      dni: '',
+      rol: 'trabajador', 
       activo: true,
       obrasAsignadas: [],
     },
@@ -78,6 +76,7 @@ export default function EditUsuarioPage() {
           form.reset({
             nombre: fetchedUsuario.nombre,
             email: fetchedUsuario.email,
+            dni: fetchedUsuario.dni,
             rol: fetchedUsuario.rol,
             activo: fetchedUsuario.activo,
             obrasAsignadas: fetchedUsuario.obrasAsignadas || [],
@@ -100,8 +99,7 @@ export default function EditUsuarioPage() {
     if (!usuarioId || !currentEmpresaId) return;
     setIsSubmitting(true);
     try {
-      // We pass only the editable fields to updateUsuario
-      const { obrasAsignadas, ...updateData } = data; // Exclude obrasAsignadas for now if not editable
+      const { obrasAsignadas, ...updateData } = data; 
       const result = await updateUsuario(usuarioId, currentEmpresaId, updateData);
       if (result.success && result.usuario) {
         toast({ title: 'Éxito', description: `Usuario "${result.usuario.nombre}" actualizado.` });
@@ -159,6 +157,12 @@ export default function EditUsuarioPage() {
               <Input id="email" type="email" {...form.register('email')} className="mt-1" />
               {form.formState.errors.email && <p className="text-sm text-destructive mt-1">{form.formState.errors.email.message}</p>}
             </div>
+
+            <div>
+              <Label htmlFor="dni" className="font-semibold">DNI / NIE</Label>
+              <Input id="dni" {...form.register('dni')} className="mt-1" placeholder="Ej: 12345678A o X1234567B" />
+              {form.formState.errors.dni && <p className="text-sm text-destructive mt-1">{form.formState.errors.dni.message}</p>}
+            </div>
             
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                 <div>
@@ -201,13 +205,11 @@ export default function EditUsuarioPage() {
                 </div>
             </div>
             
-            {/* Obras asignadas (Display only for now) */}
             {obrasAsignadasCurrent && obrasAsignadasCurrent.length > 0 && (
                 <div>
                     <Label className="font-semibold">Obras Asignadas (Informativo)</Label>
                     <p className="text-sm text-muted-foreground mt-1">
                         {obrasAsignadasCurrent.join(', ')}
-                        {/* In a real app, this would be a multi-select or link to manage assignments */}
                     </p>
                 </div>
             )}
