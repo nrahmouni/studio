@@ -18,13 +18,13 @@ export default function SelectRolePage() {
           <CardDescription>Selecciona tu rol para continuar.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Link href="/auth/login/empresa" passHref legacyBehavior>
+          <Link href="/auth/login/empresa">
             <Button variant="outline" className="w-full h-16 text-lg border-primary text-primary hover:bg-primary/5">
               <Building className="mr-3 h-6 w-6" />
               Soy Empresa
             </Button>
           </Link>
-          <Link href="/auth/login/trabajador" passHref legacyBehavior>
+          <Link href="/auth/login/trabajador">
             <Button variant="outline" className="w-full h-16 text-lg border-primary text-primary hover:bg-primary/5">
               <User className="mr-3 h-6 w-6" />
               Soy Trabajador
