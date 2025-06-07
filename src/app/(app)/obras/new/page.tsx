@@ -1,3 +1,4 @@
+
 // src/app/(app)/obras/new/page.tsx
 'use client'; 
 
@@ -21,11 +22,17 @@ import { createObra } from '@/lib/actions/obra.actions';
 import { useState, useEffect } from 'react';
 import { ObraSchema } from '@/lib/types';
 
-const ObraFormSchema = ObraSchema.omit({ id: true, empresaId: true, dataAIHint: true, jefeObraId: true, fechaFin: true })
-  .extend({
-    fechaFinEstimada: z.date().optional().nullable(),
-    jefeObraEmail: z.string().email("Email del jefe de obra inválido").optional().or(z.literal('')),
-  });
+// This schema defines the structure of the form data
+const ObraFormSchema = ObraSchema.omit({ 
+  id: true, 
+  empresaId: true, 
+  dataAIHint: true, 
+  jefeObraId: true, // jefeObraId is derived in the action, not directly set in form
+  costosPorCategoria: true, // Costs are managed in edit, not create
+}).extend({
+  fechaFinEstimada: z.date().optional().nullable(), // Keep this for form input
+  jefeObraEmail: z.string().email("Email del jefe de obra inválido").optional().or(z.literal('')), // For assigning by email
+});
 
 type ObraFormData = z.infer<typeof ObraFormSchema>;
 
@@ -69,15 +76,15 @@ export default function NuevaObraPage() {
     }
     setIsSubmitting(true);
     
-    const obraToCreate = {
+    // Map fechaFinEstimada from form to fechaFin for the action
+    const obraDataForAction = {
       ...data,
-      empresaId: empresaId,
-      fechaFin: data.fechaFinEstimada === undefined ? null : data.fechaFinEstimada, 
+      fechaFin: data.fechaFinEstimada === undefined ? null : data.fechaFinEstimada,
     };
-    const { fechaFinEstimada, jefeObraEmail, ...finalData } = obraToCreate;
+    // The createObra action now expects the form data directly, including jefeObraEmail
+    // It also needs the empresaId passed as a separate argument.
 
-
-    const result = await createObra(finalData);
+    const result = await createObra(obraDataForAction, empresaId);
     if (result.success && result.obra) {
       toast({ title: 'Éxito', description: `Nueva obra "${result.obra.nombre}" creada correctamente.` });
       router.push('/obras');
@@ -191,10 +198,10 @@ export default function NuevaObraPage() {
               </div>
             </div>
              <div>
-              <Label htmlFor="jefeObraEmail" className="font-semibold">Email Jefe de Obra (Opcional)</Label>
+              <Label htmlFor="jefeObraEmail" className="font-semibold">Email Jefe de Obra / Encargado (Opcional)</Label>
               <Input id="jefeObraEmail" type="email" {...form.register('jefeObraEmail')} className="mt-1" placeholder="jefe.obra@ejemplo.com" />
               {form.formState.errors.jefeObraEmail && <p className="text-sm text-destructive mt-1">{form.formState.errors.jefeObraEmail.message}</p>}
-               <p className="text-xs text-muted-foreground mt-1">Si se proporciona, se intentará asignar al usuario correspondiente.</p>
+               <p className="text-xs text-muted-foreground mt-1">Si se proporciona, se intentará asignar al usuario correspondiente con rol 'Jefe de Obra'.</p>
             </div>
             <div>
               <Label htmlFor="descripcion" className="font-semibold">Descripción Adicional (Opcional)</Label>
@@ -217,3 +224,4 @@ export default function NuevaObraPage() {
     </div>
   );
 }
+

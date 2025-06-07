@@ -3,14 +3,22 @@
 'use server';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { ObraSchema, type Obra } from '@/lib/types';
+import { ObraSchema, type Obra, type UsuarioFirebase } from '@/lib/types';
 import { mockObras } from '@/lib/mockData/obras'; 
+import { mockUsuarios } from '@/lib/mockData/usuarios'; // Import mockUsuarios
 
 let Cobras: Obra[] = [...mockObras];
 
-// CreateObraSchema now implicitly includes costosPorCategoria as optional from ObraSchema
-const CreateObraSchema = ObraSchema.omit({ id: true });
-type CreateObraData = z.infer<typeof CreateObraSchema>;
+// Schema for data coming from the "Nueva Obra" form, including jefeObraEmail
+const CreateObraFormInputSchema = ObraSchema.omit({ 
+  id: true, 
+  empresaId: true, // empresaId will be added based on logged-in user
+  jefeObraId: true, // jefeObraId will be derived from jefeObraEmail
+  dataAIHint: true 
+}).extend({
+  jefeObraEmail: z.string().email("Email del jefe de obra inválido").optional().or(z.literal('')),
+});
+type CreateObraFormInputData = z.infer<typeof CreateObraFormInputSchema>;
 
 
 export async function getObrasByEmpresaId(empresaId: string): Promise<Obra[]> {
@@ -24,18 +32,52 @@ export async function getObraById(obraId: string, empresaId: string): Promise<Ob
   return obra || null;
 }
 
-export async function createObra(data: CreateObraData): Promise<{ success: boolean; message: string; obra?: Obra }> {
-  const validationResult = CreateObraSchema.safeParse(data);
-  if (!validationResult.success) {
-    console.error("Validation errors:", validationResult.error.flatten().fieldErrors);
-    return { success: false, message: `Error de validación: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
+export async function createObra(data: CreateObraFormInputData, empresaId: string): Promise<{ success: boolean; message: string; obra?: Obra }> {
+  // Validate the form input first (which includes jefeObraEmail)
+  const formValidationResult = CreateObraFormInputSchema.safeParse(data);
+  if (!formValidationResult.success) {
+    console.error("Form validation errors:", formValidationResult.error.flatten().fieldErrors);
+    return { success: false, message: `Error de validación del formulario: ${JSON.stringify(formValidationResult.error.flatten().fieldErrors)}` };
+  }
+
+  const { jefeObraEmail, ...obraData } = formValidationResult.data;
+  let jefeObraIdToAssign: string | undefined = undefined;
+
+  if (jefeObraEmail) {
+    const foundJefeObra = mockUsuarios.find(
+      (user: UsuarioFirebase) => 
+        user.email === jefeObraEmail && 
+        user.rol === 'jefeObra' && 
+        user.empresaId === empresaId
+    );
+    if (foundJefeObra) {
+      jefeObraIdToAssign = foundJefeObra.id;
+    } else {
+      // Optional: return an error or warning if email provided but no matching jefeObra found
+      // For now, we'll proceed without assigning if not found, as it's optional
+      console.warn(`Jefe de Obra con email ${jefeObraEmail} no encontrado o no tiene el rol correcto.`);
+    }
+  }
+  
+  const finalObraData = {
+    ...obraData,
+    empresaId, // Add empresaId from the logged-in user context
+    jefeObraId: jefeObraIdToAssign,
+    costosPorCategoria: obraData.costosPorCategoria || [],
+  };
+
+  // Validate the final Obra object against the main ObraSchema (excluding id)
+  const obraSchemaForCreate = ObraSchema.omit({id: true, dataAIHint: true });
+  const finalValidationResult = obraSchemaForCreate.safeParse(finalObraData);
+
+  if (!finalValidationResult.success) {
+    console.error("Final Obra data validation errors:", finalValidationResult.error.flatten().fieldErrors);
+    return { success: false, message: `Error de validación de datos de obra: ${JSON.stringify(finalValidationResult.error.flatten().fieldErrors)}` };
   }
 
   const newObra: Obra = {
-    ...validationResult.data,
+    ...finalValidationResult.data,
     id: `obra-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-    // costosPorCategoria will be taken from validationResult.data, default to [] if not provided
-    costosPorCategoria: validationResult.data.costosPorCategoria || [],
   };
 
   Cobras.push(newObra);
@@ -62,7 +104,6 @@ export async function updateObra(obraId: string, empresaId: string, data: Partia
     return { success: false, message: `Error de validación al actualizar: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
   }
   
-  // Ensure costosPorCategoria is an array, even if undefined in data
   const validatedDataWithCosts = {
       ...validationResult.data,
       costosPorCategoria: validationResult.data.costosPorCategoria || Cobras[obraIndex].costosPorCategoria || [],
@@ -91,3 +132,4 @@ export async function deleteObra(obraId: string, empresaId: string): Promise<{ s
   await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true, message: 'Obra eliminada con éxito.' };
 }
+

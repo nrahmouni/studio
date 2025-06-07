@@ -138,7 +138,7 @@ export default function ObraDetailPage() {
             <InfoItem icon={<Building className="text-accent" />} label="Cliente" value={obra.clienteNombre} />
             <InfoItem icon={<CalendarDays className="text-accent" />} label="Fecha de Inicio" value={new Date(obra.fechaInicio).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })} />
             <InfoItem icon={<CalendarDays className="text-accent" />} label="Fecha de Fin Prevista" value={obra.fechaFin ? new Date(obra.fechaFin).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : 'En curso'} />
-            {jefeObra && <InfoItem icon={<User className="text-accent" />} label="Jefe de Obra" value={jefeObra.nombre} />}
+            {jefeObra && <InfoItem icon={<User className="text-accent" />} label="Jefe de Obra / Encargado" value={jefeObra.nombre} />}
           </div>
           
           <div>
@@ -205,3 +205,4 @@ function InfoItem({ icon, label, value }: InfoItemProps) {
     </div>
   );
 }
+
