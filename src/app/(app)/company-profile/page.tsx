@@ -36,7 +36,7 @@ export default function CompanyProfilePage() {
       CIF: '',
       emailContacto: '',
       telefono: '',
-      logoURL: '',
+      logoURL: '', // Default to empty string for controlled input
     },
   });
 
@@ -66,7 +66,7 @@ export default function CompanyProfilePage() {
           CIF: profile.CIF,
           emailContacto: profile.emailContacto,
           telefono: profile.telefono,
-          logoURL: profile.logoURL || '',
+          logoURL: profile.logoURL || '', // Ensure null is converted to empty string for form
         });
       } else {
         toast({
@@ -90,10 +90,18 @@ export default function CompanyProfilePage() {
     if (!empresaId) return;
     setIsSaving(true);
     try {
-      const result = await updateEmpresaProfile(empresaId, data);
+      // Ensure logoURL is null if empty string, to match schema expectation if nullable
+      const dataToSubmit = {
+        ...data,
+        logoURL: data.logoURL === '' ? null : data.logoURL,
+      };
+      const result = await updateEmpresaProfile(empresaId, dataToSubmit);
       if (result.success && result.empresa) {
         setEmpresa(result.empresa);
-        form.reset(result.empresa); // Reset form with potentially updated data
+        form.reset({ // Reset form with potentially updated data
+            ...result.empresa,
+            logoURL: result.empresa.logoURL || '', // Ensure null from backend becomes empty string for form
+        });
         toast({
           title: 'Perfil Actualizado',
           description: 'La información de tu empresa ha sido guardada.',
@@ -207,7 +215,7 @@ export default function CompanyProfilePage() {
               <Controller
                 name="logoURL"
                 control={form.control}
-                render={({ field }) => <Input id="logoURL" {...field} placeholder="https://ejemplo.com/logo.png" className="mt-1" />}
+                render={({ field }) => <Input id="logoURL" {...field} value={field.value ?? ''} placeholder="https://ejemplo.com/logo.png" className="mt-1" />}
               />
               {form.formState.errors.logoURL && <p className="text-sm text-destructive mt-1">{form.formState.errors.logoURL.message}</p>}
             </div>
