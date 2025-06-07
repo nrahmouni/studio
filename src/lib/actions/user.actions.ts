@@ -14,7 +14,7 @@ const LoginSchema = z.object({
   password: z.string().min(1, 'Contraseña requerida.'),
 });
 
-export async function authenticateEmpresa(credentials: z.infer<typeof LoginSchema>): Promise<{ success: boolean; message: string; empresaId?: string }> {
+export async function authenticateEmpresa(credentials: z.infer<typeof LoginSchema>): Promise<{ success: boolean; message: string; empresaId?: string; role?: UsuarioFirebase['rol'] }> {
   const validatedCredentials = LoginSchema.safeParse(credentials);
   if (!validatedCredentials.success) {
     return { success: false, message: 'Datos de entrada inválidos.' };
@@ -22,19 +22,19 @@ export async function authenticateEmpresa(credentials: z.infer<typeof LoginSchem
 
   const { email, password } = validatedCredentials.data;
 
-  // Simulación de búsqueda de empresa/admin
-  const adminUser = CUsuarios.find(
-    user => user.email === email && user.password === password && (user.rol === 'admin' || user.rol === 'jefeObra')
+  // Simulación de búsqueda de empresa/admin/jefeObra
+  const user = CUsuarios.find(
+    u => u.email === email && u.password === password && (u.rol === 'admin' || u.rol === 'jefeObra')
   );
 
-  if (adminUser) {
-    return { success: true, message: 'Login de empresa exitoso.', empresaId: adminUser.empresaId };
+  if (user) {
+    return { success: true, message: 'Login de empresa exitoso.', empresaId: user.empresaId, role: user.rol };
   } else {
-    return { success: false, message: 'Credenciales de empresa incorrectas.' };
+    return { success: false, message: 'Credenciales de empresa incorrectas o rol no autorizado para este acceso.' };
   }
 }
 
-export async function authenticateTrabajador(credentials: z.infer<typeof LoginSchema>): Promise<{ success: boolean; message: string; usuarioId?: string; empresaId?: string }> {
+export async function authenticateTrabajador(credentials: z.infer<typeof LoginSchema>): Promise<{ success: boolean; message: string; usuarioId?: string; empresaId?: string, role?: UsuarioFirebase['rol'] }> {
   const validatedCredentials = LoginSchema.safeParse(credentials);
   if (!validatedCredentials.success) {
     return { success: false, message: 'Datos de entrada inválidos.' };
@@ -48,7 +48,7 @@ export async function authenticateTrabajador(credentials: z.infer<typeof LoginSc
   );
 
   if (workerUser) {
-    return { success: true, message: 'Login de trabajador exitoso.', usuarioId: workerUser.id, empresaId: workerUser.empresaId };
+    return { success: true, message: 'Login de trabajador exitoso.', usuarioId: workerUser.id, empresaId: workerUser.empresaId, role: workerUser.rol };
   } else {
     return { success: false, message: 'Credenciales de trabajador incorrectas.' };
   }
@@ -136,4 +136,3 @@ export async function registerTrabajador(
   await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true, message: 'Trabajador registrado con éxito.', usuario: newUsuario };
 }
-

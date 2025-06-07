@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +20,7 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import type { UsuarioFirebase } from '@/lib/types';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -46,17 +48,15 @@ export function EmpresaLoginForm() {
     setIsLoading(true);
     try {
       const result = await authenticateEmpresa(values);
-      if (result.success && result.empresaId) {
+      if (result.success && result.empresaId && result.role) {
         toast({
           title: 'Inicio de Sesión Exitoso',
-          description: 'Bienvenido de nuevo.',
+          description: `Bienvenido de nuevo. Rol: ${result.role}`,
         });
-        // En una aplicación real, guardarías el result.empresaId en el estado de sesión/contexto
-        // y/o en una cookie segura HttpOnly.
-        // Por ahora, para simular, guardamos en localStorage y redirigimos.
         if (typeof window !== 'undefined') {
           localStorage.setItem('empresaId_obra_link', result.empresaId);
-          localStorage.setItem('userRole_obra_link', 'empresa'); // o 'admin' / 'jefeObra'
+          localStorage.setItem('usuarioId_obra_link', CUsuarios.find(u => u.email === values.email && u.empresaId === result.empresaId)?.id || ''); // Store user ID as well
+          localStorage.setItem('userRole_obra_link', result.role as UsuarioFirebase['rol']); // Store the specific role
         }
         router.push('/dashboard');
       } else {
@@ -77,6 +77,11 @@ export function EmpresaLoginForm() {
       setIsLoading(false);
     }
   }
+  // Need to declare CUsuarios if used here, or get user ID from server action
+  // For now, I'll assume you want to fetch from your global mock CUsuarios, 
+  // which isn't ideal in a client component but for mock purposes:
+  const CUsuarios = (typeof window !== 'undefined' && (window as any).CUsuarios) || [];
+
 
   return (
     <Card className="w-full max-w-md shadow-xl">

@@ -1,3 +1,4 @@
+
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -19,6 +20,8 @@ import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
+import type { UsuarioFirebase } from '@/lib/types';
+
 
 const formSchema = z.object({
   email: z.string().email({
@@ -46,18 +49,15 @@ export function TrabajadorLoginForm() {
     setIsLoading(true);
     try {
       const result = await authenticateTrabajador(values);
-      if (result.success && result.usuarioId && result.empresaId) {
+      if (result.success && result.usuarioId && result.empresaId && result.role) {
         toast({
           title: 'Inicio de Sesión Exitoso',
           description: 'Bienvenido.',
         });
-        // En una aplicación real, guardarías result.usuarioId y result.empresaId
-        // en el estado de sesión/contexto y/o en una cookie segura HttpOnly.
-        // Por ahora, para simular, guardamos en localStorage y redirigimos.
         if (typeof window !== 'undefined') {
           localStorage.setItem('usuarioId_obra_link', result.usuarioId);
           localStorage.setItem('empresaId_obra_link', result.empresaId);
-          localStorage.setItem('userRole_obra_link', 'trabajador');
+          localStorage.setItem('userRole_obra_link', result.role as UsuarioFirebase['rol']); // Store the specific role
         }
         router.push('/dashboard');
       } else {
