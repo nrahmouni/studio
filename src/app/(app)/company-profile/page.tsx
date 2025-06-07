@@ -42,6 +42,7 @@ export default function CompanyProfilePage() {
 
   useEffect(() => {
     const storedEmpresaId = localStorage.getItem('empresaId_obra_link');
+    console.log('CompanyProfilePage: Stored Empresa ID from localStorage:', storedEmpresaId);
     if (storedEmpresaId) {
       setEmpresaId(storedEmpresaId);
       fetchProfile(storedEmpresaId);
