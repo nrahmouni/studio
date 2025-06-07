@@ -60,11 +60,13 @@ export default function PartesPage() {
         fetchedObras.forEach(o => tempObrasMap[o.id] = o.nombre);
         setObrasMap(tempObrasMap);
 
-        // Sort partes by date descending
         fetchedPartes.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
         setPartes(fetchedPartes);
 
-        const userIds = new Set(fetchedPartes.map(p => p.usuarioId).concat(fetchedPartes.filter(p=>p.validadoPor).map(p => p.validadoPor!)));
+        const userIdsInPartes = fetchedPartes.map(p => p.usuarioId);
+        const validatorIds = fetchedPartes.map(p => p.validadoPor).filter(Boolean) as string[];
+        const userIds = new Set([...userIdsInPartes, ...validatorIds]);
+
         const usersPromises = Array.from(userIds).map(id => getUsuarioById(id));
         const usersData = await Promise.all(usersPromises);
         const tempUsuariosMap: Record<string, string> = {};
@@ -98,6 +100,10 @@ export default function PartesPage() {
         if (result.success && result.parte) {
             toast({ title: "Parte Validado", description: `El parte ha sido validado con éxito.` });
             setPartes(prevPartes => prevPartes.map(p => p.id === parteId ? { ...p, validado: true, validadoPor: currentUser.id } : p));
+             // Update validator in usuariosMap if not already there
+             if (currentUser && !usuariosMap[currentUser.id]) {
+              setUsuariosMap(prevMap => ({ ...prevMap, [currentUser.id!]: currentUser.nombre }));
+            }
         } else {
             toast({ title: "Error al Validar", description: result.message, variant: "destructive" });
         }
@@ -109,7 +115,7 @@ export default function PartesPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4">
+      <div className="flex flex-col sm:flex-row justify-between items-center mb-8 gap-4 animate-fade-in-down">
         <h1 className="text-3xl font-bold font-headline text-primary">
           Partes de Trabajo
         </h1>
@@ -138,19 +144,19 @@ export default function PartesPage() {
       {isLoading && (
         <div className="flex items-center justify-center py-10">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="ml-4 text-lg">Cargando partes...</p>
+          <p className="ml-4 text-lg text-muted-foreground">Cargando partes...</p>
         </div>
       )}
 
       {error && !isLoading && (
-        <Card className="bg-destructive/10 border-destructive text-destructive">
+        <Card className="bg-destructive/10 border-destructive text-destructive animate-fade-in-up">
           <CardHeader><CardTitle className="flex items-center"><AlertTriangle className="mr-2 h-6 w-6" />Error</CardTitle></CardHeader>
           <CardContent><p>{error}</p></CardContent>
         </Card>
       )}
 
       {!isLoading && !error && partes.length === 0 && (
-         <Card className="shadow-lg">
+         <Card className="shadow-lg animate-fade-in-up">
           <CardHeader>
             <CardTitle className="flex items-center">
               <FileText className="mr-3 h-6 w-6 text-primary" />
@@ -178,15 +184,18 @@ export default function PartesPage() {
 
       {!isLoading && !error && partes.length > 0 && (
         <>
-        <p className="text-muted-foreground mb-6">
+        <p className="text-muted-foreground mb-6 animate-fade-in-down">
             Mostrando {partes.length} parte(s).
             {selectedObraId !== 'all' && obrasMap[selectedObraId] ? ` Filtrado por: ${obrasMap[selectedObraId]}.` : ''}
         </p>
         <div className="space-y-6">
-          {partes.map(parte => {
+          {partes.map((parte, index) => {
             const fotosURLs = parte.fotosURLs;
             return (
-              <Card key={parte.id} className="hover:shadow-xl transition-shadow duration-300">
+              <Card 
+                key={parte.id} 
+                className={`card-interactive animate-fade-in-up animation-delay-${(index + 1) * 100}`}
+              >
                 <CardHeader className="pb-3">
                   <div className="flex justify-between items-start">
                     <div>

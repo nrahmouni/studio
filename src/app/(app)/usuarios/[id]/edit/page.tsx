@@ -17,7 +17,6 @@ import { Loader2, UserCog, ArrowLeft, Save, AlertTriangle, Fingerprint } from 'l
 import { getUsuarioById, updateUsuario } from '@/lib/actions/user.actions';
 import { UsuarioFirebaseSchema, type UsuarioFirebase } from '@/lib/types';
 
-// Schema for the form, omitting id, empresaId, password (password change should be separate)
 const UsuarioEditFormSchema = UsuarioFirebaseSchema.omit({ 
   id: true, 
   empresaId: true, 
@@ -115,13 +114,13 @@ export default function EditUsuarioPage() {
   };
   
   if (isLoading) {
-    return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg">Cargando usuario...</p></div>;
+    return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando usuario...</p></div>;
   }
 
   if (error) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <Card className="bg-destructive/10 border-destructive text-destructive"><CardHeader><CardTitle className="flex items-center"><AlertTriangle className="mr-2 h-6 w-6" />Error</CardTitle></CardHeader><CardContent><p>{error}</p></CardContent>
+        <Card className="bg-destructive/10 border-destructive text-destructive animate-fade-in-up"><CardHeader><CardTitle className="flex items-center"><AlertTriangle className="mr-2 h-6 w-6" />Error</CardTitle></CardHeader><CardContent><p>{error}</p></CardContent>
         <CardFooter><Button variant="outline" onClick={() => router.push('/usuarios')} className="border-destructive text-destructive hover:bg-destructive/20"><ArrowLeft className="mr-2 h-4 w-4"/>Volver</Button></CardFooter></Card>
       </div>
     );
@@ -131,10 +130,10 @@ export default function EditUsuarioPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-       <Button variant="outline" onClick={() => router.push('/usuarios')} className="mb-6">
+       <Button variant="outline" onClick={() => router.push('/usuarios')} className="mb-6 animate-fade-in-down">
         <ArrowLeft className="mr-2 h-4 w-4" /> Volver al Listado de Usuarios
       </Button>
-      <Card className="max-w-lg mx-auto shadow-lg">
+      <Card className="max-w-lg mx-auto shadow-lg animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
           <div className="flex items-center space-x-3">
             <UserCog className="h-8 w-8 text-primary" />

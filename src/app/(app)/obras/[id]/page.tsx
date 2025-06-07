@@ -65,7 +65,7 @@ export default function ObraDetailPage() {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg">Cargando detalles de la obra...</p>
+        <p className="ml-4 text-lg text-muted-foreground">Cargando detalles de la obra...</p>
       </div>
     );
   }
@@ -73,7 +73,7 @@ export default function ObraDetailPage() {
   if (error) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <Card className="bg-destructive/10 border-destructive text-destructive">
+        <Card className="bg-destructive/10 border-destructive text-destructive animate-fade-in-up">
           <CardHeader>
             <CardTitle className="flex items-center"><AlertTriangle className="mr-2 h-6 w-6" />Error</CardTitle>
           </CardHeader>
@@ -90,7 +90,7 @@ export default function ObraDetailPage() {
 
   if (!obra) {
     return (
-      <div className="container mx-auto py-8 px-4 text-center">
+      <div className="container mx-auto py-8 px-4 text-center animate-fade-in-up">
         <Briefcase className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
         <p className="text-xl text-muted-foreground">No se encontró la obra especificada.</p>
         <Button onClick={() => router.push('/obras')} className="mt-4">
@@ -102,15 +102,15 @@ export default function ObraDetailPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Button variant="outline" onClick={() => router.push('/obras')} className="mb-6">
+      <Button variant="outline" onClick={() => router.push('/obras')} className="mb-6 animate-fade-in-down">
         <ArrowLeft className="mr-2 h-4 w-4" /> Volver al Listado de Obras
       </Button>
-      <Card className="shadow-xl">
+      <Card className="shadow-xl animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <div className="flex items-center space-x-4 mb-4 sm:mb-0">
               <Image
-                src="https://placehold.co/120x90.png"
+                src={obra.dataAIHint ? `https://placehold.co/120x90.png` : "https://placehold.co/120x90.png"}
                 alt={`Imagen de ${obra.nombre}`}
                 width={120}
                 height={90}
@@ -158,7 +158,7 @@ interface InfoItemProps {
 
 function InfoItem({ icon, label, value }: InfoItemProps) {
   return (
-    <div className="flex items-start space-x-3 p-3 bg-card rounded-md border">
+    <div className="flex items-start space-x-3 p-3 bg-card rounded-md border card-interactive">
       <div className="flex-shrink-0 pt-1">{icon}</div>
       <div>
         <p className="text-sm font-medium text-muted-foreground">{label}</p>

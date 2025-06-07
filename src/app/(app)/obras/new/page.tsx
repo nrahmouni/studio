@@ -13,21 +13,19 @@ import { Textarea } from '@/components/ui/textarea';
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, Loader2, Briefcase } from 'lucide-react';
+import { CalendarIcon, Loader2, Briefcase, ArrowLeft } from 'lucide-react';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { createObra } from '@/lib/actions/obra.actions'; 
 import { useState, useEffect } from 'react';
-import { ObraSchema } from '@/lib/types'; // Import full ObraSchema
+import { ObraSchema } from '@/lib/types';
 
-// Schema for the form, omitting id (auto-generated) and empresaId (from context)
 const ObraFormSchema = ObraSchema.omit({ id: true, empresaId: true, dataAIHint: true, jefeObraId: true, fechaFin: true })
   .extend({
-    fechaFinEstimada: z.date().optional().nullable(), // For user input, can be optional
-    jefeObraEmail: z.string().email("Email del jefe de obra inválido").optional().or(z.literal('')), // Optional field
+    fechaFinEstimada: z.date().optional().nullable(),
+    jefeObraEmail: z.string().email("Email del jefe de obra inválido").optional().or(z.literal('')),
   });
-
 
 type ObraFormData = z.infer<typeof ObraFormSchema>;
 
@@ -44,7 +42,7 @@ export default function NuevaObraPage() {
       direccion: '',
       clienteNombre: '',
       fechaInicio: new Date(),
-      fechaFinEstimada: undefined, // Use undefined for consistency
+      fechaFinEstimada: undefined,
       jefeObraEmail: '',
       descripcion: '',
     },
@@ -91,7 +89,10 @@ export default function NuevaObraPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Card className="max-w-2xl mx-auto shadow-lg">
+      <Button variant="outline" onClick={() => router.push('/obras')} className="mb-6 animate-fade-in-down">
+        <ArrowLeft className="mr-2 h-4 w-4" /> Volver al Listado
+      </Button>
+      <Card className="max-w-2xl mx-auto shadow-lg animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
            <div className="flex items-center space-x-3">
             <Briefcase className="h-8 w-8 text-primary" />

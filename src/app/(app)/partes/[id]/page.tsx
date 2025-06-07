@@ -54,7 +54,6 @@ export default function ParteDetailPage() {
         const fetchedParte = await getParteById(parteId, storedEmpresaId);
         if (fetchedParte) {
           setParte(fetchedParte);
-          // Fetch related data in parallel
           const [fetchedObra, fetchedTrabajador, fetchedValidador] = await Promise.all([
             getObraById(fetchedParte.obraId, storedEmpresaId),
             getUsuarioById(fetchedParte.usuarioId),
@@ -104,13 +103,13 @@ export default function ParteDetailPage() {
 
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg">Cargando detalles del parte...</p></div>;
+    return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando detalles del parte...</p></div>;
   }
 
   if (error) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <Card className="bg-destructive/10 border-destructive text-destructive"><CardHeader><CardTitle className="flex items-center"><AlertTriangle className="mr-2 h-6 w-6" />Error</CardTitle></CardHeader><CardContent><p>{error}</p></CardContent>
+        <Card className="bg-destructive/10 border-destructive text-destructive animate-fade-in-up"><CardHeader><CardTitle className="flex items-center"><AlertTriangle className="mr-2 h-6 w-6" />Error</CardTitle></CardHeader><CardContent><p>{error}</p></CardContent>
         <CardFooter><Button variant="outline" onClick={() => router.push('/partes')} className="border-destructive text-destructive hover:bg-destructive/20"><ArrowLeft className="mr-2 h-4 w-4" />Volver a Partes</Button></CardFooter></Card>
       </div>
     );
@@ -118,7 +117,7 @@ export default function ParteDetailPage() {
 
   if (!parte || !obra || !trabajador) {
     return (
-      <div className="container mx-auto py-8 px-4 text-center">
+      <div className="container mx-auto py-8 px-4 text-center animate-fade-in-up">
         <FileText className="mx-auto h-16 w-16 text-muted-foreground mb-4" />
         <p className="text-xl text-muted-foreground">No se encontró el parte o falta información asociada.</p>
         <Button onClick={() => router.push('/partes')} className="mt-4"><ArrowLeft className="mr-2 h-4 w-4" />Volver a Partes</Button>
@@ -131,10 +130,10 @@ export default function ParteDetailPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Button variant="outline" onClick={() => router.push('/partes')} className="mb-6">
+      <Button variant="outline" onClick={() => router.push('/partes')} className="mb-6 animate-fade-in-down">
         <ArrowLeft className="mr-2 h-4 w-4" /> Volver al Listado de Partes
       </Button>
-      <Card className="shadow-xl">
+      <Card className="shadow-xl animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
           <div className="flex flex-col sm:flex-row justify-between items-start">
             <div>
@@ -180,8 +179,8 @@ export default function ParteDetailPage() {
             <div>
                 <h4 className="font-semibold text-md mb-1 text-primary/90">Tipos de Tarea:</h4>
                 <div className="flex flex-wrap gap-2">
-                    {tareasSeleccionadas.map(tarea => (
-                        <span key={tarea} className="px-2 py-0.5 text-xs bg-secondary text-secondary-foreground rounded-full">{tarea}</span>
+                    {tareasSeleccionadas.map((tarea, idx) => (
+                        <span key={tarea} className={`px-2 py-0.5 text-xs bg-secondary text-secondary-foreground rounded-full animate-fade-in-up animation-delay-${(idx+1)*50}`}>{tarea}</span>
                     ))}
                 </div>
             </div>
@@ -192,7 +191,8 @@ export default function ParteDetailPage() {
               <h4 className="font-semibold text-md mb-2 text-primary/90 flex items-center"><Camera className="mr-2 h-5 w-5 text-accent"/>Fotos Adjuntas:</h4>
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4">
                 {fotosURLs.map((url, index) => (
-                  <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="block hover:opacity-80 transition-opacity">
+                  <a key={index} href={url} target="_blank" rel="noopener noreferrer" 
+                     className={`block hover:opacity-80 transition-opacity animate-fade-in-up animation-delay-${(index+1)*100}`}>
                     <Image 
                         src={url} 
                         alt={`Foto ${index + 1} del parte`} 
@@ -208,7 +208,7 @@ export default function ParteDetailPage() {
           )}
           
           {parte.firmaURL && (
-             <div>
+             <div className="animate-fade-in-up animation-delay-500">
                 <h4 className="font-semibold text-md mb-1 text-primary/90">Firma:</h4>
                 <Image src={parte.firmaURL} alt="Firma del trabajador" width={200} height={100} className="border rounded-md bg-white p-2" data-ai-hint="signature" />
              </div>
@@ -218,7 +218,6 @@ export default function ParteDetailPage() {
         <CardFooter className="p-6 border-t flex flex-col sm:flex-row justify-between items-center gap-4">
             <p className="text-xs text-muted-foreground">ID Parte: {parte.id}</p>
             <div className="flex gap-3">
-                {/* <Button variant="outline" disabled><Edit3 className="mr-2 h-4 w-4"/> Editar Parte (Próximamente)</Button> */}
                 {!parte.validado && currentUser && (currentUser.rol === 'admin' || currentUser.rol === 'jefeObra') && (
                     <Button onClick={handleValidate} className="bg-green-600 hover:bg-green-700 text-white">
                         <CheckCircle className="mr-2 h-4 w-4" /> Validar Parte
@@ -239,7 +238,7 @@ interface InfoItemProps {
 
 function InfoItem({ icon, label, value }: InfoItemProps) {
   return (
-    <div className="flex items-start space-x-3 p-3 bg-card rounded-md border">
+    <div className="flex items-start space-x-3 p-3 bg-card rounded-md border card-interactive">
       <div className="flex-shrink-0 pt-1">{icon}</div>
       <div>
         <p className="text-sm font-medium text-muted-foreground">{label}</p>

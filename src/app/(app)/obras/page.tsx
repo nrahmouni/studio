@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Briefcase, PlusCircle, Loader2, AlertTriangle, Eye, Edit3, Trash2 } from "lucide-react";
 import Link from "next/link";
-import { getObrasByEmpresaId, deleteObra } from '@/lib/actions/obra.actions'; // Added deleteObra
+import { getObrasByEmpresaId, deleteObra } from '@/lib/actions/obra.actions';
 import type { Obra } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import {
@@ -78,7 +78,7 @@ export default function ObrasPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 animate-fade-in-down">
         <h1 className="text-3xl font-bold font-headline text-primary">
           Gestión de Obras
         </h1>
@@ -93,12 +93,12 @@ export default function ObrasPage() {
       {isLoading && (
         <div className="flex items-center justify-center py-10">
           <Loader2 className="h-12 w-12 animate-spin text-primary" />
-          <p className="ml-4 text-lg">Cargando obras...</p>
+          <p className="ml-4 text-lg text-muted-foreground">Cargando obras...</p>
         </div>
       )}
 
       {error && !isLoading && (
-        <Card className="bg-destructive/10 border-destructive text-destructive">
+        <Card className="bg-destructive/10 border-destructive text-destructive animate-fade-in-up">
           <CardHeader>
             <CardTitle className="flex items-center">
               <AlertTriangle className="mr-2 h-6 w-6" />
@@ -115,7 +115,7 @@ export default function ObrasPage() {
       )}
 
       {!isLoading && !error && obras.length === 0 && (
-        <Card className="shadow-lg">
+        <Card className="shadow-lg animate-fade-in-up">
           <CardHeader>
             <CardTitle className="flex items-center">
               <Briefcase className="mr-3 h-6 w-6 text-primary" />
@@ -142,10 +142,13 @@ export default function ObrasPage() {
 
       {!isLoading && !error && obras.length > 0 && (
         <>
-          <p className="text-muted-foreground mb-6">Mostrando {obras.length} obra(s).</p>
+          <p className="text-muted-foreground mb-6 animate-fade-in-down">Mostrando {obras.length} obra(s).</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {obras.map(obra => (
-              <Card key={obra.id} className="flex flex-col hover:shadow-xl transition-shadow duration-300">
+            {obras.map((obra, index) => (
+              <Card 
+                key={obra.id} 
+                className={`flex flex-col card-interactive animate-fade-in-up animation-delay-${(index + 1) * 100}`}
+              >
                 <CardHeader>
                   <CardTitle className="text-xl font-headline text-primary hover:underline">
                     <Link href={`/obras/${obra.id}`}>{obra.nombre}</Link>
@@ -179,7 +182,7 @@ export default function ObrasPage() {
                     </AlertDialogTrigger>
                     <AlertDialogContent>
                       <AlertDialogHeader>
-                        <AlertDialogTitle>¿Estás absolutamente seguro?</AlertDialogTitle>
+                        <AlertDialogTitle>¿Estás absolutely seguro?</AlertDialogTitle>
                         <AlertDialogDescription>
                           Esta acción no se puede deshacer. Esto eliminará permanentemente la obra
                            "{obra.nombre}" y todos sus datos asociados (como partes de trabajo).

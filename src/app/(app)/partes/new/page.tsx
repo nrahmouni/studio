@@ -13,7 +13,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, Loader2, FileText, UploadCloud, Send } from 'lucide-react';
+import { CalendarIcon, Loader2, FileText, ArrowLeft, Send } from 'lucide-react';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -23,21 +23,16 @@ import type { Obra } from '@/lib/types';
 import { useState, useEffect } from 'react';
 import { ParteSchema } from '@/lib/types';
 
-// Schema for the form
 const ParteFormSchema = ParteSchema.omit({ 
   id: true, 
   validado: true, 
   validadoPor: true, 
   timestamp: true, 
   dataAIHint: true,
-  usuarioId: true, // Will be added from localStorage
+  usuarioId: true,
   fotosURLs: true, 
   firmaURL: true,
-})
-.extend({
-  // Add any specific fields for the form if needed, for now, it's quite direct
 });
-
 
 type ParteFormData = z.infer<typeof ParteFormSchema>;
 
@@ -129,7 +124,10 @@ export default function NuevoPartePage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Card className="max-w-2xl mx-auto shadow-lg">
+       <Button variant="outline" onClick={() => router.push('/partes')} className="mb-6 animate-fade-in-down">
+        <ArrowLeft className="mr-2 h-4 w-4" /> Volver al Listado
+      </Button>
+      <Card className="max-w-2xl mx-auto shadow-lg animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
           <div className="flex items-center space-x-3">
             <FileText className="h-8 w-8 text-primary" />
@@ -219,10 +217,6 @@ export default function NuevoPartePage() {
                 placeholder="Anota cualquier problema, retraso, o evento relevante."
               />
             </div>
-
-            {/* TODO: Tareas Seleccionadas (Checkbox group or similar) */}
-            {/* TODO: Fotos (File input) */}
-
 
             <div className="flex justify-end space-x-3 pt-4">
               <Button type="button" variant="outline" onClick={() => router.back()} disabled={isSubmitting}>

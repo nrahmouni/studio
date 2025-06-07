@@ -21,7 +21,6 @@ import { cn } from "@/lib/utils";
 import { getObraById, updateObra } from '@/lib/actions/obra.actions';
 import { ObraSchema, type Obra } from '@/lib/types';
 
-// Schema for editing an Obra. We omit fields that are system-managed or not typically edited here.
 const ObraEditFormSchema = ObraSchema.omit({ 
   id: true, 
   empresaId: true, 
@@ -48,7 +47,7 @@ export default function EditObraPage() {
       direccion: '',
       clienteNombre: '',
       fechaInicio: new Date(),
-      fechaFin: undefined, // Use undefined for optional date not initially set
+      fechaFin: undefined,
       descripcion: '', 
     },
   });
@@ -74,7 +73,7 @@ export default function EditObraPage() {
             nombre: fetchedObra.nombre,
             direccion: fetchedObra.direccion,
             clienteNombre: fetchedObra.clienteNombre,
-            fechaInicio: new Date(fetchedObra.fechaInicio), // Ensure this is a Date object
+            fechaInicio: new Date(fetchedObra.fechaInicio),
             fechaFin: fetchedObra.fechaFin ? new Date(fetchedObra.fechaFin) : undefined,
             descripcion: fetchedObra.descripcion || '', 
           });
@@ -96,7 +95,6 @@ export default function EditObraPage() {
     if (!obraId || !empresaId) return;
     setIsSubmitting(true);
     try {
-      // Convert undefined fechaFin to null if backend expects null
       const dataToSubmit = {
         ...data,
         fechaFin: data.fechaFin === undefined ? null : data.fechaFin,
@@ -116,13 +114,13 @@ export default function EditObraPage() {
   };
 
   if (isLoading) {
-    return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg">Cargando obra...</p></div>;
+    return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando obra...</p></div>;
   }
 
   if (error) {
     return (
       <div className="container mx-auto py-8 px-4">
-        <Card className="bg-destructive/10 border-destructive text-destructive"><CardHeader><CardTitle className="flex items-center"><AlertTriangle className="mr-2 h-6 w-6" />Error</CardTitle></CardHeader><CardContent><p>{error}</p></CardContent>
+        <Card className="bg-destructive/10 border-destructive text-destructive animate-fade-in-up"><CardHeader><CardTitle className="flex items-center"><AlertTriangle className="mr-2 h-6 w-6" />Error</CardTitle></CardHeader><CardContent><p>{error}</p></CardContent>
         <CardFooter><Button variant="outline" onClick={() => router.push('/obras')} className="border-destructive text-destructive hover:bg-destructive/20"><ArrowLeft className="mr-2 h-4 w-4"/>Volver</Button></CardFooter></Card>
       </div>
     );
@@ -130,10 +128,10 @@ export default function EditObraPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-       <Button variant="outline" onClick={() => router.push(`/obras/${obraId}`)} className="mb-6">
+       <Button variant="outline" onClick={() => router.push(`/obras/${obraId}`)} className="mb-6 animate-fade-in-down">
         <ArrowLeft className="mr-2 h-4 w-4" /> Volver a Detalles de Obra
       </Button>
-      <Card className="max-w-2xl mx-auto shadow-lg">
+      <Card className="max-w-2xl mx-auto shadow-lg animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
           <div className="flex items-center space-x-3">
             <Briefcase className="h-8 w-8 text-primary" />
@@ -171,14 +169,13 @@ export default function EditObraPage() {
                     <Popover><PopoverTrigger asChild>
                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!field.value && "text-muted-foreground")}>
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {/* Ensure field.value is a Date object for format */}
                           {field.value ? format(new Date(field.value), "PPP", { locale: es }) : <span>Selecciona fecha</span>}
                         </Button></PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar 
                             mode="single" 
-                            selected={field.value ? new Date(field.value) : undefined} // Pass Date or undefined
-                            onSelect={field.onChange} // field.onChange will handle Date | undefined
+                            selected={field.value ? new Date(field.value) : undefined}
+                            onSelect={field.onChange}
                             initialFocus 
                             locale={es}
                         />

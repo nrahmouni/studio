@@ -17,7 +17,6 @@ import { EmpresaSchema } from '@/lib/types';
 import { Loader2, Building } from 'lucide-react';
 import Image from 'next/image';
 
-// Schema for the form, making logoURL optional for update
 const UpdateEmpresaSchema = EmpresaSchema.partial().omit({ id: true });
 type UpdateEmpresaFormData = z.infer<typeof UpdateEmpresaSchema>;
 
@@ -36,13 +35,12 @@ export default function CompanyProfilePage() {
       CIF: '',
       emailContacto: '',
       telefono: '',
-      logoURL: '', // Default to empty string for controlled input
+      logoURL: '',
     },
   });
 
   useEffect(() => {
     const storedEmpresaId = localStorage.getItem('empresaId_obra_link');
-    console.log('CompanyProfilePage: Stored Empresa ID from localStorage:', storedEmpresaId);
     if (storedEmpresaId) {
       setEmpresaId(storedEmpresaId);
       fetchProfile(storedEmpresaId);
@@ -67,7 +65,7 @@ export default function CompanyProfilePage() {
           CIF: profile.CIF,
           emailContacto: profile.emailContacto,
           telefono: profile.telefono,
-          logoURL: profile.logoURL || '', // Ensure null is converted to empty string for form
+          logoURL: profile.logoURL || '',
         });
       } else {
         toast({
@@ -91,7 +89,6 @@ export default function CompanyProfilePage() {
     if (!empresaId) return;
     setIsSaving(true);
     try {
-      // Ensure logoURL is null if empty string, to match schema expectation if nullable
       const dataToSubmit = {
         ...data,
         logoURL: data.logoURL === '' ? null : data.logoURL,
@@ -99,9 +96,9 @@ export default function CompanyProfilePage() {
       const result = await updateEmpresaProfile(empresaId, dataToSubmit);
       if (result.success && result.empresa) {
         setEmpresa(result.empresa);
-        form.reset({ // Reset form with potentially updated data
+        form.reset({
             ...result.empresa,
-            logoURL: result.empresa.logoURL || '', // Ensure null from backend becomes empty string for form
+            logoURL: result.empresa.logoURL || '',
         });
         toast({
           title: 'Perfil Actualizado',
@@ -129,14 +126,14 @@ export default function CompanyProfilePage() {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
-        <p className="ml-4 text-lg">Cargando perfil de empresa...</p>
+        <p className="ml-4 text-lg text-muted-foreground">Cargando perfil de empresa...</p>
       </div>
     );
   }
 
   if (!empresa) {
     return (
-      <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)]">
+      <div className="flex flex-col items-center justify-center h-[calc(100vh-8rem)] animate-fade-in-up">
         <Building className="h-16 w-16 text-muted-foreground mb-4" />
         <p className="text-xl text-muted-foreground">No se encontró el perfil de la empresa.</p>
         <Button onClick={() => router.push('/dashboard')} className="mt-4">Volver al Panel</Button>
@@ -146,7 +143,7 @@ export default function CompanyProfilePage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Card className="max-w-3xl mx-auto shadow-lg">
+      <Card className="max-w-3xl mx-auto shadow-lg animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
           <div className="flex items-center space-x-4">
             {empresa.logoURL ? (

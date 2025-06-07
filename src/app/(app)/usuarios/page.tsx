@@ -12,7 +12,6 @@ import { useToast } from '@/hooks/use-toast';
 import { Badge } from '@/components/ui/badge';
 import { cn } from "@/lib/utils";
 
-
 const getRolDisplay = (rol: UsuarioFirebase['rol']): string => {
   switch (rol) {
     case 'admin': return 'Administrador';
@@ -59,7 +58,7 @@ export default function UsuariosPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 animate-fade-in-down">
         <h1 className="text-3xl font-bold font-headline text-primary">
           Gestión de Usuarios
         </h1>
@@ -77,7 +76,7 @@ export default function UsuariosPage() {
       )}
 
       {error && !isLoading && (
-        <Card className="bg-destructive/10 border-destructive text-destructive">
+        <Card className="bg-destructive/10 border-destructive text-destructive animate-fade-in-up">
           <CardHeader>
             <CardTitle className="flex items-center">
               <AlertTriangle className="mr-2 h-6 w-6" />
@@ -98,7 +97,7 @@ export default function UsuariosPage() {
       )}
 
       {!isLoading && !error && usuarios.length === 0 && (
-        <Card className="shadow-lg border-border">
+        <Card className="shadow-lg border-border animate-fade-in-up">
           <CardHeader className="items-center text-center p-6">
             <div className="p-4 bg-primary/10 rounded-full w-fit mx-auto mb-4">
                 <Users className="h-12 w-12 text-primary" />
@@ -120,12 +119,18 @@ export default function UsuariosPage() {
 
       {!isLoading && !error && usuarios.length > 0 && (
         <>
-          <p className="text-sm text-muted-foreground mb-6">Mostrando {usuarios.length} usuario(s).</p>
+          <p className="text-sm text-muted-foreground mb-6 animate-fade-in-down">Mostrando {usuarios.length} usuario(s).</p>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {usuarios.map(usuario => {
+            {usuarios.map((usuario, index) => {
               const obrasAsignadasActuales = usuario.obrasAsignadas ?? []; 
               return (
-                <Card key={usuario.id} className="flex flex-col hover:shadow-xl transition-shadow duration-300 bg-card border-border rounded-lg overflow-hidden">
+                <Card 
+                  key={usuario.id} 
+                  className={cn(
+                    "flex flex-col bg-card border-border rounded-lg overflow-hidden card-interactive",
+                    `animate-fade-in-up animation-delay-${(index + 1) * 100}`
+                  )}
+                >
                   <CardHeader className="p-5 bg-primary/5">
                     <div className="flex justify-between items-start gap-3">
                       <CardTitle className="text-xl font-headline text-primary">{usuario.nombre}</CardTitle>

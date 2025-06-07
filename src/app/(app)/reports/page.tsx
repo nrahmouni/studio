@@ -1,5 +1,5 @@
 // src/app/(app)/reports/page.tsx
-'use client'; // Added this directive
+'use client'; 
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Construction, DollarSign, Clock, Users, FileText } from "lucide-react";
@@ -10,7 +10,7 @@ import {
   ChartLegend,
   ChartLegendContent,
 } from "@/components/ui/chart"
-import { Bar, BarChart, CartesianGrid, XAxis, YAxis, ResponsiveContainer } from "recharts"
+import { Bar, BarChart, CartesianGrid, XAxis, YAxis } from "recharts" // Removed ResponsiveContainer for now if not used
 
 const mockReportCategories = [
   { title: "Informe de Costes por Obra", icon: DollarSign, description: "Analiza los gastos detallados por cada proyecto.", status: "Próximamente" },
@@ -43,13 +43,13 @@ const chartConfig = {
 export default function ReportsPage() {
   return (
     <div className="container mx-auto py-8 px-4">
-      <div className="flex justify-between items-center mb-8">
+      <div className="flex justify-between items-center mb-8 animate-fade-in-down">
         <h1 className="text-3xl font-bold font-headline text-primary">
           Informes y Estadísticas
         </h1>
       </div>
 
-      <Card className="shadow-lg mb-8">
+      <Card className="shadow-lg mb-8 animate-fade-in-up">
         <CardHeader>
            <CardTitle className="flex items-center">
             <BarChart3 className="mr-3 h-6 w-6 text-primary" />
@@ -62,7 +62,7 @@ export default function ReportsPage() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-            <ChartContainer config={chartConfig} className="min-h-[200px] w-full">
+            <ChartContainer config={chartConfig} className="min-h-[300px] w-full">
                 <BarChart accessibilityLayer data={chartData}>
                   <CartesianGrid vertical={false} />
                   <XAxis
@@ -84,7 +84,10 @@ export default function ReportsPage() {
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {mockReportCategories.map((report, index) => (
-          <Card key={index} className="shadow-md hover:shadow-lg transition-shadow">
+          <Card 
+            key={index} 
+            className={`shadow-md card-interactive animate-fade-in-up animation-delay-${(index + 1) * 150}`}
+          >
             <CardHeader>
               <CardTitle className="flex items-center text-xl">
                 <report.icon className="mr-3 h-6 w-6 text-primary" />
@@ -101,7 +104,7 @@ export default function ReportsPage() {
           </Card>
         ))}
       </div>
-       <div className="mt-12 text-center text-muted-foreground">
+       <div className="mt-12 text-center text-muted-foreground animate-fade-in-up animation-delay-800">
           <BarChart3 className="mx-auto h-10 w-10 mb-3" />
           <p>Más informes y opciones de personalización estarán disponibles en futuras actualizaciones.</p>
         </div>

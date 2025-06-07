@@ -4,13 +4,12 @@
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Label } from '@/components/ui/label'; // Added import
+import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, Cpu, Wand2, AlertTriangle } from 'lucide-react';
 import { analyzeResourceAllocation, type AnalyzeResourceAllocationInput, type AnalyzeResourceAllocationOutput } from '@/ai/flows/resource-allocation';
 
-// Mock data similar a lo que se enviaría al flow
 const mockPartesData = [
   { id: 'parte-1', obraId: 'obra-A', proyectoNombre: 'Residencia Sol', tareaPrincipal: 'Fontanería general', trabajadorAsignado: 'Juan Pérez', horasEstimadas: 20, horasRealizadas: 5, estado: 'En progreso' },
   { id: 'parte-2', obraId: 'obra-B', proyectoNombre: 'Oficinas Centro', tareaPrincipal: 'Instalación eléctrica', trabajadorAsignado: 'Ana López', horasEstimadas: 40, horasRealizadas: 30, estado: 'Casi finalizado' },
@@ -25,8 +24,6 @@ export default function ResourceAllocationPage() {
   const [analysisResult, setAnalysisResult] = useState<AnalyzeResourceAllocationOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
   
-  // Para este ejemplo, el input de texto para `partesData` estará pre-rellenado
-  // En una app real, este JSON vendría de una base de datos o un estado de la aplicación.
   const [partesJson, setPartesJson] = useState(JSON.stringify(mockPartesData, null, 2));
 
 
@@ -36,7 +33,6 @@ export default function ResourceAllocationPage() {
     setError(null);
 
     try {
-      // Validar que el JSON es parseable antes de enviarlo
       JSON.parse(partesJson);
       
       const input: AnalyzeResourceAllocationInput = {
@@ -69,7 +65,7 @@ export default function ResourceAllocationPage() {
 
   return (
     <div className="container mx-auto py-8 px-4">
-      <Card className="max-w-3xl mx-auto shadow-lg">
+      <Card className="max-w-3xl mx-auto shadow-lg animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
           <div className="flex items-center space-x-3">
             <Cpu className="h-8 w-8 text-primary" />
@@ -109,7 +105,7 @@ export default function ResourceAllocationPage() {
           </Button>
 
           {error && (
-            <Card className="bg-destructive/10 border-destructive text-destructive p-4">
+            <Card className="bg-destructive/10 border-destructive text-destructive p-4 animate-fade-in-up">
               <CardHeader className="p-0 mb-2">
                 <CardTitle className="text-md flex items-center">
                   <AlertTriangle className="mr-2 h-5 w-5" />
@@ -123,7 +119,7 @@ export default function ResourceAllocationPage() {
           )}
 
           {analysisResult && (
-            <Card className="bg-secondary/30 border-secondary mt-6">
+            <Card className="bg-secondary/30 border-secondary mt-6 animate-fade-in-up animation-delay-200">
               <CardHeader>
                 <CardTitle className="text-xl font-headline text-primary">Resultados del Análisis IA</CardTitle>
               </CardHeader>
