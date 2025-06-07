@@ -1,3 +1,4 @@
+
 // src/app/(app)/partes/new/page.tsx
 'use client';
 
@@ -7,13 +8,14 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useToast } from '@/hooks/use-toast';
-import { CalendarIcon, Loader2, FileText, ArrowLeft, Send } from 'lucide-react';
+import { CalendarIcon, Loader2, FileText, ArrowLeft, Send, Clock } from 'lucide-react';
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -51,6 +53,7 @@ export default function NuevoPartePage() {
       obraId: '',
       fecha: new Date(),
       tareasRealizadas: '',
+      horasTrabajadas: undefined, // Default to undefined or null
       incidencias: '',
       tareasSeleccionadas: [],
     },
@@ -109,7 +112,8 @@ export default function NuevoPartePage() {
     
     const parteToCreate = {
       ...data,
-      usuarioId: finalUsuarioId, 
+      usuarioId: finalUsuarioId,
+      horasTrabajadas: data.horasTrabajadas ? Number(data.horasTrabajadas) : null,
     };
 
     const result = await createParte(parteToCreate);
@@ -139,60 +143,75 @@ export default function NuevoPartePage() {
         </CardHeader>
         <CardContent className="p-6">
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div>
-              <Label htmlFor="obraId" className="font-semibold">Obra</Label>
-              <Controller
-                name="obraId"
-                control={form.control}
-                render={({ field }) => (
-                  <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingObras}>
-                    <SelectTrigger className="w-full mt-1">
-                      <SelectValue placeholder={isLoadingObras ? "Cargando obras..." : "Selecciona una obra"} />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {!isLoadingObras && obras.length === 0 && <SelectItem value="no-obras" disabled>No hay obras activas</SelectItem>}
-                      {obras.map(obra => (
-                        <SelectItem key={obra.id} value={obra.id}>{obra.nombre}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                )}
-              />
-              {form.formState.errors.obraId && <p className="text-sm text-destructive mt-1">{form.formState.errors.obraId.message}</p>}
-            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <Label htmlFor="obraId" className="font-semibold">Obra</Label>
+                <Controller
+                  name="obraId"
+                  control={form.control}
+                  render={({ field }) => (
+                    <Select onValueChange={field.onChange} defaultValue={field.value} disabled={isLoadingObras}>
+                      <SelectTrigger className="w-full mt-1">
+                        <SelectValue placeholder={isLoadingObras ? "Cargando obras..." : "Selecciona una obra"} />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {!isLoadingObras && obras.length === 0 && <SelectItem value="no-obras" disabled>No hay obras activas</SelectItem>}
+                        {obras.map(obra => (
+                          <SelectItem key={obra.id} value={obra.id}>{obra.nombre}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  )}
+                />
+                {form.formState.errors.obraId && <p className="text-sm text-destructive mt-1">{form.formState.errors.obraId.message}</p>}
+              </div>
 
+              <div>
+                <Label htmlFor="fecha" className="font-semibold block mb-1">Fecha del Parte</Label>
+                <Controller
+                  control={form.control}
+                  name="fecha"
+                  render={({ field }) => (
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant={"outline"}
+                          className={cn(
+                            "w-full justify-start text-left font-normal",
+                            !field.value && "text-muted-foreground"
+                          )}
+                        >
+                          <CalendarIcon className="mr-2 h-4 w-4" />
+                          {field.value ? format(new Date(field.value), "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar
+                          mode="single"
+                          selected={field.value ? new Date(field.value) : undefined}
+                          onSelect={field.onChange}
+                          initialFocus
+                          locale={es}
+                        />
+                      </PopoverContent>
+                    </Popover>
+                  )}
+                />
+                {form.formState.errors.fecha && <p className="text-sm text-destructive mt-1">{form.formState.errors.fecha.message}</p>}
+              </div>
+            </div>
+            
             <div>
-              <Label htmlFor="fecha" className="font-semibold block mb-1">Fecha del Parte</Label>
-               <Controller
-                control={form.control}
-                name="fecha"
-                render={({ field }) => (
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button
-                        variant={"outline"}
-                        className={cn(
-                          "w-full justify-start text-left font-normal",
-                          !field.value && "text-muted-foreground"
-                        )}
-                      >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? format(new Date(field.value), "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0">
-                      <Calendar
-                        mode="single"
-                        selected={field.value ? new Date(field.value) : undefined}
-                        onSelect={field.onChange}
-                        initialFocus
-                        locale={es}
-                      />
-                    </PopoverContent>
-                  </Popover>
-                )}
+              <Label htmlFor="horasTrabajadas" className="font-semibold">Horas Trabajadas (opcional)</Label>
+              <Input
+                id="horasTrabajadas"
+                type="number"
+                step="0.1"
+                {...form.register('horasTrabajadas', {setValueAs: (value) => value === "" ? null : parseFloat(value)})}
+                className="mt-1"
+                placeholder="Ej: 8 o 7.5"
               />
-              {form.formState.errors.fecha && <p className="text-sm text-destructive mt-1">{form.formState.errors.fecha.message}</p>}
+              {form.formState.errors.horasTrabajadas && <p className="text-sm text-destructive mt-1">{form.formState.errors.horasTrabajadas.message}</p>}
             </div>
 
             <div>
@@ -216,6 +235,7 @@ export default function NuevoPartePage() {
                 className="mt-1"
                 placeholder="Anota cualquier problema, retraso, o evento relevante."
               />
+              {form.formState.errors.incidencias && <p className="text-sm text-destructive mt-1">{form.formState.errors.incidencias.message}</p>}
             </div>
 
             <div className="flex justify-end space-x-3 pt-4">

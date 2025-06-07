@@ -20,10 +20,6 @@ const CreateParteSchema = ParteSchema.omit({
   timestamp: true, // Ensure timestamp is omitted from the input schema for createParte
   dataAIHint: true,
   // fotosURLs and firmaURL are optional in ParteSchema and might not be sent by the basic form.
-  // If they are not part of CreateParteSchema (e.g. if not in ParteSchema or also omitted),
-  // they will be undefined in validationResult.data.
-  // If they ARE part of CreateParteSchema (because they are in ParteSchema and not omitted),
-  // and are optional, they will also be undefined if not sent.
 });
 type CreateParteData = z.infer<typeof CreateParteSchema>;
 
@@ -67,13 +63,13 @@ export async function createParte(data: CreateParteData): Promise<{ success: boo
   }
 
   const newParte: Parte = {
-    ...validationResult.data, // Spread properties from validated form data (which lacks timestamp)
+    ...validationResult.data, 
     id: `parte-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
     validado: false,
-    timestamp: new Date(), // Add timestamp here explicitly
-    // Default optional fields if not provided by form. ParteSchema defines them as optional.
+    timestamp: new Date(), 
     fotosURLs: validationResult.data.fotosURLs || [],
     firmaURL: validationResult.data.firmaURL || null,
+    horasTrabajadas: validationResult.data.horasTrabajadas === undefined ? null : validationResult.data.horasTrabajadas,
   };
 
   Cpartes.unshift(newParte);
@@ -94,10 +90,10 @@ export async function updateParte(parteId: string, data: Partial<Omit<Parte, 'id
 
   const UpdateParteSchemaInternal = ParteSchema.partial().omit({
     id: true,
-    usuarioId: true, // Usually not changed on update by this action
-    timestamp: true, // Timestamp should not be updated by user input here
-    validado: true, // Validation is a separate action
-    validadoPor: true, // Validation is a separate action
+    usuarioId: true, 
+    timestamp: true, 
+    validado: true, 
+    validadoPor: true, 
   });
   const validationResult = UpdateParteSchemaInternal.safeParse(data);
 

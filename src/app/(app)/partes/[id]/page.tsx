@@ -1,3 +1,4 @@
+
 // src/app/(app)/partes/[id]/page.tsx
 'use client';
 
@@ -5,7 +6,7 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, FileText, CalendarDays, User, Briefcase, CheckCircle, ShieldAlert, AlertTriangle, ArrowLeft, Camera, Edit3 } from "lucide-react";
+import { Loader2, FileText, CalendarDays, User, Briefcase, CheckCircle, ShieldAlert, AlertTriangle, ArrowLeft, Camera, Edit3, Clock } from "lucide-react";
 import { getParteById, validateParte } from '@/lib/actions/parte.actions';
 import { getObraById } from '@/lib/actions/obra.actions';
 import { getUsuarioById } from '@/lib/actions/user.actions';
@@ -157,8 +158,9 @@ export default function ParteDetailPage() {
           </div>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             <InfoItem icon={<User className="text-accent" />} label="Trabajador" value={trabajador.nombre} />
+            <InfoItem icon={<Clock className="text-accent" />} label="Horas Trabajadas" value={parte.horasTrabajadas ? `${parte.horasTrabajadas}h` : 'No especificado'} />
             <InfoItem icon={<Briefcase className="text-accent" />} label="Obra" value={obra.direccion} />
             <InfoItem icon={<CalendarDays className="text-accent" />} label="Fecha de Registro" value={new Date(parte.timestamp).toLocaleString('es-ES')} />
           </div>

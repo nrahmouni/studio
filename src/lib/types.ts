@@ -13,6 +13,14 @@ export const EmpresaSchema = z.object({
 export type Empresa = z.infer<typeof EmpresaSchema>;
 
 
+export const CostoCategoriaSchema = z.object({
+  id: z.string(), // For UI key management and easier updates
+  categoria: z.string().min(1, "La categoría es requerida"),
+  costo: z.number().min(0, "El costo no puede ser negativo"),
+  notas: z.string().optional(),
+});
+export type CostoCategoria = z.infer<typeof CostoCategoriaSchema>;
+
 export const ObraSchema = z.object({
   id: z.string(),
   empresaId: z.string(),
@@ -23,6 +31,7 @@ export const ObraSchema = z.object({
   clienteNombre: z.string().min(1, "El nombre del cliente es requerido"),
   jefeObraId: z.string().optional(), // Referencia a UsuarioFirebase.id
   descripcion: z.string().optional(),
+  costosPorCategoria: z.array(CostoCategoriaSchema).optional(),
   dataAIHint: z.string().optional(), 
 });
 export type Obra = z.infer<typeof ObraSchema>;
@@ -50,6 +59,7 @@ export const ParteSchema = z.object({
   obraId: z.string().min(1, "El ID de obra es requerido"), 
   fecha: z.date({ required_error: "La fecha es requerida."}),
   tareasRealizadas: z.string().min(1, "Las tareas realizadas son requeridas"),
+  horasTrabajadas: z.number().positive("Las horas deben ser positivas y mayores que cero.").optional().nullable(),
   tareasSeleccionadas: z.array(z.string()).optional(),
   fotosURLs: z.array(z.string().url()).optional(),
   firmaURL: z.string().url("URL de firma inválida").optional().nullable(),

@@ -1,3 +1,4 @@
+
 // src/app/(app)/obras/[id]/page.tsx
 'use client';
 
@@ -5,13 +6,14 @@ import { useEffect, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { Loader2, Briefcase, CalendarDays, User, Building, Edit3, ArrowLeft, AlertTriangle } from "lucide-react";
+import { Loader2, Briefcase, CalendarDays, User, Building, Edit3, ArrowLeft, AlertTriangle, DollarSign, Tag, FileText as NotesIcon } from "lucide-react";
 import { getObraById } from '@/lib/actions/obra.actions';
 import { getUsuarioById } from '@/lib/actions/user.actions';
-import type { Obra, UsuarioFirebase } from '@/lib/types';
+import type { Obra, UsuarioFirebase, CostoCategoria } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import Link from 'next/link';
 import Image from 'next/image';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export default function ObraDetailPage() {
   const params = useParams();
@@ -99,6 +101,8 @@ export default function ObraDetailPage() {
       </div>
     );
   }
+  
+  const costosPorCategoria = obra.costosPorCategoria || [];
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -129,18 +133,52 @@ export default function ObraDetailPage() {
             </Link>
           </div>
         </CardHeader>
-        <CardContent className="p-6 grid md:grid-cols-2 gap-6">
-          <InfoItem icon={<Building className="text-accent" />} label="Cliente" value={obra.clienteNombre} />
-          <InfoItem icon={<CalendarDays className="text-accent" />} label="Fecha de Inicio" value={new Date(obra.fechaInicio).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })} />
-          <InfoItem icon={<CalendarDays className="text-accent" />} label="Fecha de Fin Prevista" value={obra.fechaFin ? new Date(obra.fechaFin).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : 'En curso'} />
-          {jefeObra && <InfoItem icon={<User className="text-accent" />} label="Jefe de Obra" value={jefeObra.nombre} />}
+        <CardContent className="p-6 space-y-8">
+          <div className="grid md:grid-cols-2 gap-6">
+            <InfoItem icon={<Building className="text-accent" />} label="Cliente" value={obra.clienteNombre} />
+            <InfoItem icon={<CalendarDays className="text-accent" />} label="Fecha de Inicio" value={new Date(obra.fechaInicio).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' })} />
+            <InfoItem icon={<CalendarDays className="text-accent" />} label="Fecha de Fin Prevista" value={obra.fechaFin ? new Date(obra.fechaFin).toLocaleDateString('es-ES', { year: 'numeric', month: 'long', day: 'numeric' }) : 'En curso'} />
+            {jefeObra && <InfoItem icon={<User className="text-accent" />} label="Jefe de Obra" value={jefeObra.nombre} />}
+          </div>
           
-          <div className="md:col-span-2">
+          <div>
             <h4 className="font-semibold text-md mb-2 text-primary/90">Descripción Adicional / Notas:</h4>
             <p className="text-sm text-foreground/80 p-3 bg-muted/30 rounded-md border border-border min-h-[80px]">
               {obra.descripcion || 'No hay descripción adicional para esta obra.'}
             </p>
           </div>
+
+          {costosPorCategoria.length > 0 && (
+            <div>
+              <h4 className="font-semibold text-md mb-3 text-primary/90 flex items-center">
+                <DollarSign className="mr-2 text-accent h-5 w-5" />
+                Costos por Categoría
+              </h4>
+              <Card className="border-border">
+                <CardContent className="p-0">
+                    <Table>
+                        <TableHeader>
+                        <TableRow>
+                            <TableHead className="w-[40%]"><Tag className="inline-block mr-1 h-4 w-4 text-muted-foreground" />Categoría</TableHead>
+                            <TableHead className="text-right w-[30%]"><DollarSign className="inline-block mr-1 h-4 w-4 text-muted-foreground" />Costo (€)</TableHead>
+                            <TableHead className="w-[30%]"><NotesIcon className="inline-block mr-1 h-4 w-4 text-muted-foreground" />Notas</TableHead>
+                        </TableRow>
+                        </TableHeader>
+                        <TableBody>
+                        {costosPorCategoria.map((costoItem) => (
+                            <TableRow key={costoItem.id}>
+                            <TableCell className="font-medium">{costoItem.categoria}</TableCell>
+                            <TableCell className="text-right">{costoItem.costo.toLocaleString('es-ES', { style: 'currency', currency: 'EUR' })}</TableCell>
+                            <TableCell className="text-sm text-muted-foreground">{costoItem.notas || '-'}</TableCell>
+                            </TableRow>
+                        ))}
+                        </TableBody>
+                    </Table>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
         </CardContent>
         <CardFooter className="p-6 border-t">
            <p className="text-xs text-muted-foreground">ID Obra: {obra.id}</p>

@@ -1,3 +1,4 @@
+
 import type { Parte } from '@/lib/types';
 
 export const mockPartes: Parte[] = [
@@ -7,6 +8,7 @@ export const mockPartes: Parte[] = [
     obraId: 'obra-1-1', // Reforma Integral Ático Sol
     fecha: new Date('2024-07-20'),
     tareasRealizadas: 'Instalación de sanitarios en baño principal. Colocación de grifería. Pruebas de fontanería.',
+    horasTrabajadas: 8,
     tareasSeleccionadas: ['fontaneria', 'sanitarios'],
     fotosURLs: ['https://placehold.co/300x200.png?text=Baño+Instalado'],
     incidencias: 'Pequeña fuga detectada en lavabo, corregida.',
@@ -21,6 +23,7 @@ export const mockPartes: Parte[] = [
     obraId: 'obra-1-2', // Construcción Nave Industrial
     fecha: new Date('2024-07-21'),
     tareasRealizadas: 'Montaje de estructura metálica sector B. Soldadura de uniones. Comprobación de niveles.',
+    horasTrabajadas: 7.5,
     tareasSeleccionadas: ['estructura', 'soldadura'],
     fotosURLs: [],
     incidencias: 'Retraso en la entrega de material (vigas tipo H). Se notificó a jefe de obra.',
@@ -34,6 +37,7 @@ export const mockPartes: Parte[] = [
     obraId: 'obra-1-1',
     fecha: new Date('2024-07-22'),
     tareasRealizadas: 'Alicatado de paredes en cocina. Preparación de superficie y rejuntado.',
+    horasTrabajadas: 8,
     incidencias: '',
     tareasSeleccionadas: ['alicatado', 'cocina'],
     fotosURLs: ['https://placehold.co/300x200.png?text=Cocina+Alicatada', 'https://placehold.co/300x200.png?text=Detalle+Rejuntado'],
@@ -47,6 +51,7 @@ export const mockPartes: Parte[] = [
     obraId: 'obra-2-1', // Adecuación Local Comercial
     fecha: new Date('2024-07-22'),
     tareasRealizadas: 'Instalación de Pladur en divisiones interiores. Colocación de perfilería y placas.',
+    horasTrabajadas: 6,
     tareasSeleccionadas: ['pladur', 'divisiones'],
     fotosURLs: ['https://placehold.co/300x200.png?text=Pladur+Instalado'],
     incidencias: 'Faltan 5 placas de Pladur RF, se ha solicitado más material.',
@@ -61,6 +66,7 @@ export const mockPartes: Parte[] = [
     obraId: 'obra-1-3', // Rehabilitación Fachada
     fecha: new Date('2024-07-23'),
     tareasRealizadas: 'Montaje de andamio sector sur. Aseguramiento y señalización de zona de trabajo.',
+    horasTrabajadas: 4,
     tareasSeleccionadas: ['andamios', 'seguridad'],
     fotosURLs: ['https://placehold.co/300x200.png?text=Andamio+Montado'],
     incidencias: '',
@@ -69,3 +75,4 @@ export const mockPartes: Parte[] = [
     dataAIHint: "scaffolding setup"
   },
 ];
+

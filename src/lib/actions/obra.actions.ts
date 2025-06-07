@@ -1,12 +1,14 @@
+
 // src/lib/actions/obra.actions.ts
 'use server';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { ObraSchema, type Obra } from '@/lib/types';
-import { mockObras } from '@/lib/mockData/obras'; // Asegúrate de tener este archivo
+import { mockObras } from '@/lib/mockData/obras'; 
 
 let Cobras: Obra[] = [...mockObras];
 
+// CreateObraSchema now implicitly includes costosPorCategoria as optional from ObraSchema
 const CreateObraSchema = ObraSchema.omit({ id: true });
 type CreateObraData = z.infer<typeof CreateObraSchema>;
 
@@ -32,13 +34,14 @@ export async function createObra(data: CreateObraData): Promise<{ success: boole
   const newObra: Obra = {
     ...validationResult.data,
     id: `obra-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    // costosPorCategoria will be taken from validationResult.data, default to [] if not provided
+    costosPorCategoria: validationResult.data.costosPorCategoria || [],
   };
 
   Cobras.push(newObra);
   revalidatePath('/(app)/obras');
   revalidatePath(`/(app)/obras/new`);
 
-  // Simulate API delay for creation
   await new Promise(resolve => setTimeout(resolve, 700));
   
   return { success: true, message: 'Nueva obra creada correctamente.', obra: newObra };
@@ -50,17 +53,27 @@ export async function updateObra(obraId: string, empresaId: string, data: Partia
     return { success: false, message: 'Obra no encontrada.' };
   }
 
-  const partialSchema = CreateObraSchema.partial(); // Use partial for updates
+  // Use ObraSchema.partial() to allow partial updates including costosPorCategoria
+  const partialSchema = ObraSchema.partial().omit({ id: true, empresaId: true });
   const validationResult = partialSchema.safeParse(data);
 
   if (!validationResult.success) {
-    return { success: false, message: `Error de validación: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
+    console.error("Update validation errors:", validationResult.error.flatten().fieldErrors);
+    return { success: false, message: `Error de validación al actualizar: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
   }
+  
+  // Ensure costosPorCategoria is an array, even if undefined in data
+  const validatedDataWithCosts = {
+      ...validationResult.data,
+      costosPorCategoria: validationResult.data.costosPorCategoria || Cobras[obraIndex].costosPorCategoria || [],
+  };
 
-  Cobras[obraIndex] = { ...Cobras[obraIndex], ...validationResult.data };
+
+  Cobras[obraIndex] = { ...Cobras[obraIndex], ...validatedDataWithCosts };
   
   revalidatePath('/(app)/obras');
-  revalidatePath(`/(app)/obras/${obraId}`); // If you have a detail page
+  revalidatePath(`/(app)/obras/${obraId}`); 
+  revalidatePath(`/(app)/obras/${obraId}/edit`);
   
   await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true, message: 'Obra actualizada con éxito.', obra: Cobras[obraIndex] };
