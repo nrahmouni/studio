@@ -1,8 +1,10 @@
+
 "use client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Settings, UserCircle, LogOut, Sun, Moon } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image"; // Import Image
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -11,7 +13,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { AppSidebarNav } from "./AppSidebarNav"; // Re-using nav items for mobile
+import { AppSidebarNav } from "./AppSidebarNav"; 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
@@ -22,14 +24,11 @@ interface AppHeaderProps {
 
 export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
   const [mounted, setMounted] = useState(false);
-  // For dark mode, you would typically use a theme provider like next-themes
-  // This is a simplified toggle for demonstration.
   const [isDarkMode, setIsDarkMode] = useState(false); 
   const router = useRouter();
 
   useEffect(() => {
     setMounted(true);
-    // Check initial theme preference if stored
     const storedTheme = localStorage.getItem('theme_obra_link');
     if (storedTheme === 'dark') {
       document.documentElement.classList.add('dark');
@@ -53,7 +52,6 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
   };
 
   const handleLogout = () => {
-    // Clear mock session
     if (typeof window !== 'undefined') {
       localStorage.removeItem('empresaId_obra_link');
       localStorage.removeItem('usuarioId_obra_link');
@@ -64,13 +62,13 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
 
 
   if (!mounted) {
-    return ( // Render a placeholder or null during server-side rendering/hydration
+    return ( 
       <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="h-8 w-24 bg-muted rounded animate-pulse" /> {/* Placeholder for logo/name */}
+          <div className="h-8 w-32 bg-muted rounded animate-pulse" /> 
           <div className="flex items-center gap-2">
-            <div className="h-8 w-8 bg-muted rounded-full animate-pulse" /> {/* Placeholder for theme toggle */}
-            <div className="h-8 w-8 bg-muted rounded-full animate-pulse" /> {/* Placeholder for user menu */}
+            <div className="h-8 w-8 bg-muted rounded-full animate-pulse" /> 
+            <div className="h-8 w-8 bg-muted rounded-full animate-pulse" /> 
           </div>
         </div>
       </header>
@@ -81,7 +79,6 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
     <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm print:hidden">
       <div className="container mx-auto px-4 h-16 flex items-center justify-between">
         <div className="flex items-center gap-4">
-          {/* Mobile Menu Trigger */}
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden">
@@ -92,7 +89,16 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
             <SheetContent side="left" className="w-72 bg-sidebar text-sidebar-foreground p-0">
               <SheetHeader className="p-4 border-b border-sidebar-border">
                 <SheetTitle asChild>
-                  <h1 className="text-xl font-bold font-headline text-sidebar-primary">{companyName}</h1>
+                   {companyName === "ObraLink" ? (
+                    <Image
+                      src="/obralink-logo.png"
+                      alt="ObraLink Logo"
+                      width={150}
+                      height={34}
+                    />
+                  ) : (
+                    <h1 className="text-xl font-bold font-headline text-sidebar-primary">{companyName}</h1>
+                  )}
                 </SheetTitle>
                 <SheetDescription className="text-sidebar-muted-foreground">
                   Menú de Navegación
@@ -104,9 +110,18 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
             </SheetContent>
           </Sheet>
 
-          {/* Desktop Logo/Name */}
           <Link href="/dashboard" className="hidden md:block">
-            <h1 className="text-xl font-bold font-headline text-primary">{companyName}</h1>
+            {companyName === "ObraLink" ? (
+              <Image
+                src="/obralink-logo.png"
+                alt="ObraLink Logo"
+                width={160}
+                height={36}
+                priority
+              />
+            ) : (
+              <h1 className="text-xl font-bold font-headline text-primary">{companyName}</h1>
+            )}
           </Link>
         </div>
 
@@ -130,7 +145,7 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
                   <span>Perfil</span>
                 </DropdownMenuItem>
               </Link>
-              <Link href="/settings" passHref> {/* Placeholder for settings page */}
+              <Link href="/settings" passHref> 
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
                   <span>Configuración</span>

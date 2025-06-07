@@ -7,7 +7,7 @@ export const mockEmpresas: Empresa[] = [
     CIF: 'B12345678',
     emailContacto: 'contacto@construccionesmodernas.es',
     telefono: '912345678',
-    logoURL: 'https://placehold.co/100x100.png',
+    logoURL: '/obralink-logo.png', // Updated logo URL
     dataAIHint: 'construction building'
   },
   {
@@ -16,7 +16,7 @@ export const mockEmpresas: Empresa[] = [
     CIF: 'C87654321',
     emailContacto: 'info@reformas-alfa.com',
     telefono: '938765432',
-    logoURL: 'https://placehold.co/100x100.png',
+    logoURL: 'https://placehold.co/100x100.png', // Keeping placeholder for other companies
     dataAIHint: 'renovation tools'
   },
   {
@@ -25,7 +25,7 @@ export const mockEmpresas: Empresa[] = [
     CIF: 'A11223344',
     emailContacto: 'admin@edificafuturo.es',
     telefono: '951122334',
-    logoURL: 'https://placehold.co/100x100.png',
+    logoURL: 'https://placehold.co/100x100.png', // Keeping placeholder for other companies
     dataAIHint: 'architecture blueprint'
   },
 ];

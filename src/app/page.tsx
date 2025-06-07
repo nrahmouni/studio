@@ -62,10 +62,16 @@ export default function HomePage() {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <header className="sticky top-0 z-50 bg-primary/95 text-primary-foreground py-4 shadow-lg backdrop-blur-md">
+      <header className="sticky top-0 z-50 bg-primary/95 text-primary-foreground py-3 shadow-lg backdrop-blur-md">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          <Link href="/" className="text-3xl font-bold font-headline hover:opacity-90 transition-opacity">
-            ObraLink
+          <Link href="/" className="hover:opacity-90 transition-opacity">
+            <Image
+              src="/obralink-logo.png"
+              alt="ObraLink Logo"
+              width={160}
+              height={36} // Adjusted height for better aspect ratio in header
+              priority // Load logo quickly
+            />
           </Link>
           <nav>
             <Link href="/auth/select-role" passHref>
@@ -80,7 +86,7 @@ export default function HomePage() {
         <section className="relative py-20 md:py-32 text-white overflow-hidden">
           <div className="absolute inset-0">
             <Image
-              src="https://placehold.co/1920x1080.png"
+              src="https://placehold.co/1920x1080.png" 
               alt="Fondo de obra moderna"
               fill
               objectFit="cover"
