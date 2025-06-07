@@ -74,8 +74,8 @@ export default function EditObraPage() {
             nombre: fetchedObra.nombre,
             direccion: fetchedObra.direccion,
             clienteNombre: fetchedObra.clienteNombre,
-            fechaInicio: new Date(fetchedObra.fechaInicio),
-            fechaFin: fetchedObra.fechaFin ? new Date(fetchedObra.fechaFin) : undefined, // Use undefined if null/undefined
+            fechaInicio: new Date(fetchedObra.fechaInicio), // Ensure this is a Date object
+            fechaFin: fetchedObra.fechaFin ? new Date(fetchedObra.fechaFin) : undefined,
             descripcion: fetchedObra.descripcion || '', 
           });
         } else {
@@ -171,9 +171,18 @@ export default function EditObraPage() {
                     <Popover><PopoverTrigger asChild>
                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal",!field.value && "text-muted-foreground")}>
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP", { locale: es }) : <span>Selecciona fecha</span>}
+                          {/* Ensure field.value is a Date object for format */}
+                          {field.value ? format(new Date(field.value), "PPP", { locale: es }) : <span>Selecciona fecha</span>}
                         </Button></PopoverTrigger>
-                      <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus locale={es}/></PopoverContent>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar 
+                            mode="single" 
+                            selected={field.value ? new Date(field.value) : undefined} // Pass Date or undefined
+                            onSelect={field.onChange} // field.onChange will handle Date | undefined
+                            initialFocus 
+                            locale={es}
+                        />
+                      </PopoverContent>
                     </Popover>)}/>
                 {form.formState.errors.fechaInicio && <p className="text-sm text-destructive mt-1">{form.formState.errors.fechaInicio.message}</p>}
               </div>
@@ -184,9 +193,17 @@ export default function EditObraPage() {
                     <Popover><PopoverTrigger asChild>
                         <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal", !field.value && "text-muted-foreground")}>
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(new Date(field.value), "PPP", { locale: es }) : <span>Selecciona fecha</span>}
+                           {field.value && (typeof field.value === 'string' || field.value instanceof Date) ? format(new Date(field.value), "PPP", { locale: es }) : <span>Selecciona fecha</span>}
                         </Button></PopoverTrigger>
-                      <PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value || undefined} onSelect={(date) => field.onChange(date || null)} initialFocus locale={es} /></PopoverContent>
+                      <PopoverContent className="w-auto p-0">
+                        <Calendar 
+                            mode="single" 
+                            selected={field.value && (typeof field.value === 'string' || field.value instanceof Date) ? new Date(field.value) : undefined}
+                            onSelect={(date) => field.onChange(date || null)} 
+                            initialFocus 
+                            locale={es} 
+                        />
+                      </PopoverContent>
                     </Popover>)}/>
                 {form.formState.errors.fechaFin && <p className="text-sm text-destructive mt-1">{form.formState.errors.fechaFin.message}</p>}
               </div>

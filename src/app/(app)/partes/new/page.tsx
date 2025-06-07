@@ -31,7 +31,7 @@ const ParteFormSchema = ParteSchema.omit({
   timestamp: true, 
   dataAIHint: true,
   usuarioId: true, // Will be added from localStorage
-  fotosURLs: true, // For now, simplify and don't handle file uploads
+  fotosURLs: true, 
   firmaURL: true,
 })
 .extend({
@@ -80,20 +80,12 @@ export default function NuevoPartePage() {
         return;
     }
     
-    // If user is admin/jefeobra and no specific usuarioId is set (meaning they are creating a part for someone else, or for general record)
-    // We might need a way to select a user in the form itself. For now, if 'empresa' role and no 'usuarioId_obra_link',
-    // this means an admin is creating a part, potentially for themselves or it's a general part.
-    // The backend `createParte` action expects a `usuarioId`.
-    // A simple solution for now: if role is 'empresa' and no specific 'usuarioId_obra_link',
-    // use a placeholder or prompt. Let's assume for now `usuarioId` must be the logged-in worker or selected.
-    // The current logic correctly uses `storedUsuarioId` if available.
-
     const fetchObras = async () => {
       if (storedEmpresaId) {
         setIsLoadingObras(true);
         try {
           const fetchedObras = await getObrasByEmpresaId(storedEmpresaId);
-          setObras(fetchedObras.filter(o => !o.fechaFin || new Date(o.fechaFin) >= new Date())); // Solo obras activas
+          setObras(fetchedObras.filter(o => !o.fechaFin || new Date(o.fechaFin) >= new Date())); 
         } catch (error) {
           toast({ title: 'Error', description: 'No se pudieron cargar las obras.', variant: 'destructive' });
         } finally {
@@ -107,13 +99,9 @@ export default function NuevoPartePage() {
 
   const onSubmit = async (data: ParteFormData) => {
     if (!usuarioId && localStorage.getItem('userRole_obra_link') !== 'empresa') {
-      // This case should be handled by useEffect redirect, but as a safeguard
       toast({ title: 'Error', description: 'ID de trabajador no encontrado.', variant: 'destructive' });
       return;
     }
-    // If admin is creating, a 'usuarioId' is still needed.
-    // This simulation assumes 'usuarioId' from localStorage is the creator.
-    // For a real app, if an admin creates a part, they might select a worker.
     const finalUsuarioId = usuarioId || localStorage.getItem('usuarioId_obra_link') || 'admin_placeholder_id';
 
 
@@ -126,8 +114,7 @@ export default function NuevoPartePage() {
     
     const parteToCreate = {
       ...data,
-      usuarioId: finalUsuarioId, // This should be the actual user ID
-      // empresaId is not directly part of ParteSchema but is used by actions; not needed in form data itself
+      usuarioId: finalUsuarioId, 
     };
 
     const result = await createParte(parteToCreate);
@@ -192,13 +179,13 @@ export default function NuevoPartePage() {
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
-                        {field.value ? format(field.value, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
+                        {field.value ? format(new Date(field.value), "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0">
                       <Calendar
                         mode="single"
-                        selected={field.value}
+                        selected={field.value ? new Date(field.value) : undefined}
                         onSelect={field.onChange}
                         initialFocus
                         locale={es}

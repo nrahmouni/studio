@@ -44,7 +44,7 @@ export default function NuevaObraPage() {
       direccion: '',
       clienteNombre: '',
       fechaInicio: new Date(),
-      fechaFinEstimada: null,
+      fechaFinEstimada: undefined, // Use undefined for consistency
       jefeObraEmail: '',
       descripcion: '',
     },
@@ -71,14 +71,11 @@ export default function NuevaObraPage() {
     }
     setIsSubmitting(true);
     
-    // Prepare data for createObra, mapping fechaFinEstimada to fechaFin
     const obraToCreate = {
       ...data,
       empresaId: empresaId,
-      fechaFin: data.fechaFinEstimada, // Use fechaFinEstimada as fechaFin for the backend
-      // jefeObraId would be resolved from jefeObraEmail on the backend in a real scenario
+      fechaFin: data.fechaFinEstimada === undefined ? null : data.fechaFinEstimada, 
     };
-    // Remove fields not in the backend schema before sending
     const { fechaFinEstimada, jefeObraEmail, ...finalData } = obraToCreate;
 
 
@@ -141,13 +138,13 @@ export default function NuevaObraPage() {
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
+                          {field.value ? format(new Date(field.value), "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={field.value}
+                          selected={field.value ? new Date(field.value) : undefined}
                           onSelect={field.onChange}
                           initialFocus
                           locale={es}
@@ -174,14 +171,14 @@ export default function NuevaObraPage() {
                           )}
                         >
                           <CalendarIcon className="mr-2 h-4 w-4" />
-                          {field.value ? format(field.value, "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
+                          {field.value && (typeof field.value === 'string' || field.value instanceof Date) ? format(new Date(field.value), "PPP", { locale: es }) : <span>Selecciona una fecha</span>}
                         </Button>
                       </PopoverTrigger>
                       <PopoverContent className="w-auto p-0">
                         <Calendar
                           mode="single"
-                          selected={field.value || undefined}
-                          onSelect={(date) => field.onChange(date || null)} // Ensure null is passed if date is undefined
+                          selected={field.value && (typeof field.value === 'string' || field.value instanceof Date) ? new Date(field.value) : undefined}
+                          onSelect={(date) => field.onChange(date || null)}
                           initialFocus
                           locale={es}
                         />
