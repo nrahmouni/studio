@@ -21,11 +21,14 @@ import { cn } from "@/lib/utils";
 import { getObraById, updateObra } from '@/lib/actions/obra.actions';
 import { ObraSchema, type Obra } from '@/lib/types';
 
-const ObraEditFormSchema = ObraSchema.omit({ id: true, empresaId: true, dataAIHint: true, jefeObraId: true })
-  .extend({
-    fechaFin: z.date().optional().nullable(),
-    descripcion: z.string().optional(), // Assuming description might be part of Obra schema or added for form
-  });
+// Schema for editing an Obra. We omit fields that are system-managed or not typically edited here.
+// 'descripcion' is now part of ObraSchema, so it will be included if not omitted.
+const ObraEditFormSchema = ObraSchema.omit({ 
+  id: true, 
+  empresaId: true, 
+  dataAIHint: true, 
+  jefeObraId: true 
+});
 type ObraEditFormData = z.infer<typeof ObraEditFormSchema>;
 
 export default function EditObraPage() {
@@ -47,7 +50,7 @@ export default function EditObraPage() {
       clienteNombre: '',
       fechaInicio: new Date(),
       fechaFin: null,
-      descripcion: '',
+      descripcion: '', // Default to empty string
     },
   });
 
@@ -57,7 +60,7 @@ export default function EditObraPage() {
       setEmpresaId(storedEmpresaId);
     } else {
       toast({ title: "Error", description: "ID de empresa no encontrado.", variant: "destructive" });
-      router.push('/auth/login/empresa'); // Or a more appropriate redirect
+      router.push('/auth/login/empresa'); 
       return;
     }
 
@@ -74,7 +77,7 @@ export default function EditObraPage() {
             clienteNombre: fetchedObra.clienteNombre,
             fechaInicio: new Date(fetchedObra.fechaInicio),
             fechaFin: fetchedObra.fechaFin ? new Date(fetchedObra.fechaFin) : null,
-            descripcion: (fetchedObra as any).descripcion || '', // Cast if descripcion is not in Obra type
+            descripcion: fetchedObra.descripcion || '', 
           });
         } else {
           setError("Obra no encontrada o no tienes acceso.");
@@ -188,6 +191,7 @@ export default function EditObraPage() {
             <div>
               <Label htmlFor="descripcion" className="font-semibold">Descripción Adicional (Opcional)</Label>
               <Textarea id="descripcion" {...form.register('descripcion')} className="mt-1" placeholder="Notas, especificaciones adicionales..." rows={4}/>
+              {form.formState.errors.descripcion && <p className="text-sm text-destructive mt-1">{form.formState.errors.descripcion.message}</p>}
             </div>
             
             <div className="flex justify-end space-x-3 pt-4">

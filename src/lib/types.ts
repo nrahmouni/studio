@@ -21,6 +21,7 @@ export const ObraSchema = z.object({
   fechaFin: z.date().optional().nullable(),
   clienteNombre: z.string().min(1, "El nombre del cliente es requerido"),
   jefeObraId: z.string().optional(), // Referencia a UsuarioFirebase.id
+  descripcion: z.string().optional(), // Added optional description
   dataAIHint: z.string().optional(), 
 });
 export type Obra = z.infer<typeof ObraSchema>;
