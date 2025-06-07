@@ -22,7 +22,7 @@ import { es } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { getObraById, updateObra } from '@/lib/actions/obra.actions';
 import { getUsuarioById, getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
-import { ObraSchema, CostoCategoriaSchema, type Obra, type UsuarioFirebase } from '@/lib/types';
+import { ObraSchema, type Obra, type UsuarioFirebase } from '@/lib/types';
 
 const ObraEditFormSchema = ObraSchema.omit({ 
   id: true, 
@@ -152,18 +152,6 @@ export default function EditObraPage() {
 
   const canEditCostsOrWorkers = currentUser && obraData && (currentUser.rol === 'admin' || currentUser.id === obraData.jefeObraId);
 
-  // Debug log
-  if (currentUser && obraData) {
-    console.log("EditObraPage Debug:", {
-      canEdit: canEditCostsOrWorkers,
-      currentUserRole: currentUser.rol,
-      currentUserId: currentUser.id,
-      obraJefeId: obraData.jefeObraId,
-      companyWorkersCount: companyWorkers.length,
-      initialTrabajadoresAsignados: form.getValues("trabajadoresAsignados"),
-    });
-  }
-
   if (isLoading) {
     return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando datos...</p></div>;
   }
@@ -269,19 +257,6 @@ export default function EditObraPage() {
               {form.formState.errors.descripcion && <p className="text-sm text-destructive mt-1">{form.formState.errors.descripcion.message}</p>}
             </div>
             
-            {currentUser && obraData && (
-              <div className="my-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-md text-xs">
-                <p className="font-bold mb-1">Debug Info (Temporal):</p>
-                <p>Puede editar Trabajadores/Costos: <span className="font-semibold">{canEditCostsOrWorkers ? 'Sí' : 'No'}</span></p>
-                <p>Trabajadores en la empresa: <span className="font-semibold">{companyWorkers.length}</span></p>
-                <p>Rol Actual: <span className="font-semibold">{currentUser.rol}</span></p>
-                <p>Es Admin: <span className="font-semibold">{currentUser.rol === 'admin' ? 'Sí' : 'No'}</span></p>
-                <p>Es Jefe de Obra Asignado: <span className="font-semibold">{currentUser.id === obraData.jefeObraId ? 'Sí' : 'No'}</span></p>
-                <p>ID Jefe de Obra (Obra): <span className="font-semibold">{obraData.jefeObraId || 'No asignado'}</span></p>
-                <p>ID Usuario Actual: <span className="font-semibold">{currentUser.id}</span></p>
-              </div>
-            )}
-            
             {canEditCostsOrWorkers && (
             <Card className="border-dashed border-accent/50">
               <CardHeader>
@@ -344,7 +319,7 @@ export default function EditObraPage() {
             )}
 
             {canEditCostsOrWorkers && companyWorkers.length > 0 && (
-              <Card className="border-dashed border-primary/50">
+              <Card className="border-dashed border-primary/50 mt-6">
                 <CardHeader>
                   <CardTitle className="text-xl font-headline text-primary flex items-center">
                     <Users className="mr-2 h-6 w-6" /> Asignar Trabajadores a esta Obra
@@ -352,7 +327,6 @@ export default function EditObraPage() {
                   <CardDescription>Selecciona los trabajadores que participarán en este proyecto.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 max-h-60 overflow-y-auto p-4">
-                  {console.log("*** Renderizando sección ASIGNAR TRABAJADORES ***")}
                   <Controller
                     name="trabajadoresAsignados"
                     control={form.control}
@@ -383,7 +357,7 @@ export default function EditObraPage() {
               </Card>
             )}
              {canEditCostsOrWorkers && companyWorkers.length === 0 && (
-                <Card className="border-dashed border-primary/50">
+                <Card className="border-dashed border-primary/50 mt-6">
                     <CardHeader>
                         <CardTitle className="text-xl font-headline text-primary flex items-center">
                             <Users className="mr-2 h-6 w-6" /> Asignar Trabajadores
@@ -408,3 +382,4 @@ export default function EditObraPage() {
     </div>
   );
 }
+
