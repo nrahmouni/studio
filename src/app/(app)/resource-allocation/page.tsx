@@ -1,42 +1,130 @@
+
 // src/app/(app)/resource-allocation/page.tsx
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Cpu, Wand2, AlertTriangle } from 'lucide-react';
+import { Loader2, Cpu, Wand2, AlertTriangle, Info } from 'lucide-react';
 import { analyzeResourceAllocation, type AnalyzeResourceAllocationInput, type AnalyzeResourceAllocationOutput } from '@/ai/flows/resource-allocation';
+import { getPartesByEmpresaYObra } from '@/lib/actions/parte.actions';
+import { getObrasByEmpresaId } from '@/lib/actions/obra.actions';
+import { getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
+import type { Parte, Obra, UsuarioFirebase } from '@/lib/types';
+import { Textarea } from '@/components/ui/textarea'; // For displaying processed data
 
-const mockPartesData = [
-  { id: 'parte-1', obraId: 'obra-A', proyectoNombre: 'Residencia Sol', tareaPrincipal: 'Fontanería general', trabajadorAsignado: 'Juan Pérez', horasEstimadas: 20, horasRealizadas: 5, estado: 'En progreso' },
-  { id: 'parte-2', obraId: 'obra-B', proyectoNombre: 'Oficinas Centro', tareaPrincipal: 'Instalación eléctrica', trabajadorAsignado: 'Ana López', horasEstimadas: 40, horasRealizadas: 30, estado: 'Casi finalizado' },
-  { id: 'parte-3', obraId: 'obra-A', proyectoNombre: 'Residencia Sol', tareaPrincipal: 'Pintura interior', trabajadorAsignado: 'Carlos Ruiz', horasEstimadas: 30, horasRealizadas: 0, estado: 'Pendiente inicio' },
-  { id: 'parte-4', obraId: 'obra-C', proyectoNombre: 'Local Comercial Avenida', tareaPrincipal: 'Albañilería', trabajadorAsignado: 'Sofía Martín', horasEstimadas: 50, horasRealizadas: 10, estado: 'En progreso' },
-  { id: 'parte-5', obraId: 'obra-A', proyectoNombre: 'Residencia Sol', tareaPrincipal: 'Carpintería', trabajadorAsignado: 'Juan Pérez', horasEstimadas: 15, horasRealizadas: 10, estado: 'Retrasado' },
-];
+interface ProcessedParteForAI {
+  id: string;
+  obraId: string;
+  proyectoNombre: string;
+  tareaPrincipal: string;
+  trabajadorAsignado: string;
+  horasEstimadas: number; // Placeholder
+  horasRealizadas: number;
+  estado: string; // 'Pendiente' or 'Validado'
+}
 
 export default function ResourceAllocationPage() {
   const { toast } = useToast();
-  const [isLoading, setIsLoading] = useState(false);
+  const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
+  const [isLoadingData, setIsLoadingData] = useState(true);
   const [analysisResult, setAnalysisResult] = useState<AnalyzeResourceAllocationOutput | null>(null);
   const [error, setError] = useState<string | null>(null);
-  
-  const [partesJson, setPartesJson] = useState(JSON.stringify(mockPartesData, null, 2));
+  const [processedPartesForAI, setProcessedPartesForAI] = useState<ProcessedParteForAI[]>([]);
+  const [empresaId, setEmpresaId] = useState<string | null>(null);
 
+  useEffect(() => {
+    const storedEmpresaId = localStorage.getItem('empresaId_obra_link');
+    if (storedEmpresaId) {
+      setEmpresaId(storedEmpresaId);
+    } else {
+      toast({ title: "Error", description: "ID de empresa no encontrado.", variant: "destructive" });
+      setError("ID de empresa no disponible para cargar datos.");
+      setIsLoadingData(false);
+    }
+  }, [toast]);
+
+  useEffect(() => {
+    if (!empresaId) return;
+
+    const fetchDataForAI = async () => {
+      setIsLoadingData(true);
+      setError(null);
+      setAnalysisResult(null);
+      try {
+        const [fetchedPartes, fetchedObras, fetchedUsuarios] = await Promise.all([
+          getPartesByEmpresaYObra(empresaId, 'all'),
+          getObrasByEmpresaId(empresaId),
+          getUsuariosByEmpresaId(empresaId),
+        ]);
+
+        const obrasMap: Record<string, Obra> = fetchedObras.reduce((acc, obra) => {
+          acc[obra.id] = obra;
+          return acc;
+        }, {} as Record<string, Obra>);
+
+        const usuariosMap: Record<string, UsuarioFirebase> = fetchedUsuarios.reduce((acc, user) => {
+          acc[user.id] = user;
+          return acc;
+        }, {} as Record<string, UsuarioFirebase>);
+
+        const pendingPartes = fetchedPartes.filter(p => !p.validado);
+
+        const transformedData = pendingPartes.map(parte => ({
+          id: parte.id,
+          obraId: parte.obraId,
+          proyectoNombre: obrasMap[parte.obraId]?.nombre || 'Proyecto Desconocido',
+          tareaPrincipal: parte.tareasRealizadas.substring(0, 150) + (parte.tareasRealizadas.length > 150 ? '...' : ''),
+          trabajadorAsignado: usuariosMap[parte.usuarioId]?.nombre || 'Trabajador Desconocido',
+          horasEstimadas: 8, // Placeholder standard day
+          horasRealizadas: parte.horasTrabajadas || 0,
+          estado: 'Pendiente', // Since we filtered for !p.validado
+        }));
+        
+        setProcessedPartesForAI(transformedData);
+
+        if (transformedData.length === 0) {
+          toast({
+            title: 'No Hay Datos Para Analizar',
+            description: 'No se encontraron partes de trabajo pendientes en tu empresa.',
+            variant: 'default',
+          });
+        }
+
+      } catch (e: any) {
+        console.error("Error fetching data for AI:", e);
+        setError("No se pudieron cargar los datos para el análisis. Inténtalo de nuevo.");
+        toast({
+          title: 'Error al Cargar Datos',
+          description: "No se pudieron obtener los partes de trabajo.",
+          variant: 'destructive',
+        });
+      } finally {
+        setIsLoadingData(false);
+      }
+    };
+
+    fetchDataForAI();
+  }, [empresaId, toast]);
 
   const handleAnalysis = async () => {
-    setIsLoading(true);
+    if (processedPartesForAI.length === 0) {
+      toast({
+        title: 'Sin Datos',
+        description: 'No hay partes pendientes para analizar.',
+        variant: 'default',
+      });
+      return;
+    }
+
+    setIsLoadingAnalysis(true);
     setAnalysisResult(null);
     setError(null);
 
     try {
-      JSON.parse(partesJson);
-      
       const input: AnalyzeResourceAllocationInput = {
-        partesData: partesJson,
+        partesData: JSON.stringify(processedPartesForAI),
       };
       const result = await analyzeResourceAllocation(input);
       setAnalysisResult(result);
@@ -47,9 +135,7 @@ export default function ResourceAllocationPage() {
     } catch (e: any) {
       console.error("Error during AI analysis:", e);
       let errorMessage = 'No se pudo completar el análisis. Inténtalo de nuevo.';
-      if (e instanceof SyntaxError) {
-        errorMessage = 'El formato de los datos de los partes (JSON) no es válido. Por favor, revisa la estructura.';
-      } else if (e.message) {
+      if (e.message) {
         errorMessage = e.message;
       }
       setError(errorMessage);
@@ -59,7 +145,7 @@ export default function ResourceAllocationPage() {
         variant: 'destructive',
       });
     } finally {
-      setIsLoading(false);
+      setIsLoadingAnalysis(false);
     }
   };
 
@@ -72,44 +158,71 @@ export default function ResourceAllocationPage() {
             <div>
               <CardTitle className="text-2xl font-bold font-headline text-primary">Optimización de Recursos con IA</CardTitle>
               <CardDescription className="text-md text-muted-foreground">
-                Analiza los partes de trabajo abiertos para obtener recomendaciones sobre la asignación de recursos y evitar cuellos de botella.
+                Analiza los partes de trabajo pendientes para obtener recomendaciones sobre la asignación de recursos.
               </CardDescription>
             </div>
           </div>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
-          <div>
-            <Label htmlFor="partesData" className="font-semibold text-lg mb-2 block">
-              Datos de Partes de Trabajo (Formato JSON)
-            </Label>
-            <Textarea
-              id="partesData"
-              value={partesJson}
-              onChange={(e) => setPartesJson(e.target.value)}
-              rows={10}
-              className="font-mono text-sm bg-muted/30 border-input focus:border-primary"
-              placeholder="Pega aquí el JSON con los datos de los partes de trabajo..."
-            />
-            <p className="text-xs text-muted-foreground mt-1">
-              Este es un ejemplo. En una aplicación real, estos datos se cargarían automáticamente.
-            </p>
-          </div>
+          {isLoadingData && (
+            <div className="flex items-center justify-center py-6">
+              <Loader2 className="mr-3 h-6 w-6 animate-spin text-primary" />
+              <p className="text-muted-foreground">Cargando datos de partes pendientes...</p>
+            </div>
+          )}
 
-          <Button onClick={handleAnalysis} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6" disabled={isLoading}>
-            {isLoading ? (
+          {!isLoadingData && processedPartesForAI.length === 0 && !error && (
+            <Card className="bg-secondary/30 border-secondary p-4">
+              <CardHeader className="p-0 mb-2">
+                <CardTitle className="text-md flex items-center">
+                  <Info className="mr-2 h-5 w-5 text-primary" />
+                  No Hay Partes Para Analizar
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="p-0 text-sm">
+                Actualmente no hay partes de trabajo pendientes de validación en tu empresa. La IA necesita esta información para generar sugerencias.
+              </CardContent>
+            </Card>
+          )}
+          
+          {!isLoadingData && processedPartesForAI.length > 0 && (
+             <div className="space-y-2">
+                <p className="text-sm text-muted-foreground">
+                    Se analizarán {processedPartesForAI.length} parte(s) de trabajo pendientes.
+                </p>
+                 {/* Optionally display the data being sent to AI - good for debugging */}
+                <details className="text-xs">
+                    <summary className="cursor-pointer text-muted-foreground hover:text-primary">Ver datos que se enviarán a la IA</summary>
+                    <Textarea
+                        readOnly
+                        value={JSON.stringify(processedPartesForAI, null, 2)}
+                        rows={8}
+                        className="mt-1 font-mono text-xs bg-muted/20 border-dashed"
+                    />
+                </details>
+            </div>
+          )}
+
+
+          <Button 
+            onClick={handleAnalysis} 
+            className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-6" 
+            disabled={isLoadingAnalysis || isLoadingData || processedPartesForAI.length === 0}
+          >
+            {isLoadingAnalysis ? (
               <Loader2 className="mr-2 h-5 w-5 animate-spin" />
             ) : (
               <Wand2 className="mr-2 h-5 w-5" />
             )}
-            {isLoading ? 'Analizando Recursos...' : 'Ejecutar Análisis IA'}
+            {isLoadingAnalysis ? 'Analizando Recursos...' : (isLoadingData ? 'Cargando datos...' : 'Ejecutar Análisis IA')}
           </Button>
 
-          {error && (
+          {error && !isLoadingAnalysis && ( // Show general error if not analysis specific
             <Card className="bg-destructive/10 border-destructive text-destructive p-4 animate-fade-in-up">
               <CardHeader className="p-0 mb-2">
                 <CardTitle className="text-md flex items-center">
                   <AlertTriangle className="mr-2 h-5 w-5" />
-                  Error en el Análisis
+                  Error
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0 text-sm">
@@ -142,10 +255,13 @@ export default function ResourceAllocationPage() {
         </CardContent>
          <CardFooter className="p-6 text-center">
           <p className="text-xs text-muted-foreground">
-            La IA analiza los datos proporcionados para ofrecer recomendaciones. Revisa siempre las sugerencias antes de tomar decisiones.
+            La IA analiza los datos de partes pendientes para ofrecer recomendaciones. Revisa siempre las sugerencias antes de tomar decisiones.
           </p>
         </CardFooter>
       </Card>
     </div>
   );
 }
+
+
+    
