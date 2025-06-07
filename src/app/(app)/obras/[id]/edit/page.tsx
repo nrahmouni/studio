@@ -160,6 +160,7 @@ export default function EditObraPage() {
       currentUserId: currentUser.id,
       obraJefeId: obraData.jefeObraId,
       companyWorkersCount: companyWorkers.length,
+      initialTrabajadoresAsignados: form.getValues("trabajadoresAsignados"),
     });
   }
 
@@ -268,7 +269,6 @@ export default function EditObraPage() {
               {form.formState.errors.descripcion && <p className="text-sm text-destructive mt-1">{form.formState.errors.descripcion.message}</p>}
             </div>
             
-            {/* --- DEBUG INFO START --- */}
             {currentUser && obraData && (
               <div className="my-4 p-3 bg-yellow-100 border border-yellow-400 text-yellow-800 rounded-md text-xs">
                 <p className="font-bold mb-1">Debug Info (Temporal):</p>
@@ -281,7 +281,6 @@ export default function EditObraPage() {
                 <p>ID Usuario Actual: <span className="font-semibold">{currentUser.id}</span></p>
               </div>
             )}
-            {/* --- DEBUG INFO END --- */}
             
             {canEditCostsOrWorkers && (
             <Card className="border-dashed border-accent/50">
@@ -353,6 +352,7 @@ export default function EditObraPage() {
                   <CardDescription>Selecciona los trabajadores que participarán en este proyecto.</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-3 max-h-60 overflow-y-auto p-4">
+                  {console.log("*** Renderizando sección ASIGNAR TRABAJADORES ***")}
                   <Controller
                     name="trabajadoresAsignados"
                     control={form.control}
@@ -408,4 +408,3 @@ export default function EditObraPage() {
     </div>
   );
 }
-
