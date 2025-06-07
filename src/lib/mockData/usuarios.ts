@@ -1,0 +1,99 @@
+import type { UsuarioFirebase } from '@/lib/types';
+
+export const mockUsuarios: UsuarioFirebase[] = [
+  // Usuarios para Construcciones Modernas S.L. (empresa-1)
+  {
+    id: 'user-1-admin',
+    empresaId: 'empresa-1',
+    nombre: 'Ana Pérez (Admin CM)',
+    email: 'admin.cm@example.com',
+    password: 'password123', // En un caso real, esto estaría hasheado
+    rol: 'admin',
+    activo: true,
+    obrasAsignadas: ['obra-1-1', 'obra-1-2'],
+  },
+  {
+    id: 'user-1-jefeobra',
+    empresaId: 'empresa-1',
+    nombre: 'Carlos López (Jefe Obra CM)',
+    email: 'jefeobra.cm@example.com',
+    password: 'password123',
+    rol: 'jefeObra',
+    activo: true,
+    obrasAsignadas: ['obra-1-1'],
+  },
+  {
+    id: 'user-1-trabajador-1',
+    empresaId: 'empresa-1',
+    nombre: 'Lucía Fernández (Trabajador CM)',
+    email: 'lucia.f@example.com',
+    password: 'password123',
+    rol: 'trabajador',
+    activo: true,
+    obrasAsignadas: ['obra-1-1'],
+  },
+  {
+    id: 'user-1-trabajador-2',
+    empresaId: 'empresa-1',
+    nombre: 'Marcos García (Trabajador CM)',
+    email: 'marcos.g@example.com',
+    password: 'password123',
+    rol: 'trabajador',
+    activo: true,
+    obrasAsignadas: ['obra-1-2'],
+  },
+
+  // Usuarios para Reformas Integrales Alfa (empresa-2)
+  {
+    id: 'user-2-admin',
+    empresaId: 'empresa-2',
+    nombre: 'Sofía Ramírez (Admin Alfa)',
+    email: 'admin.alfa@example.com',
+    password: 'password123',
+    rol: 'admin',
+    activo: true,
+    obrasAsignadas: ['obra-2-1'],
+  },
+  {
+    id: 'user-2-trabajador-1',
+    empresaId: 'empresa-2',
+    nombre: 'David Sanz (Trabajador Alfa)',
+    email: 'david.s@example.com',
+    password: 'password123',
+    rol: 'trabajador',
+    activo: true,
+    obrasAsignadas: ['obra-2-1'],
+  },
+
+  // Usuarios para Edifica Futuro Group (empresa-3)
+   {
+    id: 'user-3-admin',
+    empresaId: 'empresa-3',
+    nombre: 'Elena Vazquez (Admin Edifica)',
+    email: 'admin.edifica@example.com',
+    password: 'password123',
+    rol: 'admin',
+    activo: true,
+    obrasAsignadas: ['obra-3-1', 'obra-3-2'],
+  },
+  {
+    id: 'user-3-jefeobra',
+    empresaId: 'empresa-3',
+    nombre: 'Miguel Torres (Jefe Obra Edifica)',
+    email: 'jefeobra.edifica@example.com',
+    password: 'password123',
+    rol: 'jefeObra',
+    activo: true,
+    obrasAsignadas: ['obra-3-1'],
+  },
+  {
+    id: 'user-3-trabajador-1',
+    empresaId: 'empresa-3',
+    nombre: 'Laura Jimenez (Trabajador Edifica)',
+    email: 'laura.j@example.com',
+    password: 'password123',
+    rol: 'trabajador',
+    activo: true,
+    obrasAsignadas: ['obra-3-1', 'obra-3-2'],
+  },
+];
