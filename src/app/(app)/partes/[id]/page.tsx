@@ -199,7 +199,7 @@ export default function ParteDetailPage() {
                         width={200} 
                         height={150} 
                         className="rounded-md object-cover border shadow-sm aspect-[4/3]"
-                        data-ai-hint={parte.dataAIHint || "construction work evidence"}
+                        data-ai-hint={parte.dataAIHint || "work evidence"}
                     />
                   </a>
                 ))}

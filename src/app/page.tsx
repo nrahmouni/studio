@@ -39,7 +39,7 @@ export default function HomePage() {
       description: "Transforma tus partes de trabajo en papel a un formato digital, accesible y fácil de gestionar. Adjunta fotos, registra incidencias y obtén firmas digitales al instante.",
       imageSrc: "https://placehold.co/600x450.png",
       imageAlt: "Trabajador usando tablet en obra",
-      dataAiHint: "construction worker tablet",
+      dataAiHint: "worker tablet",
       align: "left"
     },
     {
@@ -47,7 +47,7 @@ export default function HomePage() {
       description: "Desde el perfil de tu empresa hasta el detalle de cada obra y usuario. Asigna jefes de obra, gestiona accesos y mantén toda la información organizada y segura.",
       imageSrc: "https://placehold.co/600x450.png",
       imageAlt: "Panel de control de proyectos",
-      dataAiHint: "project dashboard interface",
+      dataAiHint: "dashboard interface",
       align: "right"
     },
     {
@@ -55,7 +55,7 @@ export default function HomePage() {
       description: "Nuestra IA analiza los datos de tus partes para ofrecerte sugerencias de asignación de recursos, ayudándote a prevenir cuellos de botella y optimizar la productividad.",
       imageSrc: "https://placehold.co/600x450.png",
       imageAlt: "Gráfico de optimización de recursos IA",
-      dataAiHint: "ai resource optimization chart",
+      dataAiHint: "ai optimization",
       align: "left"
     }
   ];
@@ -82,11 +82,11 @@ export default function HomePage() {
             <Image
               src="https://placehold.co/1920x1080.png"
               alt="Fondo de obra moderna"
-              fill // Changed from layout="fill"
+              fill
               objectFit="cover"
               quality={80}
               className="opacity-30"
-              data-ai-hint="modern construction background"
+              data-ai-hint="construction background"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/90 to-primary"></div>
           </div>

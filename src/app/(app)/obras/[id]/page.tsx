@@ -110,7 +110,7 @@ export default function ObraDetailPage() {
           <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
             <div className="flex items-center space-x-4 mb-4 sm:mb-0">
               <Image
-                src={obra.dataAIHint ? `https://placehold.co/120x90.png` : "https://placehold.co/120x90.png"}
+                src="https://placehold.co/120x90.png"
                 alt={`Imagen de ${obra.nombre}`}
                 width={120}
                 height={90}
