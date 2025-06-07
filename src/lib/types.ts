@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const EmpresaSchema = z.object({
@@ -32,19 +33,21 @@ export const UsuarioFirebaseSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
   email: z.string().email("Email inválido"),
   dni: z.string().min(1, "El DNI es requerido").regex(/^[0-9XYZxyz][0-9]{7}[A-HJ-NP-TV-Z]$/i, "Formato de DNI/NIE inválido (e.g., 12345678A o X1234567B)"),
-  password: z.string().min(1, "Contraseña requerida para simulación"), // Added for mock auth
+  password: z.string().min(1, "Contraseña requerida para simulación"), 
   rol: z.enum(["admin", "trabajador", "jefeObra"]),
   activo: z.boolean().default(true),
-  obrasAsignadas: z.array(z.string()).optional(), // Array de obraId
+  obrasAsignadas: z.array(z.string()).optional(), 
   empresaId: z.string(),
+  dniAnversoURL: z.string().url("URL de foto de anverso de DNI inválida").optional().nullable(),
+  dniReversoURL: z.string().url("URL de foto de reverso de DNI inválida").optional().nullable(),
 });
 export type UsuarioFirebase = z.infer<typeof UsuarioFirebaseSchema>;
 
 
 export const ParteSchema = z.object({
   id: z.string(),
-  usuarioId: z.string().min(1, "El ID de usuario es requerido"), // Referencia a UsuarioFirebase.id
-  obraId: z.string().min(1, "El ID de obra es requerido"), // Referencia a Obra.id
+  usuarioId: z.string().min(1, "El ID de usuario es requerido"), 
+  obraId: z.string().min(1, "El ID de obra es requerido"), 
   fecha: z.date({ required_error: "La fecha es requerida."}),
   tareasRealizadas: z.string().min(1, "Las tareas realizadas son requeridas"),
   tareasSeleccionadas: z.array(z.string()).optional(),
@@ -52,16 +55,16 @@ export const ParteSchema = z.object({
   firmaURL: z.string().url("URL de firma inválida").optional().nullable(),
   incidencias: z.string().optional(),
   validado: z.boolean().default(false),
-  validadoPor: z.string().optional(), // Referencia a UsuarioFirebase.id (admin/jefeObra)
-  timestamp: z.date(), // Removed .default() - will be set in action
+  validadoPor: z.string().optional(), 
+  timestamp: z.date(), 
   dataAIHint: z.string().optional(),
 });
 export type Parte = z.infer<typeof ParteSchema>;
 
 export const FichajeSchema = z.object({
   id: z.string(),
-  usuarioId: z.string(), // Referencia a UsuarioFirebase.id
-  obraId: z.string(), // Referencia a Obra.id
+  usuarioId: z.string(), 
+  obraId: z.string(), 
   tipo: z.enum(["entrada", "salida"]),
   ubicacion: z.object({
     lat: z.number(),
@@ -70,3 +73,4 @@ export const FichajeSchema = z.object({
   timestamp: z.date().default(() => new Date()),
 });
 export type Fichaje = z.infer<typeof FichajeSchema>;
+

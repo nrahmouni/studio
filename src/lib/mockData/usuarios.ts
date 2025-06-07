@@ -1,3 +1,4 @@
+
 import type { UsuarioFirebase } from '@/lib/types';
 
 export const mockUsuarios: UsuarioFirebase[] = [
@@ -7,44 +8,52 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-1',
     nombre: 'Administrador Principal (Empresa Demo)',
     email: 'empresa@example.com',
-    dni: 'A00000000', // DNI para admin
+    dni: 'A00000000', 
     password: 'empresa', 
     rol: 'admin',
     activo: true,
     obrasAsignadas: ['obra-1-1', 'obra-1-2', 'obra-1-3'],
+    dniAnversoURL: null,
+    dniReversoURL: null,
   },
   {
     id: 'user-1-jefeobra',
     empresaId: 'empresa-1',
     nombre: 'Carlos López (Jefe Obra CM)',
     email: 'jefeobra.cm@example.com',
-    dni: 'B11111111', // DNI para jefe de obra
+    dni: 'B11111111', 
     password: 'password123',
     rol: 'jefeObra',
     activo: true,
     obrasAsignadas: ['obra-1-1'],
+    dniAnversoURL: null,
+    dniReversoURL: null,
   },
   {
     id: 'user-1-trabajador-1',
     empresaId: 'empresa-1',
     nombre: 'Lucía Fernández (Trabajador Demo)',
     email: 'trabajador@example.com',
-    dni: '12345678A', // DNI para trabajador
+    dni: '12345678A', 
     password: 'trabajador',
     rol: 'trabajador',
     activo: true,
     obrasAsignadas: ['obra-1-1', 'obra-1-2'],
+    dniAnversoURL: 'https://placehold.co/300x200.png?text=DNI+Anverso',
+    dniReversoURL: 'https://placehold.co/300x200.png?text=DNI+Reverso',
   },
   {
     id: 'user-1-trabajador-2',
     empresaId: 'empresa-1',
     nombre: 'Marcos García (Trabajador CM)',
     email: 'marcos.g@example.com',
-    dni: '87654321B', // DNI para trabajador
+    dni: '87654321B', 
     password: 'password123',
     rol: 'trabajador',
     activo: true,
     obrasAsignadas: ['obra-1-2'],
+    dniAnversoURL: null,
+    dniReversoURL: null,
   },
 
   // Usuarios para Reformas Integrales Alfa (empresa-2)
@@ -53,22 +62,26 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-2',
     nombre: 'Sofía Ramírez (Admin Alfa)',
     email: 'admin.alfa@example.com',
-    dni: 'C22222222', // DNI para admin
+    dni: 'C22222222', 
     password: 'password123',
     rol: 'admin',
     activo: true,
     obrasAsignadas: ['obra-2-1'],
+    dniAnversoURL: null,
+    dniReversoURL: null,
   },
   {
     id: 'user-2-trabajador-1',
     empresaId: 'empresa-2',
     nombre: 'David Sanz (Trabajador Alfa)',
     email: 'david.s@example.com',
-    dni: '11223344C', // DNI para trabajador
+    dni: '11223344C', 
     password: 'password123',
     rol: 'trabajador',
     activo: true,
     obrasAsignadas: ['obra-2-1'],
+    dniAnversoURL: null,
+    dniReversoURL: null,
   },
 
   // Usuarios para Edifica Futuro Group (empresa-3)
@@ -77,32 +90,38 @@ export const mockUsuarios: UsuarioFirebase[] = [
     empresaId: 'empresa-3',
     nombre: 'Elena Vazquez (Admin Edifica)',
     email: 'admin.edifica@example.com',
-    dni: 'D33333333', // DNI para admin
+    dni: 'D33333333', 
     password: 'password123',
     rol: 'admin',
     activo: true,
     obrasAsignadas: ['obra-3-1', 'obra-3-2'],
+    dniAnversoURL: null,
+    dniReversoURL: null,
   },
   {
     id: 'user-3-jefeobra',
     empresaId: 'empresa-3',
     nombre: 'Miguel Torres (Jefe Obra Edifica)',
     email: 'jefeobra.edifica@example.com',
-    dni: 'E44444444', // DNI para jefe de obra
+    dni: 'E44444444', 
     password: 'password123',
     rol: 'jefeObra',
     activo: true,
     obrasAsignadas: ['obra-3-1'],
+    dniAnversoURL: null,
+    dniReversoURL: null,
   },
   {
     id: 'user-3-trabajador-1',
     empresaId: 'empresa-3',
     nombre: 'Laura Jimenez (Trabajador Edifica)',
     email: 'laura.j@example.com',
-    dni: '55667788D', // DNI para trabajador
+    dni: '55667788D', 
     password: 'password123',
     rol: 'trabajador',
     activo: true,
     obrasAsignadas: ['obra-3-1', 'obra-3-2'],
+    dniAnversoURL: null,
+    dniReversoURL: null,
   },
 ];

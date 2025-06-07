@@ -1,3 +1,4 @@
+
 // src/app/(app)/company-profile/page.tsx
 'use client';
 
@@ -12,23 +13,38 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getEmpresaProfile, updateEmpresaProfile } from '@/lib/actions/company.actions';
+import { registerTrabajador } from '@/lib/actions/user.actions';
 import type { Empresa } from '@/lib/types';
-import { EmpresaSchema } from '@/lib/types';
-import { Loader2, Building } from 'lucide-react';
+import { EmpresaSchema, UsuarioFirebaseSchema } from '@/lib/types';
+import { Loader2, Building, UserPlus } from 'lucide-react';
 import Image from 'next/image';
 
 const UpdateEmpresaSchema = EmpresaSchema.partial().omit({ id: true });
 type UpdateEmpresaFormData = z.infer<typeof UpdateEmpresaSchema>;
+
+const RegisterTrabajadorFormSchema = UsuarioFirebaseSchema.pick({
+  nombre: true,
+  email: true,
+  dni: true,
+  dniAnversoURL: true,
+  dniReversoURL: true,
+}).extend({
+  // Override to make optional for form input, they are optional in main schema anyway
+  dniAnversoURL: z.string().url("URL inválida").optional().or(z.literal('')),
+  dniReversoURL: z.string().url("URL inválida").optional().or(z.literal('')),
+});
+type RegisterTrabajadorFormData = z.infer<typeof RegisterTrabajadorFormSchema>;
 
 export default function CompanyProfilePage() {
   const router = useRouter();
   const { toast } = useToast();
   const [empresa, setEmpresa] = useState<Empresa | null>(null);
   const [isLoading, setIsLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
+  const [isSavingEmpresa, setIsSavingEmpresa] = useState(false);
+  const [isRegisteringTrabajador, setIsRegisteringTrabajador] = useState(false);
   const [empresaId, setEmpresaId] = useState<string | null>(null);
 
-  const form = useForm<UpdateEmpresaFormData>({
+  const empresaForm = useForm<UpdateEmpresaFormData>({
     resolver: zodResolver(UpdateEmpresaSchema),
     defaultValues: {
       nombre: '',
@@ -36,6 +52,17 @@ export default function CompanyProfilePage() {
       emailContacto: '',
       telefono: '',
       logoURL: '',
+    },
+  });
+
+  const trabajadorForm = useForm<RegisterTrabajadorFormData>({
+    resolver: zodResolver(RegisterTrabajadorFormSchema),
+    defaultValues: {
+      nombre: '',
+      email: '',
+      dni: '',
+      dniAnversoURL: '',
+      dniReversoURL: '',
     },
   });
 
@@ -60,7 +87,7 @@ export default function CompanyProfilePage() {
       const profile = await getEmpresaProfile(id);
       if (profile) {
         setEmpresa(profile);
-        form.reset({
+        empresaForm.reset({
           nombre: profile.nombre,
           CIF: profile.CIF,
           emailContacto: profile.emailContacto,
@@ -85,9 +112,9 @@ export default function CompanyProfilePage() {
     }
   };
 
-  const onSubmit = async (data: UpdateEmpresaFormData) => {
+  const onEmpresaSubmit = async (data: UpdateEmpresaFormData) => {
     if (!empresaId) return;
-    setIsSaving(true);
+    setIsSavingEmpresa(true);
     try {
       const dataToSubmit = {
         ...data,
@@ -96,7 +123,7 @@ export default function CompanyProfilePage() {
       const result = await updateEmpresaProfile(empresaId, dataToSubmit);
       if (result.success && result.empresa) {
         setEmpresa(result.empresa);
-        form.reset({
+        empresaForm.reset({
             ...result.empresa,
             logoURL: result.empresa.logoURL || '',
         });
@@ -118,7 +145,44 @@ export default function CompanyProfilePage() {
         variant: 'destructive',
       });
     } finally {
-      setIsSaving(false);
+      setIsSavingEmpresa(false);
+    }
+  };
+
+  const onTrabajadorSubmit = async (data: RegisterTrabajadorFormData) => {
+    if (!empresaId) {
+      toast({ title: 'Error', description: 'ID de empresa no disponible.', variant: 'destructive' });
+      return;
+    }
+    setIsRegisteringTrabajador(true);
+    try {
+      const dataToSend = {
+        ...data,
+        dniAnversoURL: data.dniAnversoURL === '' ? null : data.dniAnversoURL,
+        dniReversoURL: data.dniReversoURL === '' ? null : data.dniReversoURL,
+      };
+      const result = await registerTrabajador(empresaId, dataToSend);
+      if (result.success) {
+        toast({
+          title: 'Trabajador Registrado',
+          description: `${data.nombre} ha sido añadido a tu empresa.`,
+        });
+        trabajadorForm.reset();
+      } else {
+        toast({
+          title: 'Error al Registrar',
+          description: result.message || 'No se pudo registrar al trabajador.',
+          variant: 'destructive',
+        });
+      }
+    } catch (error) {
+      toast({
+        title: 'Error Inesperado',
+        description: 'Ocurrió un error al registrar al trabajador.',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsRegisteringTrabajador(false);
     }
   };
 
@@ -142,7 +206,7 @@ export default function CompanyProfilePage() {
   }
 
   return (
-    <div className="container mx-auto py-8 px-4">
+    <div className="container mx-auto py-8 px-4 space-y-8">
       <Card className="max-w-3xl mx-auto shadow-lg animate-fade-in-up">
         <CardHeader className="bg-primary/5 p-6">
           <div className="flex items-center space-x-4">
@@ -167,59 +231,131 @@ export default function CompanyProfilePage() {
           </div>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+          <form onSubmit={empresaForm.handleSubmit(onEmpresaSubmit)} className="space-y-6">
             <div>
               <Label htmlFor="nombre" className="font-semibold">Nombre de la Empresa</Label>
               <Controller
                 name="nombre"
-                control={form.control}
+                control={empresaForm.control}
                 render={({ field }) => <Input id="nombre" {...field} className="mt-1" />}
               />
-              {form.formState.errors.nombre && <p className="text-sm text-destructive mt-1">{form.formState.errors.nombre.message}</p>}
+              {empresaForm.formState.errors.nombre && <p className="text-sm text-destructive mt-1">{empresaForm.formState.errors.nombre.message}</p>}
             </div>
 
             <div>
               <Label htmlFor="CIF" className="font-semibold">CIF</Label>
               <Controller
                 name="CIF"
-                control={form.control}
+                control={empresaForm.control}
                 render={({ field }) => <Input id="CIF" {...field} className="mt-1" />}
               />
-              {form.formState.errors.CIF && <p className="text-sm text-destructive mt-1">{form.formState.errors.CIF.message}</p>}
+              {empresaForm.formState.errors.CIF && <p className="text-sm text-destructive mt-1">{empresaForm.formState.errors.CIF.message}</p>}
             </div>
 
             <div>
               <Label htmlFor="emailContacto" className="font-semibold">Email de Contacto</Label>
               <Controller
                 name="emailContacto"
-                control={form.control}
+                control={empresaForm.control}
                 render={({ field }) => <Input id="emailContacto" type="email" {...field} className="mt-1" />}
               />
-              {form.formState.errors.emailContacto && <p className="text-sm text-destructive mt-1">{form.formState.errors.emailContacto.message}</p>}
+              {empresaForm.formState.errors.emailContacto && <p className="text-sm text-destructive mt-1">{empresaForm.formState.errors.emailContacto.message}</p>}
             </div>
 
             <div>
               <Label htmlFor="telefono" className="font-semibold">Teléfono</Label>
               <Controller
                 name="telefono"
-                control={form.control}
+                control={empresaForm.control}
                 render={({ field }) => <Input id="telefono" {...field} className="mt-1" />}
               />
-              {form.formState.errors.telefono && <p className="text-sm text-destructive mt-1">{form.formState.errors.telefono.message}</p>}
+              {empresaForm.formState.errors.telefono && <p className="text-sm text-destructive mt-1">{empresaForm.formState.errors.telefono.message}</p>}
             </div>
             
             <div>
               <Label htmlFor="logoURL" className="font-semibold">URL del Logo (opcional)</Label>
               <Controller
                 name="logoURL"
-                control={form.control}
+                control={empresaForm.control}
                 render={({ field }) => <Input id="logoURL" {...field} value={field.value ?? ''} placeholder="https://ejemplo.com/logo.png" className="mt-1" />}
               />
-              {form.formState.errors.logoURL && <p className="text-sm text-destructive mt-1">{form.formState.errors.logoURL.message}</p>}
+              {empresaForm.formState.errors.logoURL && <p className="text-sm text-destructive mt-1">{empresaForm.formState.errors.logoURL.message}</p>}
             </div>
 
-            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSaving}>
-              {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Guardar Cambios'}
+            <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSavingEmpresa}>
+              {isSavingEmpresa ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Guardar Cambios Empresa'}
+            </Button>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card className="max-w-3xl mx-auto shadow-lg animate-fade-in-up animation-delay-200">
+        <CardHeader className="bg-accent/5 p-6">
+           <div className="flex items-center space-x-3">
+            <UserPlus className="h-8 w-8 text-accent" />
+            <div>
+                <CardTitle className="text-2xl font-bold font-headline text-accent">Registrar Nuevo Trabajador</CardTitle>
+                <CardDescription className="text-md text-muted-foreground">Añade un nuevo miembro a tu equipo.</CardDescription>
+            </div>
+          </div>
+        </CardHeader>
+        <CardContent className="p-6 space-y-6">
+          <form onSubmit={trabajadorForm.handleSubmit(onTrabajadorSubmit)} className="space-y-6">
+            <div>
+              <Label htmlFor="trabajadorNombre" className="font-semibold">Nombre Completo del Trabajador</Label>
+              <Controller
+                name="nombre"
+                control={trabajadorForm.control}
+                render={({ field }) => <Input id="trabajadorNombre" {...field} className="mt-1" placeholder="Ej: Juan Pérez García" />}
+              />
+              {trabajadorForm.formState.errors.nombre && <p className="text-sm text-destructive mt-1">{trabajadorForm.formState.errors.nombre.message}</p>}
+            </div>
+            
+            <div>
+              <Label htmlFor="trabajadorEmail" className="font-semibold">Email del Trabajador</Label>
+              <Controller
+                name="email"
+                control={trabajadorForm.control}
+                render={({ field }) => <Input id="trabajadorEmail" type="email" {...field} className="mt-1" placeholder="ej: trabajador@email.com" />}
+              />
+              {trabajadorForm.formState.errors.email && <p className="text-sm text-destructive mt-1">{trabajadorForm.formState.errors.email.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="trabajadorDni" className="font-semibold">DNI/NIE del Trabajador</Label>
+              <Controller
+                name="dni"
+                control={trabajadorForm.control}
+                render={({ field }) => <Input id="trabajadorDni" {...field} className="mt-1" placeholder="Ej: 12345678A" />}
+              />
+              {trabajadorForm.formState.errors.dni && <p className="text-sm text-destructive mt-1">{trabajadorForm.formState.errors.dni.message}</p>}
+            </div>
+            
+            <p className="text-xs text-muted-foreground">La contraseña inicial del trabajador será su DNI/NIE.</p>
+
+            <div>
+              <Label htmlFor="dniAnversoURL" className="font-semibold">URL Foto Anverso DNI (opcional)</Label>
+               <Controller
+                name="dniAnversoURL"
+                control={trabajadorForm.control}
+                render={({ field }) => <Input id="dniAnversoURL" {...field} value={field.value ?? ''} className="mt-1" placeholder="https://ejemplo.com/dni_anverso.jpg" />}
+              />
+              {trabajadorForm.formState.errors.dniAnversoURL && <p className="text-sm text-destructive mt-1">{trabajadorForm.formState.errors.dniAnversoURL.message}</p>}
+            </div>
+
+            <div>
+              <Label htmlFor="dniReversoURL" className="font-semibold">URL Foto Reverso DNI (opcional)</Label>
+              <Controller
+                name="dniReversoURL"
+                control={trabajadorForm.control}
+                render={({ field }) => <Input id="dniReversoURL" {...field} value={field.value ?? ''} className="mt-1" placeholder="https://ejemplo.com/dni_reverso.jpg" />}
+              />
+              {trabajadorForm.formState.errors.dniReversoURL && <p className="text-sm text-destructive mt-1">{trabajadorForm.formState.errors.dniReversoURL.message}</p>}
+            </div>
+
+            <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isRegisteringTrabajador}>
+              {isRegisteringTrabajador ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <UserPlus className="mr-2 h-4 w-4" />}
+              Registrar Trabajador
             </Button>
           </form>
         </CardContent>

@@ -1,3 +1,4 @@
+
 // src/lib/actions/user.actions.ts
 'use server';
 import { z } from 'zod';
@@ -64,7 +65,7 @@ export async function getUsuarioById(usuarioId: string): Promise<UsuarioFirebase
   return user || null;
 }
 
-const UpdateUsuarioSchema = UsuarioFirebaseSchema.partial().omit({ id: true, empresaId: true, password: true }); // Password usually handled separately
+const UpdateUsuarioSchema = UsuarioFirebaseSchema.partial().omit({ id: true, empresaId: true, password: true });
 
 export async function updateUsuario(usuarioId: string, empresaIdAuth: string, data: Partial<Omit<UsuarioFirebase, 'id' | 'empresaId' | 'password'>>): Promise<{ success: boolean; message: string; usuario?: UsuarioFirebase }> {
   const userIndex = CUsuarios.findIndex(u => u.id === usuarioId);
@@ -89,3 +90,50 @@ export async function updateUsuario(usuarioId: string, empresaIdAuth: string, da
   await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true, message: 'Usuario actualizado con éxito.', usuario: CUsuarios[userIndex] };
 }
+
+const RegisterTrabajadorSchema = z.object({
+  nombre: z.string().min(1, "El nombre es requerido"),
+  email: z.string().email("Email inválido"),
+  dni: z.string().min(1, "El DNI es requerido").regex(/^[0-9XYZxyz][0-9]{7}[A-HJ-NP-TV-Z]$/i, "Formato de DNI/NIE inválido"),
+  dniAnversoURL: z.string().url("URL de foto de anverso de DNI inválida").optional().nullable(),
+  dniReversoURL: z.string().url("URL de foto de reverso de DNI inválida").optional().nullable(),
+});
+type RegisterTrabajadorData = z.infer<typeof RegisterTrabajadorSchema>;
+
+export async function registerTrabajador(
+  empresaId: string, 
+  data: RegisterTrabajadorData
+): Promise<{ success: boolean; message: string; usuario?: UsuarioFirebase }> {
+  
+  const validationResult = RegisterTrabajadorSchema.safeParse(data);
+  if (!validationResult.success) {
+    const errors = validationResult.error.flatten().fieldErrors;
+    const errorMessages = Object.values(errors).flat().join(', ');
+    return { success: false, message: `Error de validación: ${errorMessages}` };
+  }
+
+  // Check if email or DNI already exists for this company
+  const existingUser = CUsuarios.find(u => u.empresaId === empresaId && (u.email === data.email || u.dni === data.dni));
+  if (existingUser) {
+    const field = existingUser.email === data.email ? 'email' : 'DNI';
+    return { success: false, message: `Ya existe un trabajador con este ${field} en tu empresa.` };
+  }
+
+  const newUsuario: UsuarioFirebase = {
+    ...validationResult.data,
+    id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
+    empresaId: empresaId,
+    rol: 'trabajador',
+    activo: true,
+    password: data.dni, // Using DNI as default password for simplicity in mock
+    obrasAsignadas: [],
+    // dniAnversoURL and dniReversoURL are already in validationResult.data
+  };
+
+  CUsuarios.push(newUsuario);
+  revalidatePath('/(app)/usuarios');
+  
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return { success: true, message: 'Trabajador registrado con éxito.', usuario: newUsuario };
+}
+
