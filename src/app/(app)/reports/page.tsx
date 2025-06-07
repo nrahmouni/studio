@@ -1,4 +1,6 @@
 // src/app/(app)/reports/page.tsx
+'use client'; // Added this directive
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Construction, DollarSign, Clock, Users, FileText } from "lucide-react";
 import {
