@@ -3,8 +3,7 @@
 'use client';
 
 import { useEffect, useState, useMemo } from 'react';
-import { useForm, useFieldArray, Controller }
-from 'react-hook-form';
+import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
@@ -14,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/hooks/use-toast';
+import { useToast } from '@/components/ui/use-toast';
 import { Loader2, CalendarIcon, ChevronLeft, ChevronRight, Save, UserCheck, AlertTriangle, Info, Edit3 } from 'lucide-react';
 import { format, addDays, subDays, isEqual, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -22,9 +21,10 @@ import { getUsuarioById, getUsuariosByEmpresaId } from '@/lib/actions/user.actio
 import { getObrasByEmpresaId } from '@/lib/actions/obra.actions';
 import { getControlDiario, saveControlDiario } from '@/lib/actions/controlDiario.actions';
 import type { UsuarioFirebase, Obra, ControlDiarioObra, ControlDiarioRegistroTrabajador } from '@/lib/types';
-import { ControlDiarioObraFormSchema } from '@/lib/types'; // Using the form-specific schema
+import { ControlDiarioObraFormSchema, type ControlDiarioFormData } from '@/lib/types'; // Using the form-specific schema, added ControlDiarioFormData import
+import useMobile from '@/hooks/use-mobile';
 
-type ControlDiarioFormData = z.infer<typeof ControlDiarioObraFormSchema>;
+// type ControlDiarioFormData = z.infer<typeof ControlDiarioObraFormSchema>; // z was not imported here, moved to types.ts
 
 export default function ControlDiarioPage() {
   const { toast } = useToast();
@@ -33,7 +33,7 @@ export default function ControlDiarioPage() {
   const [userObras, setUserObras] = useState<Obra[]>([]);
   const [selectedObraId, setSelectedObraId] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
-  
+  const isMobile = useMobile();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export default function ControlDiarioPage() {
   const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: 'registrosTrabajadores',
-    keyName: 'fieldId', // to prevent issues with array item re-rendering
+    keyName: 'id', 
   });
 
   // Load current user and their obras
@@ -105,13 +105,12 @@ export default function ControlDiarioPage() {
   // Load control diario data when obra or date changes
   useEffect(() => {
     if (!selectedObraId || !currentUser || !empresaId) {
-      // If no obra selected, or user not loaded, clear form or show placeholder
-      replace([]); // Clear existing field array items
+      replace([]); 
       form.reset({ obraId: selectedObraId, fecha: selectedDate, registrosTrabajadores: [] });
       return;
     }
     
-    const fetchControlData = async () => {
+ const fetchControlData = async () => {
       setIsLoading(true);
       setError(null);
       try {
@@ -119,24 +118,23 @@ export default function ControlDiarioPage() {
         if (data) {
           form.reset({
             obraId: data.obraId,
-            fecha: new Date(data.fecha), // Ensure it's a Date object
+            fecha: new Date(data.fecha), 
             registrosTrabajadores: data.registrosTrabajadores.map(rt => ({
-              ...rt,
-              // ensure nombreTrabajador is populated if missing from shell
-              nombreTrabajador: rt.nombreTrabajador || mockUsuarios.find(u => u.id === rt.usuarioId)?.nombre || 'Desconocido', 
-              horasReportadas: rt.horasReportadas === undefined ? null : rt.horasReportadas, // Ensure null for empty
+ ...rt,
+ nombreTrabajador: rt.nombreTrabajador || 'Desconocido', 
+              horasReportadas: rt.horasReportadas === undefined ? null : rt.horasReportadas,
               horaInicio: rt.horaInicio === undefined ? null : rt.horaInicio,
-              horaFin: rt.horaFin === undefined ? null : rt.horaFin,
+ horaFin: rt.horaFin === undefined ? null : rt.horaFin,
             })),
             firmaJefeObraURL: data.firmaJefeObraURL,
           });
         } else {
            setError("No se pudo cargar o inicializar el control diario para esta obra/fecha.");
-           replace([]); // Clear form if no data
+           replace([]); 
         }
       } catch (e) {
         setError("Error al cargar el control diario.");
-        replace([]); // Clear form on error
+        replace([]); 
       } finally {
         setIsLoading(false);
       }
@@ -170,7 +168,7 @@ export default function ControlDiarioPage() {
     const startDate = new Date(0, 0, 0, startH, startM);
     let endDate = new Date(0, 0, 0, endH, endM);
 
-    if (endDate < startDate) { // Assumes crossing midnight means next day for end time
+    if (endDate < startDate) { 
         endDate.setDate(endDate.getDate() + 1);
     }
     
@@ -179,8 +177,6 @@ export default function ControlDiarioPage() {
     
     const diffHours = diffMillis / (1000 * 60 * 60);
     return diffHours.toFixed(2) + 'h';
-    // Note: This doesn't account for breaks. It's purely start to end.
-    // For more accuracy, this could be expanded or a separate "break duration" field could be added.
   };
 
 
@@ -189,23 +185,23 @@ export default function ControlDiarioPage() {
         toast({ title: "Error", description: "Usuario no autenticado.", variant: "destructive" });
         return;
     }
+    if (!empresaId) {
+        toast({ title: "Error", description: "ID de empresa no disponible.", variant: "destructive" });
+        return;
+    }
     setIsSaving(true);
     try {
-      // The form data (formData) should already match the structure needed by saveControlDiario,
-      // including obraId and fecha. The jefeObraId is passed separately.
       const result = await saveControlDiario(formData, currentUser.id);
       if (result.success) {
         toast({ title: "Éxito", description: "Control diario guardado." });
-        // Optionally, re-fetch data to reflect any server-side changes or confirmations
-        const updatedData = await getControlDiario(selectedObraId, selectedDate, currentUser.id, empresaId!);
+        const updatedData = await getControlDiario(selectedObraId, selectedDate, currentUser.id, empresaId);
          if (updatedData) {
           form.reset({
             obraId: updatedData.obraId,
             fecha: new Date(updatedData.fecha),
             registrosTrabajadores: updatedData.registrosTrabajadores.map(rt => ({
                 ...rt,
-                nombreTrabajador: rt.nombreTrabajador || mockUsuarios.find(u => u.id === rt.usuarioId)?.nombre || 'Desconocido',
-                horasReportadas: rt.horasReportadas === undefined ? null : rt.horasReportadas,
+                nombreTrabajador: rt.nombreTrabajador || 'Desconocido',
               })),
             firmaJefeObraURL: updatedData.firmaJefeObraURL,
           });
@@ -220,7 +216,7 @@ export default function ControlDiarioPage() {
     }
   };
 
-  if (!currentUser && !isLoading && !error) { // If user data couldn't be loaded but no specific error shown yet
+  if (!currentUser && !isLoading && !error) { 
     return <div className="container mx-auto py-8 px-4"><Card className="bg-destructive/10 border-destructive text-destructive"><CardHeader><CardTitle>Error de Usuario</CardTitle></CardHeader><CardContent><p>No se pudo cargar la información del usuario. Intente recargar la página.</p></CardContent></Card></div>;
   }
   if (currentUser && currentUser.rol === 'trabajador'){
@@ -314,98 +310,167 @@ export default function ControlDiarioPage() {
               <input type="hidden" {...form.register("obraId")} value={selectedObraId} />
               <input type="hidden" {...form.register("fecha")} value={selectedDate.toISOString()} />
 
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead className="border-b">
-                    <tr>
-                      <th className="p-2 text-left font-semibold text-sm text-muted-foreground">Asist.</th>
-                      <th className="p-2 text-left font-semibold text-sm text-muted-foreground">Trabajador</th>
-                      <th className="p-2 text-left font-semibold text-sm text-muted-foreground">H. Inicio</th>
-                      <th className="p-2 text-left font-semibold text-sm text-muted-foreground">H. Fin</th>
-                      <th className="p-2 text-left font-semibold text-sm text-muted-foreground">H. Calc.</th>
-                      <th className="p-2 text-left font-semibold text-sm text-muted-foreground">H. Report.</th>
-                      <th className="p-2 text-left font-semibold text-sm text-muted-foreground">Validado</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {fields.map((field, index) => (
-                      <tr key={field.fieldId} className="border-b last:border-b-0 hover:bg-muted/50">
-                        <td className="p-2 align-middle">
-                          <Controller
-                            name={`registrosTrabajadores.${index}.asistencia`}
-                            control={form.control}
-                            render={({ field: controllerField }) => (
-                              <Checkbox
-                                checked={controllerField.value}
-                                onCheckedChange={controllerField.onChange}
-                                disabled={isSaving}
-                              />
-                            )}
-                          />
-                        </td>
-                        <td className="p-2 align-middle text-sm">{form.watch(`registrosTrabajadores.${index}.nombreTrabajador`) || field.usuarioId}</td>
-                        <td className="p-2 align-middle">
-                          <Input
-                            type="time"
-                            {...form.register(`registrosTrabajadores.${index}.horaInicio`)}
-                            className="w-28 h-9 text-sm"
-                            disabled={isSaving || !form.watch(`registrosTrabajadores.${index}.asistencia`)}
-                          />
-                        </td>
-                        <td className="p-2 align-middle">
-                           <Input
-                            type="time"
-                            {...form.register(`registrosTrabajadores.${index}.horaFin`)}
-                            className="w-28 h-9 text-sm"
-                            disabled={isSaving || !form.watch(`registrosTrabajadores.${index}.asistencia`)}
-                          />
-                        </td>
-                         <td className="p-2 align-middle text-sm text-muted-foreground w-20">
-                           {form.watch(`registrosTrabajadores.${index}.asistencia`) ? calculateWorkedHours(index) : 'N/A'}
-                         </td>
-                        <td className="p-2 align-middle">
-                          <Input
-                            type="number"
-                            step="0.1"
-                            {...form.register(`registrosTrabajadores.${index}.horasReportadas`, { valueAsNumber: true })}
-                            className="w-24 h-9 text-sm"
-                            placeholder="Ej: 8"
-                            disabled={isSaving || !form.watch(`registrosTrabajadores.${index}.asistencia`)}
-                          />
-                        </td>
-                        <td className="p-2 align-middle">
-                           <Controller
-                            name={`registrosTrabajadores.${index}.validadoPorJefeObra`}
-                            control={form.control}
-                            render={({ field: controllerField }) => (
-                              <Checkbox
-                                checked={controllerField.value}
-                                onCheckedChange={controllerField.onChange}
-                                disabled={isSaving}
-                                title="Marcar como validado por Jefe de Obra"
-                              />
-                            )}
-                          />
-                        </td>
+              {isMobile ? (
+                <div className="space-y-4">
+                  {fields.map((field, index) => (
+                    <Card key={field.id} className="p-4 border">
+                      <div className="flex items-center justify-between mb-3">
+                        <h4 className="font-semibold text-md">{form.watch(`registrosTrabajadores.${index}.nombreTrabajador`) || field.usuarioId}</h4>
+                         <div className="flex items-center space-x-2">
+                           <Label htmlFor={`asistencia-${field.id}`} className="text-sm text-muted-foreground">Asistencia:</Label>
+                            <Controller
+                              name={`registrosTrabajadores.${index}.asistencia`}
+                              control={form.control}
+                              render={({ field: controllerField }) => (
+                                <Checkbox
+                                  id={`asistencia-${field.id}`}
+                                  checked={controllerField.value}
+                                  onCheckedChange={controllerField.onChange}
+                                  disabled={isSaving}
+                                />
+                              )}
+                            />
+                         </div>
+                      </div>
+                      
+                       {form.watch(`registrosTrabajadores.${index}.asistencia`) && (
+                         <div className="grid grid-cols-2 gap-3 text-sm">
+                            <div>
+                                <Label htmlFor={`horaInicio-${field.id}`} className="text-xs text-muted-foreground">Hora Inicio:</Label>
+                                <Input
+                                  id={`horaInicio-${field.id}`}
+                                  type="time"
+                                  {...form.register(`registrosTrabajadores.${index}.horaInicio`)}
+                                  className="w-full h-8 text-xs"
+                                  disabled={isSaving}
+                                />
+                            </div>
+                             <div>
+                                <Label htmlFor={`horaFin-${field.id}`} className="text-xs text-muted-foreground">Hora Fin:</Label>
+                                <Input
+                                  id={`horaFin-${field.id}`}
+                                  type="time"
+                                  {...form.register(`registrosTrabajadores.${index}.horaFin`)}
+                                  className="w-full h-8 text-xs"
+                                  disabled={isSaving}
+                                />
+                            </div>
+                            <div className="col-span-2">
+                                <Label className="text-xs text-muted-foreground block">Horas Calculadas:</Label>
+                                <p className="font-mono">{calculateWorkedHours(index)}</p>
+                            </div>
+                             <div className="col-span-2">
+                                <Label htmlFor={`horasReportadas-${field.id}`} className="text-xs text-muted-foreground">Horas Reportadas:</Label>
+                                <Input
+                                  id={`horasReportadas-${field.id}`}
+                                  type="number"
+                                  step="0.1"
+                                  {...form.register(`registrosTrabajadores.${index}.horasReportadas`, { valueAsNumber: true })}
+                                  className="w-full h-8 text-xs"
+                                  placeholder="Ej: 8"
+                                  disabled={isSaving}
+                                />
+                            </div>
+                             <div className="col-span-2 flex items-center space-x-2 pt-2">
+                                 <Controller
+                                  name={`registrosTrabajadores.${index}.validadoPorJefeObra`}
+                                  control={form.control}
+                                  render={({ field: controllerField }) => (
+                                    <Checkbox
+                                       id={`validado-${field.id}`}
+                                      checked={controllerField.value}
+                                      onCheckedChange={controllerField.onChange}
+                                      disabled={isSaving}
+                                    />
+                                  )}
+                                />
+                                <Label htmlFor={`validado-${field.id}`} className="text-sm">Validado por Jefe de Obra</Label>
+                            </div>
+                         </div>
+                       )}
+                    </Card>
+                  ))}
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="w-full">
+                    <thead className="border-b">
+                      <tr>
+                         <th className="p-2 text-left font-semibold text-sm text-muted-foreground">Asist.</th>
+                        <th className="p-2 text-left font-semibold text-sm text-muted-foreground">Trabajador</th>
+                        <th className="p-2 text-left font-semibold text-sm text-muted-foreground">H. Inicio</th>
+                        <th className="p-2 text-left font-semibold text-sm text-muted-foreground">H. Fin</th>
+                        <th className="p-2 text-left font-semibold text-sm text-muted-foreground">H. Calc.</th>
+                        <th className="p-2 text-left font-semibold text-sm text-muted-foreground">H. Report.</th>
+                        <th className="p-2 text-left font-semibold text-sm text-muted-foreground">Validado</th>
                       </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
-              
-              {/* Placeholder for Firma */}
-              <div className="pt-4">
-                <Label htmlFor="firmaURL" className="font-semibold">Firma Jefe de Obra (URL)</Label>
-                 <Input 
-                    id="firmaURL" 
-                    {...form.register("firmaJefeObraURL")} 
-                    placeholder="https://ejemplo.com/firma.png (funcionalidad en desarrollo)" 
-                    className="mt-1"
-                    disabled={isSaving}
-                  />
-                <p className="text-xs text-muted-foreground mt-1">En el futuro, aquí habrá un componente de firma digital.</p>
-              </div>
-
+                    </thead>
+                    <tbody>
+                      {fields.map((field, index) => (
+                        <tr key={field.id} className="border-b last:border-b-0 hover:bg-muted/50">
+                          <td className="p-2 align-middle">
+                            <Controller
+                              name={`registrosTrabajadores.${index}.asistencia`}
+                              control={form.control}
+                              render={({ field: controllerField }) => (
+                                <Checkbox
+                                  checked={controllerField.value}
+                                  onCheckedChange={controllerField.onChange}
+                                  disabled={isSaving}
+                                />
+                              )}
+                            />
+                          </td>
+                          <td className="p-2 align-middle text-sm">{form.watch(`registrosTrabajadores.${index}.nombreTrabajador`) || field.usuarioId}</td>
+                          <td className="p-2 align-middle">
+                            <Input
+                              type="time"
+                              {...form.register(`registrosTrabajadores.${index}.horaInicio`)}
+                              className="w-28 h-9 text-sm"
+                              disabled={isSaving || !form.watch(`registrosTrabajadores.${index}.asistencia`)}
+                            />
+                          </td>
+                          <td className="p-2 align-middle">
+                             <Input
+                              type="time"
+                              {...form.register(`registrosTrabajadores.${index}.horaFin`)}
+                              className="w-28 h-9 text-sm"
+                              disabled={isSaving || !form.watch(`registrosTrabajadores.${index}.asistencia`)}
+                            />
+                          </td>
+                           <td className="p-2 align-middle text-sm text-muted-foreground w-20">
+                             {form.watch(`registrosTrabajadores.${index}.asistencia`) ? calculateWorkedHours(index) : 'N/A'}
+                           </td>
+                          <td className="p-2 align-middle">
+                            <Input
+                              type="number"
+                              step="0.1"
+                              {...form.register(`registrosTrabajadores.${index}.horasReportadas`, { valueAsNumber: true })}
+                              className="w-24 h-9 text-sm"
+                              placeholder="Ej: 8"
+                              disabled={isSaving || !form.watch(`registrosTrabajadores.${index}.asistencia`)}
+                            />
+                          </td>
+                          <td className="p-2 align-middle">
+                             <Controller
+                              name={`registrosTrabajadores.${index}.validadoPorJefeObra`}
+                              control={form.control}
+                              render={({ field: controllerField }) => (
+                                <Checkbox
+                                  checked={controllerField.value}
+                                  onCheckedChange={controllerField.onChange}
+                                  disabled={isSaving}
+                                  title="Marcar como validado por Jefe de Obra"
+                                />
+                              )}
+                            />
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
               <div className="flex justify-end pt-4">
                 <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isSaving || isLoading || fields.length === 0}>
                   {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
@@ -424,3 +489,4 @@ export default function ControlDiarioPage() {
     </div>
   );
 }
+
