@@ -1,8 +1,7 @@
-
 'use server';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { FichajeSchema, type Fichaje, type FichajeTipo } from '@/lib/types';
+import { FichajeSchema, type Fichaje, type FichajeTipo, GetFichajesCriteriaSchema, type GetFichajesCriteria } from '@/lib/types';
 import { mockFichajes } from '@/lib/mockData/fichajes';
 import { mockObras } from '../mockData/obras';
 import { mockUsuarios } from '../mockData/usuarios';
@@ -43,7 +42,7 @@ export async function createFichaje(data: CreateFichajeData): Promise<{ success:
     obraId,
     tipo,
     timestamp: new Date(),
-    validado: false, // Default validation status
+    validado: false, 
     validadoPor: null,
   };
 
@@ -73,34 +72,22 @@ export async function getFichajesHoyUsuarioObra(usuarioId: string, obraId: strin
   return fichajesFiltrados.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
 }
 
-export const GetFichajesCriteriaSchema = z.object({
-  empresaId: z.string(),
-  obraId: z.string().optional(),
-  usuarioId: z.string().optional(),
-  fechaInicio: z.date().optional(),
-  fechaFin: z.date().optional(),
-  estadoValidacion: z.enum(['todos', 'validados', 'pendientes']).default('todos').optional(),
-});
-export type GetFichajesCriteria = z.infer<typeof GetFichajesCriteriaSchema>;
-
 export async function getFichajesByCriteria(criteria: GetFichajesCriteria): Promise<Fichaje[]> {
-  await new Promise(resolve => setTimeout(resolve, 400)); // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 400)); 
 
   const validationResult = GetFichajesCriteriaSchema.safeParse(criteria);
   if (!validationResult.success) {
     console.error("Error de validación de criterios de fichaje:", validationResult.error.flatten().fieldErrors);
-    return []; // Or throw an error
+    return []; 
   }
   const { empresaId, obraId, usuarioId, fechaInicio, fechaFin, estadoValidacion } = validationResult.data;
 
-  // First, get all obras for the given empresaId
   const obrasDeEmpresa = mockObras.filter(o => o.empresaId === empresaId).map(o => o.id);
-  if (obrasDeEmpresa.length === 0 && obraId !== undefined ) { // If specific obraId is passed but empresa has no obras
+  if (obrasDeEmpresa.length === 0 && obraId !== undefined ) { 
       if (!obrasDeEmpresa.includes(obraId)) return [];
   }
 
   let filteredFichajes = Cfichajes.filter(f => {
-    // Check if fichaje's obraId is within the company's obras
     if (!obrasDeEmpresa.includes(f.obraId)) {
       return false;
     }
@@ -109,7 +96,7 @@ export async function getFichajesByCriteria(criteria: GetFichajesCriteria): Prom
     if (fechaInicio && f.timestamp < fechaInicio) return false;
     if (fechaFin) {
         const endOfDay = new Date(fechaFin);
-        endOfDay.setHours(23, 59, 59, 999); // Include the entire end day
+        endOfDay.setHours(23, 59, 59, 999); 
         if (f.timestamp > endOfDay) return false;
     }
     if (estadoValidacion === 'validados' && !f.validado) return false;

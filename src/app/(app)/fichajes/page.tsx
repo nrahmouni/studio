@@ -10,8 +10,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, Clock, LogIn, LogOut, Coffee, Briefcase, AlertTriangle, Info, Filter, CheckCircle, ShieldAlert, UsersIcon, CalendarDays } from 'lucide-react';
 import { getUsuarioById, getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
 import { getObraById, getObrasByEmpresaId } from '@/lib/actions/obra.actions';
-import { createFichaje, getFichajesHoyUsuarioObra, getFichajesByCriteria, validateFichaje, GetFichajesCriteria } from '@/lib/actions/fichaje.actions';
-import type { UsuarioFirebase, Obra, Fichaje, FichajeTipo } from '@/lib/types';
+import { createFichaje, getFichajesHoyUsuarioObra, getFichajesByCriteria, validateFichaje } from '@/lib/actions/fichaje.actions';
+import type { UsuarioFirebase, Obra, Fichaje, FichajeTipo, GetFichajesCriteria } from '@/lib/types'; // Correctly importing GetFichajesCriteria
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";

@@ -83,3 +83,12 @@ export const FichajeSchema = z.object({
 export type Fichaje = z.infer<typeof FichajeSchema>;
 export type FichajeTipo = z.infer<typeof FichajeSchema.shape.tipo>;
 
+export const GetFichajesCriteriaSchema = z.object({
+  empresaId: z.string(),
+  obraId: z.string().optional(),
+  usuarioId: z.string().optional(),
+  fechaInicio: z.date().optional(),
+  fechaFin: z.date().optional(),
+  estadoValidacion: z.enum(['todos', 'validados', 'pendientes']).default('todos').optional(),
+});
+export type GetFichajesCriteria = z.infer<typeof GetFichajesCriteriaSchema>;
