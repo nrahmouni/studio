@@ -87,7 +87,7 @@ export default function EditObraPage() {
       setIsLoading(true);
       setError(null);
       try {
-        console.log("[EDIT OBRA FETCH] Iniciando carga de datos para obraId:", obraId);
+        console.log("[EDIT OBRA FETCH] Iniciando carga de datos para obraId:", obraId, "EmpresaId:", storedEmpresaId);
         const [fetchedObra, fetchedWorkers] = await Promise.all([
           getObraById(obraId, storedEmpresaId),
           getUsuariosByEmpresaId(storedEmpresaId)
@@ -95,7 +95,7 @@ export default function EditObraPage() {
         
         const activeTrabajadores = fetchedWorkers.filter(u => u.rol === 'trabajador' && u.activo);
         setCompanyWorkers(activeTrabajadores);
-        console.log("[EDIT OBRA FETCH] Trabajadores activos de la empresa:", activeTrabajadores);
+        console.log("[EDIT OBRA FETCH] Trabajadores activos de la empresa (" + activeTrabajadores.length + "):", activeTrabajadores.map(w => w.nombre).join(', '));
 
         if (fetchedObra) {
           setObraData(fetchedObra);
@@ -130,8 +130,10 @@ export default function EditObraPage() {
         console.log("[EDIT OBRA FETCH] Carga de datos finalizada.");
       }
     };
-    fetchData();
-  }, [obraId, router, toast]); // Removido 'form' de las dependencias para evitar re-renders innecesarios.
+    if (currentUser || localStorage.getItem('usuarioId_obra_link')) { // Ensure currentUser might be set or fallback to localStorage check
+      fetchData();
+    }
+  }, [obraId, router, toast, currentUser]); // Added currentUser to re-fetch if it changes after initial load
 
   const onSubmit = async (data: ObraEditFormData) => {
     if (!obraId || !empresaId) return;
@@ -160,6 +162,7 @@ export default function EditObraPage() {
   };
 
   const canEditCostsOrWorkers = currentUser && obraData && (currentUser.rol === 'admin' || currentUser.id === obraData.jefeObraId);
+  console.log(`[EDIT OBRA RENDER] currentUser.id: ${currentUser?.id}, obraData.jefeObraId: ${obraData?.jefeObraId}, currentUser.rol: ${currentUser?.rol}, canEditCostsOrWorkers: ${canEditCostsOrWorkers}`);
   
   if (isLoading) {
     return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando datos...</p></div>;
@@ -267,7 +270,6 @@ export default function EditObraPage() {
               {form.formState.errors.descripcion && <p className="text-sm text-destructive mt-1">{form.formState.errors.descripcion.message}</p>}
             </div>
             
-            {console.log("[EDIT OBRA RENDER] Checkpoint A: About to render Costs. canEditCostsOrWorkers =", canEditCostsOrWorkers)}
             {canEditCostsOrWorkers && (
             <Card className="border-dashed border-accent/50">
               <CardHeader>
@@ -328,12 +330,13 @@ export default function EditObraPage() {
               </CardContent>
             </Card>
             )}
-            {console.log("[EDIT OBRA RENDER] Checkpoint B: About to render Worker Assignment. canEditCostsOrWorkers =", canEditCostsOrWorkers, "companyWorkers.length =", companyWorkers.length)}
-
+            
             {/* Worker Assignment Section START */}
+            {console.log("[EDIT OBRA RENDER] *** INTENTANDO RENDERIZAR SECCIÓN ASIGNAR TRABAJADORES ***")}
+            {console.log(`[EDIT OBRA RENDER] canEditCostsOrWorkers: ${canEditCostsOrWorkers}, companyWorkers.length: ${companyWorkers.length}`)}
             {canEditCostsOrWorkers && companyWorkers.length > 0 && (
               <>
-                {console.log("[EDIT OBRA RENDER] >>> Rendering WORKER ASSIGNMENT SECTION (with workers) <<<")}
+                {console.log("[EDIT OBRA RENDER] >>> RENDERIZANDO SECCIÓN ASIGNAR TRABAJADORES (CON TRABAJADORES) <<<")}
                 <Card className="border-dashed border-primary/50 mt-6">
                   <CardHeader>
                     <CardTitle className="text-xl font-headline text-primary flex items-center">
@@ -357,7 +360,7 @@ export default function EditObraPage() {
                                     ? [...(field.value || []), worker.id]
                                     : (field.value || []).filter((id) => id !== worker.id);
                                   field.onChange(newValue);
-                                  console.log("[EDIT OBRA CHECKBOX] New trabajadoresAsignados:", newValue);
+                                  console.log("[EDIT OBRA CHECKBOX] Nuevos trabajadoresAsignados:", newValue);
                                 }}
                               />
                               <Label htmlFor={`worker-${worker.id}`} className="font-normal cursor-pointer">
@@ -375,7 +378,7 @@ export default function EditObraPage() {
             )}
             {canEditCostsOrWorkers && companyWorkers.length === 0 && (
               <>
-                {console.log("[EDIT OBRA RENDER] >>> Rendering WORKER ASSIGNMENT SECTION (NO workers) <<<")}
+                {console.log("[EDIT OBRA RENDER] >>> RENDERIZANDO SECCIÓN ASIGNAR TRABAJADORES (SIN TRABAJADORES DISPONIBLES) <<<")}
                 <Card className="border-dashed border-primary/50 mt-6">
                     <CardHeader>
                         <CardTitle className="text-xl font-headline text-primary flex items-center">
@@ -389,7 +392,9 @@ export default function EditObraPage() {
                 </Card>
               </>
             )}
-            {console.log("[EDIT OBRA RENDER] Checkpoint C: After Worker Assignment section conditions.")}
+            {!canEditCostsOrWorkers && (
+                 console.log("[EDIT OBRA RENDER] >>> NO SE RENDERIZA SECCIÓN ASIGNAR TRABAJADORES POR FALTA DE PERMISOS (canEditCostsOrWorkers es false) <<<")
+            )}
             {/* Worker Assignment Section END */}
             
             <div className="flex justify-end space-x-3 pt-4">
