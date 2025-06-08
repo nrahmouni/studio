@@ -13,7 +13,7 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
-import { useToast } from '@/components/ui/use-toast';
+import { useToast } from '@/hooks/use-toast';
 import { Loader2, CalendarIcon, ChevronLeft, ChevronRight, Save, UserCheck, AlertTriangle, Info, Edit3 } from 'lucide-react';
 import { format, addDays, subDays, isEqual, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -21,10 +21,9 @@ import { getUsuarioById, getUsuariosByEmpresaId } from '@/lib/actions/user.actio
 import { getObrasByEmpresaId } from '@/lib/actions/obra.actions';
 import { getControlDiario, saveControlDiario } from '@/lib/actions/controlDiario.actions';
 import type { UsuarioFirebase, Obra, ControlDiarioObra, ControlDiarioRegistroTrabajador } from '@/lib/types';
-import { ControlDiarioObraFormSchema, type ControlDiarioFormData } from '@/lib/types'; // Using the form-specific schema, added ControlDiarioFormData import
-import useMobile from '@/hooks/use-mobile';
+import { ControlDiarioObraFormSchema, type ControlDiarioFormData } from '@/lib/types';
+import { useIsMobile } from '@/hooks/use-mobile';
 
-// type ControlDiarioFormData = z.infer<typeof ControlDiarioObraFormSchema>; // z was not imported here, moved to types.ts
 
 export default function ControlDiarioPage() {
   const { toast } = useToast();
@@ -33,7 +32,7 @@ export default function ControlDiarioPage() {
   const [userObras, setUserObras] = useState<Obra[]>([]);
   const [selectedObraId, setSelectedObraId] = useState<string>('');
   const [selectedDate, setSelectedDate] = useState<Date>(startOfDay(new Date()));
-  const isMobile = useMobile();
+  const isMobile = useIsMobile();
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,7 +50,7 @@ export default function ControlDiarioPage() {
   const { fields, append, remove, replace } = useFieldArray({
     control: form.control,
     name: 'registrosTrabajadores',
-    keyName: 'id', 
+    keyName: 'id',
   });
 
   // Load current user and their obras
@@ -73,8 +72,8 @@ export default function ControlDiarioPage() {
         setCurrentUser(user);
         if (user && (user.rol === 'admin' || user.rol === 'jefeObra')) {
           const obras = await getObrasByEmpresaId(storedEmpresaId);
-          const relevantObras = user.rol === 'admin' 
-            ? obras 
+          const relevantObras = user.rol === 'admin'
+            ? obras
             : obras.filter(o => user.obrasAsignadas?.includes(o.id));
           
           const activeRelevantObras = relevantObras.filter(o => !o.fechaFin || new Date(o.fechaFin) >= new Date());
@@ -105,7 +104,7 @@ export default function ControlDiarioPage() {
   // Load control diario data when obra or date changes
   useEffect(() => {
     if (!selectedObraId || !currentUser || !empresaId) {
-      replace([]); 
+      replace([]);
       form.reset({ obraId: selectedObraId, fecha: selectedDate, registrosTrabajadores: [] });
       return;
     }
@@ -118,10 +117,10 @@ export default function ControlDiarioPage() {
         if (data) {
           form.reset({
             obraId: data.obraId,
-            fecha: new Date(data.fecha), 
+            fecha: new Date(data.fecha),
             registrosTrabajadores: data.registrosTrabajadores.map(rt => ({
  ...rt,
- nombreTrabajador: rt.nombreTrabajador || 'Desconocido', 
+ nombreTrabajador: rt.nombreTrabajador || 'Desconocido',
               horasReportadas: rt.horasReportadas === undefined ? null : rt.horasReportadas,
               horaInicio: rt.horaInicio === undefined ? null : rt.horaInicio,
  horaFin: rt.horaFin === undefined ? null : rt.horaFin,
@@ -130,11 +129,11 @@ export default function ControlDiarioPage() {
           });
         } else {
            setError("No se pudo cargar o inicializar el control diario para esta obra/fecha.");
-           replace([]); 
+           replace([]);
         }
       } catch (e) {
         setError("Error al cargar el control diario.");
-        replace([]); 
+        replace([]);
       } finally {
         setIsLoading(false);
       }
@@ -168,7 +167,7 @@ export default function ControlDiarioPage() {
     const startDate = new Date(0, 0, 0, startH, startM);
     let endDate = new Date(0, 0, 0, endH, endM);
 
-    if (endDate < startDate) { 
+    if (endDate < startDate) {
         endDate.setDate(endDate.getDate() + 1);
     }
     
@@ -216,7 +215,7 @@ export default function ControlDiarioPage() {
     }
   };
 
-  if (!currentUser && !isLoading && !error) { 
+  if (!currentUser && !isLoading && !error) {
     return <div className="container mx-auto py-8 px-4"><Card className="bg-destructive/10 border-destructive text-destructive"><CardHeader><CardTitle>Error de Usuario</CardTitle></CardHeader><CardContent><p>No se pudo cargar la información del usuario. Intente recargar la página.</p></CardContent></Card></div>;
   }
   if (currentUser && currentUser.rol === 'trabajador'){
@@ -489,4 +488,3 @@ export default function ControlDiarioPage() {
     </div>
   );
 }
-
