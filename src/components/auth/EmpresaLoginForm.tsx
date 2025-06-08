@@ -58,7 +58,11 @@ export function EmpresaLoginForm() {
           localStorage.setItem('usuarioId_obra_link', result.userId); 
           localStorage.setItem('userRole_obra_link', result.role as UsuarioFirebase['rol']);
         }
-        router.push('/dashboard');
+        if (result.role === 'jefeObra') {
+          router.push('/control-diario');
+        } else {
+          router.push('/dashboard');
+        }
       } else {
         toast({
           title: 'Error de Inicio de Sesión',

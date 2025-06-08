@@ -40,7 +40,7 @@ export const mockObras: Obra[] = [
     nombre: 'Rehabilitación Fachada Edificio Histórico',
     direccion: 'Plaza de la Villa, 5, Madrid',
     fechaInicio: new Date('2024-07-15'),
-    fechaFin: new Date('2024-12-20'),
+    fechaFin: null, // Cambiado a null para asegurar que esté activa para user-1-jefeobra-1
     clienteNombre: 'Comunidad de Propietarios Plaza Villa',
     jefeObraId: 'user-1-jefeobra-1', // Carlos López
     costosPorCategoria: [],
