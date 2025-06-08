@@ -77,7 +77,8 @@ export const FichajeSchema = z.object({
   obraId: z.string(),
   tipo: z.enum(["entrada", "salida", "inicioDescanso", "finDescanso"]),
   timestamp: z.date(),
-  // ubicacion: z.object({ lat: z.number(), lon: z.number(),}).optional(), // For future use
+  validado: z.boolean().default(false).optional(),
+  validadoPor: z.string().optional().nullable(),
 });
 export type Fichaje = z.infer<typeof FichajeSchema>;
 export type FichajeTipo = z.infer<typeof FichajeSchema.shape.tipo>;
