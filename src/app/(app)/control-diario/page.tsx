@@ -21,7 +21,7 @@ import { getUsuarioById, getUsuariosByEmpresaId } from '@/lib/actions/user.actio
 import { getObrasByEmpresaId } from '@/lib/actions/obra.actions';
 import { getControlDiario, saveControlDiario } from '@/lib/actions/controlDiario.actions';
 import type { UsuarioFirebase, Obra, ControlDiarioObra, ControlDiarioRegistroTrabajador } from '@/lib/types';
-import { ControlDiarioObraFormSchema, type ControlDiarioFormData } from '@/lib/types';
+import { ControlDiarioObraFormSchema, type ControlDiarioObraFormData } from '@/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
 
 
@@ -37,7 +37,7 @@ export default function ControlDiarioPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const form = useForm<ControlDiarioFormData>({
+  const form = useForm<ControlDiarioObraFormData>({
     resolver: zodResolver(ControlDiarioObraFormSchema),
     defaultValues: {
       obraId: '',
@@ -179,7 +179,7 @@ export default function ControlDiarioPage() {
   };
 
 
-  const onSubmit = async (formData: ControlDiarioFormData) => {
+  const onSubmit = async (formData: ControlDiarioObraFormData) => {
     if (!currentUser) {
         toast({ title: "Error", description: "Usuario no autenticado.", variant: "destructive" });
         return;
