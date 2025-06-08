@@ -17,7 +17,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: null,
   },
   {
-    id: 'user-1-jefeobra-1', // Renamed from user-1-jefeobra for clarity
+    id: 'user-1-jefeobra-1', // Carlos López
     empresaId: 'empresa-1',
     nombre: 'Carlos López (Jefe Obra CM)',
     email: 'jefeobra.cm@example.com',
@@ -30,7 +30,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: null,
   },
   {
-    id: 'user-1-jefeobra-2', // New Jefe de Obra for Empresa 1
+    id: 'user-1-jefeobra-2', // Elena García
     empresaId: 'empresa-1',
     nombre: 'Elena García (Jefa Obra CM)',
     email: 'elena.garcia.jo@example.com',
@@ -43,7 +43,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: 'https://placehold.co/300x200.png?text=DNI+Elena+R',
   },
   {
-    id: 'user-1-trabajador-1',
+    id: 'user-1-trabajador-1', // Lucía Fernández
     empresaId: 'empresa-1',
     nombre: 'Lucía Fernández (Trabajadora Demo)',
     email: 'trabajador@example.com',
@@ -56,7 +56,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: 'https://placehold.co/300x200.png?text=DNI+Lucia+R',
   },
   {
-    id: 'user-1-trabajador-2',
+    id: 'user-1-trabajador-2', // Marcos García
     empresaId: 'empresa-1',
     nombre: 'Marcos García (Trabajador CM)',
     email: 'marcos.g@example.com',
@@ -69,7 +69,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: null,
   },
   {
-    id: 'user-1-trabajador-3', // New Trabajador for Empresa 1
+    id: 'user-1-trabajador-3', // Javier Soler
     empresaId: 'empresa-1',
     nombre: 'Javier Soler (Trabajador CM)',
     email: 'javier.s@example.com',
@@ -78,6 +78,32 @@ export const mockUsuarios: UsuarioFirebase[] = [
     rol: 'trabajador',
     activo: true,
     obrasAsignadas: ['obra-1-1', 'obra-1-2', 'obra-1-4'],
+    dniAnversoURL: null,
+    dniReversoURL: null,
+  },
+  {
+    id: 'user-1-trabajador-4', // Nuevo trabajador
+    empresaId: 'empresa-1',
+    nombre: 'Sofía Navarro (Trabajadora CM)',
+    email: 'sofia.n@example.com',
+    dni: '22233344D',
+    password: 'password123',
+    rol: 'trabajador',
+    activo: true,
+    obrasAsignadas: ['obra-1-3', 'obra-1-4'],
+    dniAnversoURL: 'https://placehold.co/300x200.png?text=DNI+Sofia+A',
+    dniReversoURL: 'https://placehold.co/300x200.png?text=DNI+Sofia+R',
+  },
+  {
+    id: 'user-1-trabajador-5', // Otro nuevo trabajador
+    empresaId: 'empresa-1',
+    nombre: 'David Reyes (Trabajador CM)',
+    email: 'david.r@example.com',
+    dni: '33344455E',
+    password: 'password123',
+    rol: 'trabajador',
+    activo: false, // Para tener un trabajador inactivo de ejemplo
+    obrasAsignadas: ['obra-1-1'],
     dniAnversoURL: null,
     dniReversoURL: null,
   },
@@ -97,7 +123,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: null,
   },
   {
-    id: 'user-2-jefeobra-1', // New Jefe de Obra for Empresa 2
+    id: 'user-2-jefeobra-1', // Ricardo Montes
     empresaId: 'empresa-2',
     nombre: 'Ricardo Montes (Jefe Obra Alfa)',
     email: 'ricardo.montes.jo@example.com',
@@ -110,7 +136,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: null,
   },
   {
-    id: 'user-2-trabajador-1',
+    id: 'user-2-trabajador-1', // David Sanz
     empresaId: 'empresa-2',
     nombre: 'David Sanz (Trabajador Alfa)',
     email: 'david.s@example.com',
@@ -123,7 +149,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: null,
   },
   {
-    id: 'user-2-trabajador-2', // New Trabajador for Empresa 2
+    id: 'user-2-trabajador-2', // Ana Torres
     empresaId: 'empresa-2',
     nombre: 'Ana Torres (Trabajadora Alfa)',
     email: 'ana.t@example.com',
@@ -151,7 +177,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: null,
   },
   {
-    id: 'user-3-jefeobra-1', // Renamed from user-3-jefeobra
+    id: 'user-3-jefeobra-1', // Miguel Torres
     empresaId: 'empresa-3',
     nombre: 'Miguel Torres (Jefe Obra Edifica)',
     email: 'jefeobra.edifica@example.com',
@@ -164,7 +190,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: null,
   },
    {
-    id: 'user-3-jefeobra-2', // New Jefe de Obra for Empresa 3
+    id: 'user-3-jefeobra-2', // Laura Campos
     empresaId: 'empresa-3',
     nombre: 'Laura Campos (Jefa Obra Edifica)',
     email: 'laura.campos.jo@example.com',
@@ -177,7 +203,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: null,
   },
   {
-    id: 'user-3-trabajador-1',
+    id: 'user-3-trabajador-1', // Laura Jimenez
     empresaId: 'empresa-3',
     nombre: 'Laura Jimenez (Trabajadora Edifica)',
     email: 'laura.j@example.com',
@@ -190,7 +216,7 @@ export const mockUsuarios: UsuarioFirebase[] = [
     dniReversoURL: null,
   },
   {
-    id: 'user-3-trabajador-2', // New Trabajador for Empresa 3
+    id: 'user-3-trabajador-2', // Pedro Ramos
     empresaId: 'empresa-3',
     nombre: 'Pedro Ramos (Trabajador Edifica)',
     email: 'pedro.r@example.com',
