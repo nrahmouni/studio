@@ -14,7 +14,7 @@ const LoginSchema = z.object({
   password: z.string().min(1, 'Contraseña requerida.'),
 });
 
-export async function authenticateEmpresa(credentials: z.infer<typeof LoginSchema>): Promise<{ success: boolean; message: string; empresaId?: string; role?: UsuarioFirebase['rol'] }> {
+export async function authenticateEmpresa(credentials: z.infer<typeof LoginSchema>): Promise<{ success: boolean; message: string; empresaId?: string; userId?: string; role?: UsuarioFirebase['rol'] }> {
   const validatedCredentials = LoginSchema.safeParse(credentials);
   if (!validatedCredentials.success) {
     return { success: false, message: 'Datos de entrada inválidos.' };
@@ -28,7 +28,7 @@ export async function authenticateEmpresa(credentials: z.infer<typeof LoginSchem
   );
 
   if (user) {
-    return { success: true, message: 'Login de empresa exitoso.', empresaId: user.empresaId, role: user.rol };
+    return { success: true, message: 'Login de empresa exitoso.', empresaId: user.empresaId, userId: user.id, role: user.rol };
   } else {
     return { success: false, message: 'Credenciales de empresa incorrectas o rol no autorizado para este acceso.' };
   }
