@@ -33,7 +33,6 @@ export function AppSidebarNav() {
   const [isLoadingRole, setIsLoadingRole] = useState(true);
 
   useEffect(() => {
-    // Ensure localStorage is accessed only on the client side
     if (typeof window !== 'undefined') {
       const role = localStorage.getItem('userRole_obra_link');
       setUserRole(role);
@@ -42,10 +41,8 @@ export function AppSidebarNav() {
   }, []);
 
   if (isLoadingRole) {
-    // You can render a skeleton loader here if preferred
     return (
         <nav className="flex flex-col gap-2 px-4 py-2">
-            {/* Example of a few skeleton items */}
             <div className="h-11 w-full bg-muted/50 rounded-md animate-pulse"></div>
             <div className="h-11 w-full bg-muted/50 rounded-md animate-pulse animation-delay-100"></div>
             <div className="h-11 w-full bg-muted/50 rounded-md animate-pulse animation-delay-200"></div>
@@ -54,7 +51,7 @@ export function AppSidebarNav() {
   }
 
   const visibleNavItems = allNavItems.filter(item => {
-    if (!userRole) return false; // Should not happen if logged in
+    if (!userRole) return false;
     return item.roles.includes(userRole as 'admin' | 'jefeObra' | 'trabajador');
   });
 
@@ -63,20 +60,21 @@ export function AppSidebarNav() {
       {visibleNavItems.map((item) => {
         const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
         return (
-          <Link href={item.href} key={item.label} passHref legacyBehavior>
-            <Button
-              as="a" // Make button behave like an anchor for Next.js Link
-              variant={isActive ? "secondary" : "ghost"}
-              className={cn(
-                "w-full justify-start text-base h-11",
-                isActive && "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/90",
-                !isActive && "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
-              )}
-            >
+          <Button
+            asChild
+            key={item.label}
+            variant={isActive ? "secondary" : "ghost"}
+            className={cn(
+              "w-full justify-start text-base h-11",
+              isActive && "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/90",
+              !isActive && "text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground"
+            )}
+          >
+            <Link href={item.href}>
               <item.icon className="mr-3 h-5 w-5" />
               {item.label}
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         );
       })}
     </nav>
