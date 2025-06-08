@@ -7,7 +7,7 @@ export const mockEmpresas: Empresa[] = [
     CIF: 'B12345678',
     emailContacto: 'contacto@construccionesmodernas.es',
     telefono: '912345678',
-    logoURL: '/obralink-logo.png', // Updated logo URL
+    logoURL: 'https://ibb.co/V0PSQM9D', // Updated logo URL
     dataAIHint: 'construction building'
   },
   {

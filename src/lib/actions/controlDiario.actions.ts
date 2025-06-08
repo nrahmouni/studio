@@ -4,10 +4,11 @@
 
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
-import { 
-  ControlDiarioObraSchema, 
+import {
+  ControlDiarioObraSchema,
   type ControlDiarioObra,
-  type ControlDiarioRegistroTrabajador 
+  type ControlDiarioRegistroTrabajador,
+  type ControlDiarioObraFormData // Import the specific form data type
 } from '@/lib/types';
 import { mockControlDiarioData } from '@/lib/mockData/controlDiario';
 import { mockUsuarios } from '@/lib/mockData/usuarios';
@@ -16,8 +17,8 @@ import { mockObras } from '@/lib/mockData/obras';
 let CcontrolDiario: ControlDiarioObra[] = [...mockControlDiarioData];
 
 export async function getControlDiario(
-  obraId: string, 
-  fecha: Date, 
+  obraId: string,
+  fecha: Date,
   jefeObraId: string,
   empresaId: string
 ): Promise<ControlDiarioObra | null> {
@@ -36,7 +37,7 @@ export async function getControlDiario(
     const assignedWorkerIds = mockUsuarios
       .filter(u => u.empresaId === empresaId && u.rol === 'trabajador' && u.obrasAsignadas?.includes(obraId))
       .map(u => u.id);
-    
+
     const recordWorkerIds = new Set(existingRecord.registrosTrabajadores.map(rt => rt.usuarioId));
 
     assignedWorkerIds.forEach(workerId => {
@@ -96,36 +97,39 @@ export async function getControlDiario(
     firmaJefeObraURL: null,
     lastModified: new Date(),
   };
-  return newShellRecord; 
+  return newShellRecord;
 }
 
-const SaveControlDiarioDataSchema = ControlDiarioObraSchema.omit({ lastModified: true }).extend({
-  fecha: z.string().transform((val) => new Date(val)), // Allow string date from form
-});
-
 export async function saveControlDiario(
-  data: Omit<ControlDiarioObra, 'lastModified' | 'id'> & { fecha: string | Date } , // Allow string date from form
+  data: ControlDiarioObraFormData, // Changed: Expects the form data type directly
   currentJefeObraId: string
 ): Promise<{ success: boolean; message: string; controlDiario?: ControlDiarioObra }> {
-  
-  const parseData = {
-    ...data,
-    fecha: typeof data.fecha === 'string' ? new Date(data.fecha) : data.fecha,
-    jefeObraId: currentJefeObraId,
+
+  // data.fecha is already a Date object from ControlDiarioObraFormData
+  // Add jefeObraId before validation
+  const dataToValidate = {
+    ...data, // data is ControlDiarioObraFormData (fecha: Date, no jefeObraId)
+    jefeObraId: currentJefeObraId, // jefeObraId is added here
   };
 
-  const validationResult = SaveControlDiarioDataSchema.safeParse(parseData);
+  // This schema will validate the object that now includes jefeObraId and expects fecha as Date
+  const InternalValidationSchema = ControlDiarioObraSchema.omit({
+    id: true, // id will be constructed later
+    lastModified: true, // will be set on save
+  });
+
+  const validationResult = InternalValidationSchema.safeParse(dataToValidate);
 
   if (!validationResult.success) {
     console.error("Validation error saving control diario:", validationResult.error.flatten().fieldErrors);
     return { success: false, message: `Error de validación: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
   }
 
-  const validatedData = validationResult.data;
+  const validatedData = validationResult.data; // This now has jefeObraId and fecha as Date
   const recordId = `${validatedData.obraId}-${validatedData.fecha.toISOString().split('T')[0]}`;
-  
+
   const recordToSave: ControlDiarioObra = {
-    ...validatedData,
+    ...validatedData, // validatedData now correctly typed and includes all necessary fields
     id: recordId,
     lastModified: new Date(),
   };
