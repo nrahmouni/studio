@@ -87,7 +87,6 @@ export default function EditObraPage() {
       setIsLoading(true);
       setError(null);
       try {
-        console.log("[EDIT OBRA FETCH] Iniciando carga de datos para obraId:", obraId, "EmpresaId:", storedEmpresaId);
         const [fetchedObra, fetchedWorkers] = await Promise.all([
           getObraById(obraId, storedEmpresaId),
           getUsuariosByEmpresaId(storedEmpresaId)
@@ -95,7 +94,6 @@ export default function EditObraPage() {
         
         const activeTrabajadores = fetchedWorkers.filter(u => u.rol === 'trabajador' && u.activo);
         setCompanyWorkers(activeTrabajadores);
-        console.log("[EDIT OBRA FETCH] Trabajadores activos de la empresa (" + activeTrabajadores.length + "):", activeTrabajadores.map(w => w.nombre).join(', '));
 
         if (fetchedObra) {
           setObraData(fetchedObra);
@@ -103,9 +101,6 @@ export default function EditObraPage() {
             .filter(worker => worker.obrasAsignadas?.includes(fetchedObra.id))
             .map(worker => worker.id);
           
-          console.log("[EDIT OBRA FETCH] Datos de la obra cargados:", fetchedObra);
-          console.log("[EDIT OBRA FETCH] IDs de trabajadores asignados inicialmente:", initialAssignedWorkerIds);
-
           form.reset({
             nombre: fetchedObra.nombre,
             direccion: fetchedObra.direccion,
@@ -127,13 +122,13 @@ export default function EditObraPage() {
         toast({ title: "Error de Carga", description: "No se pudo cargar la obra o los trabajadores.", variant: "destructive" });
       } finally {
         setIsLoading(false);
-        console.log("[EDIT OBRA FETCH] Carga de datos finalizada.");
       }
     };
-    if (currentUser || localStorage.getItem('usuarioId_obra_link')) { // Ensure currentUser might be set or fallback to localStorage check
+    if (currentUser || localStorage.getItem('usuarioId_obra_link')) { 
       fetchData();
     }
-  }, [obraId, router, toast, currentUser]); // Added currentUser to re-fetch if it changes after initial load
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [obraId, router, toast, currentUser]); 
 
   const onSubmit = async (data: ObraEditFormData) => {
     if (!obraId || !empresaId) return;
@@ -145,7 +140,6 @@ export default function EditObraPage() {
         costosPorCategoria: data.costosPorCategoria?.map(c => ({...c, costo: Number(c.costo)})) || [],
         trabajadoresAsignados: data.trabajadoresAsignados || [],
       };
-      console.log("[EDIT OBRA SUBMIT] Enviando datos para actualizar:", dataToSubmit);
       const result = await updateObra(obraId, empresaId, dataToSubmit);
       if (result.success && result.obra) {
         toast({ title: 'Éxito', description: `Obra "${result.obra.nombre}" actualizada.` });
@@ -162,7 +156,6 @@ export default function EditObraPage() {
   };
 
   const canEditCostsOrWorkers = currentUser && obraData && (currentUser.rol === 'admin' || currentUser.id === obraData.jefeObraId);
-  console.log(`[EDIT OBRA RENDER] currentUser.id: ${currentUser?.id}, obraData.jefeObraId: ${obraData?.jefeObraId}, currentUser.rol: ${currentUser?.rol}, canEditCostsOrWorkers: ${canEditCostsOrWorkers}`);
   
   if (isLoading) {
     return <div className="flex items-center justify-center h-[calc(100vh-8rem)]"><Loader2 className="h-12 w-12 animate-spin text-primary" /><p className="ml-4 text-lg text-muted-foreground">Cargando datos...</p></div>;
@@ -332,68 +325,56 @@ export default function EditObraPage() {
             )}
             
             {/* Worker Assignment Section START */}
-            {console.log("[EDIT OBRA RENDER] *** INTENTANDO RENDERIZAR SECCIÓN ASIGNAR TRABAJADORES ***")}
-            {console.log(`[EDIT OBRA RENDER] canEditCostsOrWorkers: ${canEditCostsOrWorkers}, companyWorkers.length: ${companyWorkers.length}`)}
             {canEditCostsOrWorkers && companyWorkers.length > 0 && (
-              <>
-                {console.log("[EDIT OBRA RENDER] >>> RENDERIZANDO SECCIÓN ASIGNAR TRABAJADORES (CON TRABAJADORES) <<<")}
-                <Card className="border-dashed border-primary/50 mt-6">
-                  <CardHeader>
-                    <CardTitle className="text-xl font-headline text-primary flex items-center">
-                      <Users className="mr-2 h-6 w-6" /> Asignar Trabajadores a esta Obra
-                    </CardTitle>
-                    <CardDescription>Selecciona los trabajadores que participarán en este proyecto.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="space-y-3 max-h-60 overflow-y-auto p-4">
-                    <Controller
-                      name="trabajadoresAsignados"
-                      control={form.control}
-                      render={({ field }) => (
-                        <>
-                          {companyWorkers.map((worker) => (
-                            <div key={worker.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded-md">
-                              <Checkbox
-                                id={`worker-${worker.id}`}
-                                checked={field.value?.includes(worker.id)}
-                                onCheckedChange={(checked) => {
-                                  const newValue = checked
-                                    ? [...(field.value || []), worker.id]
-                                    : (field.value || []).filter((id) => id !== worker.id);
-                                  field.onChange(newValue);
-                                  console.log("[EDIT OBRA CHECKBOX] Nuevos trabajadoresAsignados:", newValue);
-                                }}
-                              />
-                              <Label htmlFor={`worker-${worker.id}`} className="font-normal cursor-pointer">
-                                {worker.nombre} <span className="text-xs text-muted-foreground">({worker.email})</span>
-                              </Label>
-                            </div>
-                          ))}
-                        </>
-                      )}
-                    />
-                    {form.formState.errors.trabajadoresAsignados && <p className="text-sm text-destructive mt-1">{form.formState.errors.trabajadoresAsignados.message}</p>}
-                  </CardContent>
-                </Card>
-              </>
+              <Card className="border-dashed border-primary/50 mt-6">
+                <CardHeader>
+                  <CardTitle className="text-xl font-headline text-primary flex items-center">
+                    <Users className="mr-2 h-6 w-6" /> Asignar Trabajadores a esta Obra
+                  </CardTitle>
+                  <CardDescription>Selecciona los trabajadores que participarán en este proyecto.</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-3 max-h-60 overflow-y-auto p-4">
+                  <Controller
+                    name="trabajadoresAsignados"
+                    control={form.control}
+                    render={({ field }) => (
+                      <>
+                        {companyWorkers.map((worker) => (
+                          <div key={worker.id} className="flex items-center space-x-2 p-2 hover:bg-muted/50 rounded-md">
+                            <Checkbox
+                              id={`worker-${worker.id}`}
+                              checked={field.value?.includes(worker.id)}
+                              onCheckedChange={(checked) => {
+                                const newValue = checked
+                                  ? [...(field.value || []), worker.id]
+                                  : (field.value || []).filter((id) => id !== worker.id);
+                                field.onChange(newValue);
+                              }}
+                            />
+                            <Label htmlFor={`worker-${worker.id}`} className="font-normal cursor-pointer">
+                              {worker.nombre} <span className="text-xs text-muted-foreground">({worker.email})</span>
+                            </Label>
+                          </div>
+                        ))}
+                      </>
+                    )}
+                  />
+                  {form.formState.errors.trabajadoresAsignados && <p className="text-sm text-destructive mt-1">{form.formState.errors.trabajadoresAsignados.message}</p>}
+                </CardContent>
+              </Card>
             )}
             {canEditCostsOrWorkers && companyWorkers.length === 0 && (
-              <>
-                {console.log("[EDIT OBRA RENDER] >>> RENDERIZANDO SECCIÓN ASIGNAR TRABAJADORES (SIN TRABAJADORES DISPONIBLES) <<<")}
-                <Card className="border-dashed border-primary/50 mt-6">
-                    <CardHeader>
-                        <CardTitle className="text-xl font-headline text-primary flex items-center">
-                            <Users className="mr-2 h-6 w-6" /> Asignar Trabajadores
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <p className="text-muted-foreground">No hay trabajadores activos en la empresa para asignar a esta obra.</p>
-                        <p className="text-xs text-muted-foreground mt-1">Puedes registrar nuevos trabajadores desde la sección "Perfil de Empresa".</p>
-                    </CardContent>
-                </Card>
-              </>
-            )}
-            {!canEditCostsOrWorkers && (
-                 console.log("[EDIT OBRA RENDER] >>> NO SE RENDERIZA SECCIÓN ASIGNAR TRABAJADORES POR FALTA DE PERMISOS (canEditCostsOrWorkers es false) <<<")
+              <Card className="border-dashed border-primary/50 mt-6">
+                  <CardHeader>
+                      <CardTitle className="text-xl font-headline text-primary flex items-center">
+                          <Users className="mr-2 h-6 w-6" /> Asignar Trabajadores
+                      </CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                      <p className="text-muted-foreground">No hay trabajadores activos en la empresa para asignar a esta obra.</p>
+                      <p className="text-xs text-muted-foreground mt-1">Puedes registrar nuevos trabajadores desde la sección "Perfil de Empresa".</p>
+                  </CardContent>
+              </Card>
             )}
             {/* Worker Assignment Section END */}
             
