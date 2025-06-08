@@ -2,22 +2,22 @@
 import type { UsuarioFirebase } from '@/lib/types';
 
 export const mockUsuarios: UsuarioFirebase[] = [
-  // Usuarios para Construcciones Modernas S.L. (empresa-1)
+  // --- Empresa 1: Construcciones Modernas S.L. ---
   {
     id: 'user-1-admin',
     empresaId: 'empresa-1',
-    nombre: 'Administrador Principal (Empresa Demo)',
+    nombre: 'Admin CM (Empresa Demo)',
     email: 'empresa@example.com',
     dni: 'A00000000', 
     password: 'empresa', 
     rol: 'admin',
     activo: true,
-    obrasAsignadas: ['obra-1-1', 'obra-1-2', 'obra-1-3'], // Admins can be "assigned" for overview
+    obrasAsignadas: ['obra-1-1', 'obra-1-2', 'obra-1-3', 'obra-1-4'], 
     dniAnversoURL: null,
     dniReversoURL: null,
   },
   {
-    id: 'user-1-jefeobra',
+    id: 'user-1-jefeobra-1', // Renamed from user-1-jefeobra for clarity
     empresaId: 'empresa-1',
     nombre: 'Carlos López (Jefe Obra CM)',
     email: 'jefeobra.cm@example.com',
@@ -25,22 +25,35 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'password123',
     rol: 'jefeObra',
     activo: true,
-    obrasAsignadas: ['obra-1-1', 'obra-1-3'], // Jefe de obra explicitly assigned to these
+    obrasAsignadas: ['obra-1-1', 'obra-1-3'], 
     dniAnversoURL: null,
     dniReversoURL: null,
   },
   {
+    id: 'user-1-jefeobra-2', // New Jefe de Obra for Empresa 1
+    empresaId: 'empresa-1',
+    nombre: 'Elena García (Jefa Obra CM)',
+    email: 'elena.garcia.jo@example.com',
+    dni: 'B22222222', 
+    password: 'password123',
+    rol: 'jefeObra',
+    activo: true,
+    obrasAsignadas: ['obra-1-2', 'obra-1-4'],
+    dniAnversoURL: 'https://placehold.co/300x200.png?text=DNI+Elena+A',
+    dniReversoURL: 'https://placehold.co/300x200.png?text=DNI+Elena+R',
+  },
+  {
     id: 'user-1-trabajador-1',
     empresaId: 'empresa-1',
-    nombre: 'Lucía Fernández (Trabajador Demo)',
+    nombre: 'Lucía Fernández (Trabajadora Demo)',
     email: 'trabajador@example.com',
     dni: '12345678A', 
     password: 'trabajador',
     rol: 'trabajador',
     activo: true,
-    obrasAsignadas: ['obra-1-1', 'obra-1-3'], // Lucía assigned to Ático Sol and Fachada
-    dniAnversoURL: 'https://placehold.co/300x200.png?text=DNI+Anverso',
-    dniReversoURL: 'https://placehold.co/300x200.png?text=DNI+Reverso',
+    obrasAsignadas: ['obra-1-1', 'obra-1-3'],
+    dniAnversoURL: 'https://placehold.co/300x200.png?text=DNI+Lucia+A',
+    dniReversoURL: 'https://placehold.co/300x200.png?text=DNI+Lucia+R',
   },
   {
     id: 'user-1-trabajador-2',
@@ -51,12 +64,25 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'password123',
     rol: 'trabajador',
     activo: true,
-    obrasAsignadas: ['obra-1-2'], // Marcos assigned to Nave Industrial
+    obrasAsignadas: ['obra-1-2', 'obra-1-4'], 
+    dniAnversoURL: null,
+    dniReversoURL: null,
+  },
+  {
+    id: 'user-1-trabajador-3', // New Trabajador for Empresa 1
+    empresaId: 'empresa-1',
+    nombre: 'Javier Soler (Trabajador CM)',
+    email: 'javier.s@example.com',
+    dni: '11122233C',
+    password: 'password123',
+    rol: 'trabajador',
+    activo: true,
+    obrasAsignadas: ['obra-1-1', 'obra-1-2', 'obra-1-4'],
     dniAnversoURL: null,
     dniReversoURL: null,
   },
 
-  // Usuarios para Reformas Integrales Alfa (empresa-2)
+  // --- Empresa 2: Reformas Integrales Alfa ---
   {
     id: 'user-2-admin',
     empresaId: 'empresa-2',
@@ -66,7 +92,20 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'password123',
     rol: 'admin',
     activo: true,
-    obrasAsignadas: ['obra-2-1'],
+    obrasAsignadas: ['obra-2-1', 'obra-2-2'],
+    dniAnversoURL: null,
+    dniReversoURL: null,
+  },
+  {
+    id: 'user-2-jefeobra-1', // New Jefe de Obra for Empresa 2
+    empresaId: 'empresa-2',
+    nombre: 'Ricardo Montes (Jefe Obra Alfa)',
+    email: 'ricardo.montes.jo@example.com',
+    dni: 'D44444444',
+    password: 'password123',
+    rol: 'jefeObra',
+    activo: true,
+    obrasAsignadas: ['obra-2-1', 'obra-2-2'],
     dniAnversoURL: null,
     dniReversoURL: null,
   },
@@ -79,50 +118,88 @@ export const mockUsuarios: UsuarioFirebase[] = [
     password: 'password123',
     rol: 'trabajador',
     activo: true,
-    obrasAsignadas: ['obra-2-1'], // David assigned to Local Comercial
+    obrasAsignadas: ['obra-2-1'], 
     dniAnversoURL: null,
     dniReversoURL: null,
   },
+  {
+    id: 'user-2-trabajador-2', // New Trabajador for Empresa 2
+    empresaId: 'empresa-2',
+    nombre: 'Ana Torres (Trabajadora Alfa)',
+    email: 'ana.t@example.com',
+    dni: '55667788D',
+    password: 'password123',
+    rol: 'trabajador',
+    activo: true,
+    obrasAsignadas: ['obra-2-1', 'obra-2-2'],
+    dniAnversoURL: 'https://placehold.co/300x200.png?text=DNI+Ana+A',
+    dniReversoURL: 'https://placehold.co/300x200.png?text=DNI+Ana+R',
+  },
 
-  // Usuarios para Edifica Futuro Group (empresa-3)
+  // --- Empresa 3: Edifica Futuro Group ---
    {
     id: 'user-3-admin',
     empresaId: 'empresa-3',
     nombre: 'Elena Vazquez (Admin Edifica)',
     email: 'admin.edifica@example.com',
-    dni: 'D33333333', 
+    dni: 'E33333333', 
     password: 'password123',
     rol: 'admin',
     activo: true,
-    obrasAsignadas: ['obra-3-1', 'obra-3-2'],
+    obrasAsignadas: ['obra-3-1', 'obra-3-2', 'obra-3-3'],
     dniAnversoURL: null,
     dniReversoURL: null,
   },
   {
-    id: 'user-3-jefeobra',
+    id: 'user-3-jefeobra-1', // Renamed from user-3-jefeobra
     empresaId: 'empresa-3',
     nombre: 'Miguel Torres (Jefe Obra Edifica)',
     email: 'jefeobra.edifica@example.com',
-    dni: 'E44444444', 
+    dni: 'F44444444', 
     password: 'password123',
     rol: 'jefeObra',
     activo: true,
-    obrasAsignadas: ['obra-3-1'], // Miguel assigned to Edificio Residencial
+    obrasAsignadas: ['obra-3-1', 'obra-3-3'], 
+    dniAnversoURL: null,
+    dniReversoURL: null,
+  },
+   {
+    id: 'user-3-jefeobra-2', // New Jefe de Obra for Empresa 3
+    empresaId: 'empresa-3',
+    nombre: 'Laura Campos (Jefa Obra Edifica)',
+    email: 'laura.campos.jo@example.com',
+    dni: 'F55555555', 
+    password: 'password123',
+    rol: 'jefeObra',
+    activo: true,
+    obrasAsignadas: ['obra-3-2'],
     dniAnversoURL: null,
     dniReversoURL: null,
   },
   {
     id: 'user-3-trabajador-1',
     empresaId: 'empresa-3',
-    nombre: 'Laura Jimenez (Trabajador Edifica)',
+    nombre: 'Laura Jimenez (Trabajadora Edifica)',
     email: 'laura.j@example.com',
-    dni: '55667788D', 
+    dni: '55667788E', 
     password: 'password123',
     rol: 'trabajador',
     activo: true,
-    obrasAsignadas: ['obra-3-1', 'obra-3-2'], // Laura assigned to both
+    obrasAsignadas: ['obra-3-1', 'obra-3-2'],
     dniAnversoURL: null,
     dniReversoURL: null,
   },
+  {
+    id: 'user-3-trabajador-2', // New Trabajador for Empresa 3
+    empresaId: 'empresa-3',
+    nombre: 'Pedro Ramos (Trabajador Edifica)',
+    email: 'pedro.r@example.com',
+    dni: '99887766F',
+    password: 'password123',
+    rol: 'trabajador',
+    activo: true,
+    obrasAsignadas: ['obra-3-1', 'obra-3-3'],
+    dniAnversoURL: 'https://placehold.co/300x200.png?text=DNI+Pedro+A',
+    dniReversoURL: 'https://placehold.co/300x200.png?text=DNI+Pedro+R',
+  },
 ];
-
