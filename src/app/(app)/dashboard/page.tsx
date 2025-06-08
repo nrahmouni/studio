@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from '@/components/ui/button';
 import Link from 'next/link';
-import { Briefcase, Users, FileText, Wrench, BarChart3, Building, Clock } from 'lucide-react';
+import { Briefcase, Users, FileText, Wrench, BarChart3, Building, Clock, UserCheck } from 'lucide-react';
 
 interface UserInfo {
   empresaId: string | null;
@@ -30,7 +30,8 @@ export default function DashboardPage() {
     return <div className="flex items-center justify-center h-screen"><p className="text-muted-foreground">Cargando dashboard...</p></div>;
   }
   
-  const isAdminOrEmpresa = userInfo?.role === 'empresa' || userInfo?.role === 'admin' || userInfo?.role === 'jefeObra';
+  const isAdmin = userInfo?.role === 'admin';
+  const isJefeObra = userInfo?.role === 'jefeObra';
   const isTrabajador = userInfo?.role === 'trabajador';
 
   const commonCardsBase = [
@@ -43,17 +44,30 @@ export default function DashboardPage() {
     ...commonCardsBase,
   ];
 
-  const adminCardsBase = [
+  const jefeObraCards = [
+    { title: "Control Diario Obra", description: "Gestiona asistencia y horas de tu equipo.", icon: <UserCheck className="w-8 h-8 text-primary" />, link: "/control-diario", actionText: "Ir a Control Diario" },
     { title: "Partes de Trabajo", description: "Crea y revisa los partes diarios.", icon: <FileText className="w-8 h-8 text-primary" />, link: "/partes", actionText: "Ver Partes" },
     { title: "Obras", description: "Gestiona tus proyectos y sitios de trabajo.", icon: <Briefcase className="w-8 h-8 text-primary" />, link: "/obras", actionText: "Ver Obras" },
-    { title: "Usuarios", description: "Administra los usuarios de tu empresa.", icon: <Users className="w-8 h-8 text-primary" />, link: "/usuarios", actionText: "Gestionar Usuarios" },
+    { title: "Usuarios", description: "Consulta los usuarios de tu empresa.", icon: <Users className="w-8 h-8 text-primary" />, link: "/usuarios", actionText: "Consultar Usuarios" },
+    { title: "Fichajes (Gestión)", description: "Consulta y valida los fichajes.", icon: <Clock className="w-8 h-8 text-primary" />, link: "/fichajes", actionText: "Gestionar Fichajes" },
     { title: "Perfil de Empresa", description: "Actualiza los datos de tu empresa.", icon: <Building className="w-8 h-8 text-primary" />, link: "/company-profile", actionText: "Ver Perfil" },
     { title: "Recursos IA", description: "Optimiza la asignación de recursos.", icon: <Wrench className="w-8 h-8 text-primary" />, link: "/resource-allocation", actionText: "Analizar Recursos" },
     { title: "Informes", description: "Genera informes y estadísticas.", icon: <BarChart3 className="w-8 h-8 text-primary" />, link: "/reports", actionText: "Ver Informes" },
-     { title: "Fichajes (Admin)", description: "Consulta registros de fichajes.", icon: <Clock className="w-8 h-8 text-primary" />, link: "/fichajes", actionText: "Ver Fichajes" },
   ];
 
-  const cardsToDisplay = isTrabajador ? trabajadorCards : (isAdminOrEmpresa ? adminCardsBase : commonCardsBase) ;
+  const adminCards = [
+    ...jefeObraCards, // Admin has all JefeObra cards plus potentially more if distinct
+    // If there are admin-only cards, add them here. For now, let's assume admin has at least jefeObra access.
+  ];
+  
+  let cardsToDisplay = commonCardsBase; // Default for unknown roles or if no specific role matches
+  if (isTrabajador) {
+    cardsToDisplay = trabajadorCards;
+  } else if (isJefeObra) {
+    cardsToDisplay = jefeObraCards;
+  } else if (isAdmin) {
+    cardsToDisplay = adminCards;
+  }
 
 
   return (
@@ -74,13 +88,14 @@ export default function DashboardPage() {
         ))}
       </div>
 
-      {isAdminOrEmpresa && (
+      {(isAdmin || isJefeObra) && (
          <Card className="mt-10 bg-primary/5 border-primary/20 animate-fade-in-up animation-delay-700">
           <CardHeader>
             <CardTitle className="text-primary font-headline">Acceso Rápido para Gestores</CardTitle>
             <CardDescription>Funciones clave para la administración.</CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <CardContent className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+            <Link href="/control-diario" passHref><Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">Ir a Control Diario</Button></Link>
             <Link href="/obras/new" passHref><Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">Crear Nueva Obra</Button></Link>
             <Link href="/partes/new" passHref><Button variant="outline" className="w-full border-primary text-primary hover:bg-primary/10">Nuevo Parte de Trabajo</Button></Link>
           </CardContent>

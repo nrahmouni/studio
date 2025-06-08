@@ -92,3 +92,38 @@ export const GetFichajesCriteriaSchema = z.object({
   estadoValidacion: z.enum(['todos', 'validados', 'pendientes']).default('todos').optional(),
 });
 export type GetFichajesCriteria = z.infer<typeof GetFichajesCriteriaSchema>;
+
+
+// --- Tipos para Control Diario ---
+const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/; // HH:mm format
+
+export const ControlDiarioRegistroTrabajadorSchema = z.object({
+  usuarioId: z.string(),
+  nombreTrabajador: z.string().optional(), // For display purposes on the form
+  asistencia: z.boolean().default(false),
+  horaInicio: z.string().regex(timeRegex, "Formato HH:mm").optional().nullable(),
+  horaFin: z.string().regex(timeRegex, "Formato HH:mm").optional().nullable(),
+  horasReportadas: z.number().min(0, "Horas deben ser >= 0").max(24, "Horas no pueden exceder 24").optional().nullable(),
+  validadoPorJefeObra: z.boolean().default(false),
+});
+export type ControlDiarioRegistroTrabajador = z.infer<typeof ControlDiarioRegistroTrabajadorSchema>;
+
+export const ControlDiarioObraSchema = z.object({
+  id: z.string(), // obraId-YYYY-MM-DD
+  obraId: z.string(),
+  fecha: z.date(),
+  registrosTrabajadores: z.array(ControlDiarioRegistroTrabajadorSchema),
+  firmaJefeObraURL: z.string().url().optional().nullable(),
+  jefeObraId: z.string(), // ID del Jefe de Obra que crea/modifica el registro
+  lastModified: z.date(),
+});
+export type ControlDiarioObra = z.infer<typeof ControlDiarioObraSchema>;
+
+// Schema for the form data which might be slightly different before saving
+export const ControlDiarioObraFormSchema = ControlDiarioObraSchema.omit({ 
+  id: true, // id will be constructed
+  lastModified: true, // will be set on save
+  jefeObraId: true, // will be set from current user
+});
+export type ControlDiarioObraFormData = z.infer<typeof ControlDiarioObraFormSchema>;
+
