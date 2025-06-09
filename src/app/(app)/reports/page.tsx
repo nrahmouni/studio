@@ -3,7 +3,7 @@
 'use client'; 
 
 import { useEffect, useState } from 'react';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Loader2, AlertTriangle, Info } from "lucide-react";
 import {
   ChartContainer,
@@ -97,7 +97,7 @@ export default function ReportsPage() {
     <div className="container mx-auto py-8 px-4">
       <div className="flex justify-between items-center mb-8 animate-fade-in-down">
         <h1 className="text-3xl font-bold font-headline text-primary">
-          Informes y Estadísticas
+          Informes para Gestión y Validación
         </h1>
       </div>
 
@@ -133,7 +133,7 @@ export default function ReportsPage() {
               <span>Número de Partes de Trabajo por Obra</span>
             </CardTitle>
             <CardDescription>
-              Visualiza la cantidad de partes de trabajo registrados para cada obra de la empresa.
+              Resumen de actividad para revisión y validación mensual por Jefes de Obra.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -166,12 +166,17 @@ export default function ReportsPage() {
                   </BarChart>
               </ChartContainer>
           </CardContent>
+          <CardFooter className="p-4 border-t text-center bg-primary/5">
+            <p className="text-xs text-muted-foreground mx-auto">
+                Esta información es clave para la revisión y validación mensual del progreso por parte de la Jefatura de Obra, permitiendo una toma de decisiones informada.
+            </p>
+         </CardFooter>
         </Card>
       )}
       
        <div className="mt-12 text-center text-muted-foreground animate-fade-in-up animation-delay-700">
           <BarChart3 className="mx-auto h-10 w-10 mb-3" />
-          <p>Más informes y opciones de personalización estarán disponibles en futuras actualizaciones.</p>
+          <p>Más informes detallados y opciones de personalización estarán disponibles en futuras actualizaciones.</p>
         </div>
     </div>
   );
