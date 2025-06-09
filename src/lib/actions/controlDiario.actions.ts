@@ -8,11 +8,13 @@ import {
   ControlDiarioObraSchema,
   type ControlDiarioObra,
   type ControlDiarioRegistroTrabajador,
-  type ControlDiarioObraFormData // Import the specific form data type
+  type ControlDiarioObraFormData,
+  type Parte, // Import Parte type
 } from '@/lib/types';
 import { mockControlDiarioData } from '@/lib/mockData/controlDiario';
 import { mockUsuarios } from '@/lib/mockData/usuarios';
 import { mockObras } from '@/lib/mockData/obras';
+import { createParte, updateParte, getParteByWorkerObraDate } from './parte.actions'; // Import parte actions
 
 let CcontrolDiario: ControlDiarioObra[] = [...mockControlDiarioData];
 
@@ -22,17 +24,16 @@ export async function getControlDiario(
   jefeObraId: string,
   empresaId: string
 ): Promise<ControlDiarioObra | null> {
-  await new Promise(resolve => setTimeout(resolve, 300)); // Simulate API delay
+  await new Promise(resolve => setTimeout(resolve, 300)); 
 
-  const fechaString = fecha.toISOString().split('T')[0]; // YYYY-MM-DD
+  const fechaString = fecha.toISOString().split('T')[0]; 
   const existingRecord = CcontrolDiario.find(
     (cd) => cd.obraId === obraId && cd.fecha.toISOString().split('T')[0] === fechaString
   );
 
   if (existingRecord) {
-    // Ensure all assigned workers are present in the record, add if missing
     const obra = mockObras.find(o => o.id === obraId && o.empresaId === empresaId);
-    if (!obra) return existingRecord; // Or handle error
+    if (!obra) return existingRecord; 
 
     const assignedWorkerIds = mockUsuarios
       .filter(u => u.empresaId === empresaId && u.rol === 'trabajador' && u.obrasAsignadas?.includes(obraId))
@@ -53,24 +54,21 @@ export async function getControlDiario(
           validadoPorJefeObra: false,
         });
       } else {
-        // Ensure nombreTrabajador is up-to-date
         const registro = existingRecord.registrosTrabajadores.find(rt => rt.usuarioId === workerId);
         if (registro && !registro.nombreTrabajador) {
             const worker = mockUsuarios.find(u => u.id === workerId);
-            registro.nombreTrabajador = worker?.nombre || 'Desconocido';
+            if(worker) registro.nombreTrabajador = worker.nombre;
         }
       }
     });
-     // Sort by worker name for consistent display
     existingRecord.registrosTrabajadores.sort((a, b) => (a.nombreTrabajador || '').localeCompare(b.nombreTrabajador || ''));
     return existingRecord;
   }
 
-  // If no record exists, create a new "shell" record
   const obra = mockObras.find(o => o.id === obraId && o.empresaId === empresaId);
   if (!obra) {
     console.error(`Obra con ID ${obraId} no encontrada para la empresa ${empresaId}.`);
-    return null; // Obra no encontrada o no pertenece a la empresa
+    return null; 
   }
 
   const assignedWorkers = mockUsuarios.filter(
@@ -89,7 +87,7 @@ export async function getControlDiario(
 
 
   const newShellRecord: ControlDiarioObra = {
-    id: `${obraId}-${fechaString}`, // Construct ID
+    id: `${obraId}-${fechaString}`, 
     obraId,
     fecha,
     jefeObraId,
@@ -101,21 +99,18 @@ export async function getControlDiario(
 }
 
 export async function saveControlDiario(
-  data: ControlDiarioObraFormData, // Changed: Expects the form data type directly
+  data: ControlDiarioObraFormData, 
   currentJefeObraId: string
 ): Promise<{ success: boolean; message: string; controlDiario?: ControlDiarioObra }> {
 
-  // data.fecha is already a Date object from ControlDiarioObraFormData
-  // Add jefeObraId before validation
   const dataToValidate = {
-    ...data, // data is ControlDiarioObraFormData (fecha: Date, no jefeObraId)
-    jefeObraId: currentJefeObraId, // jefeObraId is added here
+    ...data, 
+    jefeObraId: currentJefeObraId, 
   };
 
-  // This schema will validate the object that now includes jefeObraId and expects fecha as Date
   const InternalValidationSchema = ControlDiarioObraSchema.omit({
-    id: true, // id will be constructed later
-    lastModified: true, // will be set on save
+    id: true, 
+    lastModified: true, 
   });
 
   const validationResult = InternalValidationSchema.safeParse(dataToValidate);
@@ -125,11 +120,17 @@ export async function saveControlDiario(
     return { success: false, message: `Error de validación: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
   }
 
-  const validatedData = validationResult.data; // This now has jefeObraId and fecha as Date
+  const validatedData = validationResult.data; 
   const recordId = `${validatedData.obraId}-${validatedData.fecha.toISOString().split('T')[0]}`;
+  
+  const obraDelControl = mockObras.find(o => o.id === validatedData.obraId);
+  if (!obraDelControl) {
+    return { success: false, message: 'Obra no encontrada para este control diario.' };
+  }
+  const empresaId = obraDelControl.empresaId;
 
   const recordToSave: ControlDiarioObra = {
-    ...validatedData, // validatedData now correctly typed and includes all necessary fields
+    ...validatedData, 
     id: recordId,
     lastModified: new Date(),
   };
@@ -142,10 +143,59 @@ export async function saveControlDiario(
     CcontrolDiario.push(recordToSave);
   }
 
-  revalidatePath('/(app)/control-diario');
-  // Potentially revalidate other paths if this data impacts them.
+  // --- Inicio de la lógica para crear/actualizar Partes ---
+  const jefeObraActual = mockUsuarios.find(u => u.id === recordToSave.jefeObraId);
+  const nombreJefeObra = jefeObraActual?.nombre || 'Jefe de Obra';
 
-  await new Promise(resolve => setTimeout(resolve, 500)); // Simulate API delay
-  console.log("Control diario guardado:", recordToSave);
-  return { success: true, message: 'Control diario guardado con éxito.', controlDiario: recordToSave };
+  for (const registro of recordToSave.registrosTrabajadores) {
+    if (registro.asistencia && registro.horasReportadas != null && registro.horasReportadas > 0) {
+      
+      const existingParte = await getParteByWorkerObraDate(
+        registro.usuarioId,
+        recordToSave.obraId,
+        recordToSave.fecha,
+        empresaId 
+      );
+
+      if (existingParte) {
+        if (!existingParte.validado) { 
+          const parteUpdateData: Partial<Omit<Parte, 'id' | 'usuarioId' | 'timestamp'>> = {
+            horasTrabajadas: registro.horasReportadas,
+            validado: true,
+            validadoPor: recordToSave.jefeObraId,
+            tareasRealizadas: existingParte.tareasRealizadas.includes("Control Diario") 
+              ? existingParte.tareasRealizadas 
+              : `${existingParte.tareasRealizadas}\n(Horas y asistencia actualizadas y validadas vía Control Diario por ${nombreJefeObra} el ${new Date().toLocaleDateString()}).`.trim(),
+          };
+          await updateParte(existingParte.id, parteUpdateData as UpdateParteData); // Cast to UpdateParteData
+        }
+      } else {
+        const parteCreateData = { 
+          usuarioId: registro.usuarioId,
+          obraId: recordToSave.obraId,
+          fecha: recordToSave.fecha,
+          tareasRealizadas: `Trabajo registrado y validado mediante Control Diario por ${nombreJefeObra}.`,
+          horasTrabajadas: registro.horasReportadas,
+          incidencias: '', 
+          tareasSeleccionadas: [],
+          fotosURLs: [],
+          firmaURL: null,
+          validado: true, 
+          validadoPor: recordToSave.jefeObraId,
+        };
+        await createParte(parteCreateData);
+      }
+    }
+  }
+  // --- Fin de la lógica para crear/actualizar Partes ---
+
+  revalidatePath('/(app)/control-diario');
+  revalidatePath('/(app)/partes'); 
+
+  await new Promise(resolve => setTimeout(resolve, 500)); 
+  return { success: true, message: 'Control diario guardado y partes de trabajo actualizados/creados.', controlDiario: recordToSave };
 }
+
+// Definición local del tipo UpdateParteData ya que no se puede importar directamente desde parte.actions.ts
+// debido a las reglas de 'use server'. Esta definición debe coincidir con la de parte.actions.ts
+type UpdateParteData = Partial<Omit<Parte, 'id' | 'usuarioId' | 'timestamp'>>;
