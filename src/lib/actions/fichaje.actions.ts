@@ -1,3 +1,4 @@
+
 'use server';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
@@ -73,31 +74,41 @@ export async function getFichajesHoyUsuarioObra(usuarioId: string, obraId: strin
 }
 
 export async function getFichajesByCriteria(criteria: GetFichajesCriteria): Promise<Fichaje[]> {
-  await new Promise(resolve => setTimeout(resolve, 400)); 
+  await new Promise(resolve => setTimeout(resolve, 400));
 
   const validationResult = GetFichajesCriteriaSchema.safeParse(criteria);
   if (!validationResult.success) {
     console.error("Error de validación de criterios de fichaje:", validationResult.error.flatten().fieldErrors);
-    return []; 
+    return [];
   }
   const { empresaId, obraId, usuarioId, fechaInicio, fechaFin, estadoValidacion } = validationResult.data;
 
-  const obrasDeEmpresa = mockObras.filter(o => o.empresaId === empresaId).map(o => o.id);
-  if (obrasDeEmpresa.length === 0 && obraId !== undefined ) { 
-      if (!obrasDeEmpresa.includes(obraId)) return [];
+  // Get all obra IDs that belong to the specified empresaId
+  let obrasPermitidasIds = mockObras
+    .filter(o => o.empresaId === empresaId)
+    .map(o => o.id);
+
+  // If a specific obraId is provided in criteria, ensure it's valid for the company
+  // and then filter by that specific obraId.
+  if (obraId) {
+    if (!obrasPermitidasIds.includes(obraId)) {
+      return []; // The specified obraId does not belong to the company or doesn't exist.
+    }
+    obrasPermitidasIds = [obraId]; // Filter only for this specific obra
+  }
+  
+  if (obrasPermitidasIds.length === 0) { // No obras match criteria (e.g. empresa has no obras or specific obraId not found)
+    return [];
   }
 
-  let filteredFichajes = Cfichajes.filter(f => {
-    if (!obrasDeEmpresa.includes(f.obraId)) {
-      return false;
-    }
-    if (obraId && f.obraId !== obraId) return false;
+  const filteredFichajes = Cfichajes.filter(f => {
+    if (!obrasPermitidasIds.includes(f.obraId)) return false; // Must be within allowed obras
     if (usuarioId && f.usuarioId !== usuarioId) return false;
     if (fechaInicio && f.timestamp < fechaInicio) return false;
     if (fechaFin) {
-        const endOfDay = new Date(fechaFin);
-        endOfDay.setHours(23, 59, 59, 999); 
-        if (f.timestamp > endOfDay) return false;
+      const endOfDay = new Date(fechaFin);
+      endOfDay.setHours(23, 59, 59, 999);
+      if (f.timestamp > endOfDay) return false;
     }
     if (estadoValidacion === 'validados' && !f.validado) return false;
     if (estadoValidacion === 'pendientes' && f.validado) return false;
@@ -108,22 +119,31 @@ export async function getFichajesByCriteria(criteria: GetFichajesCriteria): Prom
 }
 
 
-export async function validateFichaje(fichajeId: string, validadorId: string): Promise<{ success: boolean; message: string; fichaje?: Fichaje }> {
+export async function validateFichaje(fichajeId: string, validadorId: string, empresaIdDelValidador: string): Promise<{ success: boolean; message: string; fichaje?: Fichaje }> {
   await new Promise(resolve => setTimeout(resolve, 300));
 
   const fichajeIndex = Cfichajes.findIndex(f => f.id === fichajeId);
   if (fichajeIndex === -1) {
     return { success: false, message: 'Fichaje no encontrado.' };
   }
+  const fichajeToValidate = Cfichajes[fichajeIndex];
 
   const validador = mockUsuarios.find(u => u.id === validadorId && (u.rol === 'admin' || u.rol === 'jefeObra'));
   if (!validador) {
-    return { success: false, message: 'Usuario validador no autorizado.' };
+    return { success: false, message: 'Usuario validador no encontrado o no autorizado.' };
   }
 
-  const obraDelFichaje = mockObras.find(o => o.id === Cfichajes[fichajeIndex].obraId);
-  if (!obraDelFichaje || obraDelFichaje.empresaId !== validador.empresaId) {
-    return { success: false, message: 'El validador no pertenece a la empresa de la obra del fichaje.' };
+  if (validador.empresaId !== empresaIdDelValidador) {
+    return { success: false, message: 'El validador no pertenece a la empresa que intenta validar.' };
+  }
+
+  const obraDelFichaje = mockObras.find(o => o.id === fichajeToValidate.obraId);
+  if (!obraDelFichaje) {
+    return { success: false, message: 'La obra asociada al fichaje no fue encontrada.' };
+  }
+  
+  if (obraDelFichaje.empresaId !== empresaIdDelValidador) {
+    return { success: false, message: 'El fichaje no pertenece a una obra de la empresa del validador.' };
   }
 
   Cfichajes[fichajeIndex].validado = true;

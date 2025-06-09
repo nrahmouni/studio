@@ -7,12 +7,12 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, Clock, LogIn, LogOut, Coffee, Briefcase, AlertTriangle, Info, Filter, CheckCircle, ShieldAlert, UsersIcon, CalendarDays } from 'lucide-react';
+import { Loader2, Clock, LogIn, LogOut, Coffee, Briefcase, AlertTriangle, Info, Filter, CheckCircle, ShieldAlert, UsersIcon, CalendarDays, FileText as PdfIcon } from 'lucide-react';
 import { getUsuarioById, getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
 import { getObraById, getObrasByEmpresaId } from '@/lib/actions/obra.actions';
 import { createFichaje, getFichajesHoyUsuarioObra, getFichajesByCriteria, validateFichaje } from '@/lib/actions/fichaje.actions';
-import type { UsuarioFirebase, Obra, Fichaje, FichajeTipo, GetFichajesCriteria } from '@/lib/types'; // Correctly importing GetFichajesCriteria
-import { format } from 'date-fns';
+import type { UsuarioFirebase, Obra, Fichaje, FichajeTipo, GetFichajesCriteria } from '@/lib/types';
+import { format, startOfDay, endOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
@@ -38,12 +38,17 @@ export default function FichajesPage() {
   
   // Admin/Manager view states
   const [adminFichajes, setAdminFichajes] = useState<Fichaje[]>([]);
-  const [companyObras, setCompanyObras] = useState<Obra[]>([]);
+  const [companyObras, setCompanyObras] = useState<Obra[]>([]); // All obras for admin, assigned for jefe
   const [companyTrabajadores, setCompanyTrabajadores] = useState<UsuarioFirebase[]>([]);
   const [usuariosMap, setUsuariosMap] = useState<Record<string, string>>({});
   const [obrasMap, setObrasMap] = useState<Record<string, string>>({});
-  const [filters, setFilters] = useState<Partial<GetFichajesCriteria>>({ estadoValidacion: 'todos' });
-  const [dateRange, setDateRange] = useState<DateRange | undefined>();
+  const [filters, setFilters] = useState<Partial<GetFichajesCriteria>>({ 
+    estadoValidacion: 'pendientes' 
+  });
+  const [dateRange, setDateRange] = useState<DateRange | undefined>({
+    from: startOfDay(new Date()),
+    to: endOfDay(new Date()),
+  });
 
   // General states
   const [isLoadingUser, setIsLoadingUser] = useState(true);
@@ -75,25 +80,29 @@ export default function FichajesPage() {
         if (user) {
           if (user.rol === 'admin' || user.rol === 'jefeObra') {
             setViewMode('admin');
-            // Fetch data for admin view
             setIsLoadingAdminFichajes(true);
-            const [obras, trabajadores, initialFichajes] = await Promise.all([
-              getObrasByEmpresaId(user.empresaId),
-              getUsuariosByEmpresaId(user.empresaId).then(users => users.filter(u => u.rol === 'trabajador')),
-              getFichajesByCriteria({ empresaId: user.empresaId, ...filters })
-            ]);
-            setCompanyObras(obras);
-            setCompanyTrabajadores(trabajadores);
-            setAdminFichajes(initialFichajes);
+            
+            let obrasParaFiltro: Obra[];
+            if (user.rol === 'admin') {
+              obrasParaFiltro = await getObrasByEmpresaId(user.empresaId);
+            } else { // jefeObra
+              const todasObrasEmpresa = await getObrasByEmpresaId(user.empresaId);
+              obrasParaFiltro = todasObrasEmpresa.filter(o => user.obrasAsignadas?.includes(o.id));
+            }
+            setCompanyObras(obrasParaFiltro);
 
-            const tempObrasMap: Record<string, string> = obras.reduce((acc, o) => { acc[o.id] = o.nombre; return acc; }, {} as Record<string, string>);
-            setObrasMap(tempObrasMap);
+            const trabajadores = await getUsuariosByEmpresaId(user.empresaId).then(users => users.filter(u => u.rol === 'trabajador'));
+            setCompanyTrabajadores(trabajadores);
             
             const allUsers = await getUsuariosByEmpresaId(user.empresaId);
             const tempUsuariosMap: Record<string, string> = allUsers.reduce((acc, u) => { acc[u.id] = u.nombre; return acc; }, {} as Record<string, string>);
             setUsuariosMap(tempUsuariosMap);
+            
+            const todasObrasEmpresaGlobal = await getObrasByEmpresaId(user.empresaId);
+            const tempObrasMap: Record<string, string> = todasObrasEmpresaGlobal.reduce((acc, o) => { acc[o.id] = o.nombre; return acc; }, {} as Record<string, string>);
+            setObrasMap(tempObrasMap);
 
-            setIsLoadingAdminFichajes(false);
+            setIsLoadingAdminFichajes(false); // Fichajes se cargarán en el effect de filtros
           } else { // Trabajador view
             setViewMode('trabajador');
             if (user.obrasAsignadas && user.obrasAsignadas.length > 0) {
@@ -149,7 +158,7 @@ export default function FichajesPage() {
     fetchStatus();
   }, [currentUser, selectedObraId, toast, viewMode]);
   
-  // Effect for admin: Fetch fichajes when filters change
+  // Effect for admin: Fetch fichajes when filters or dateRange change
   useEffect(() => {
     if (viewMode !== 'admin' || !currentUser?.empresaId) return;
     
@@ -159,8 +168,8 @@ export default function FichajesPage() {
         const criteria: GetFichajesCriteria = { 
           empresaId: currentUser.empresaId!, 
           ...filters,
-          fechaInicio: dateRange?.from,
-          fechaFin: dateRange?.to,
+          fechaInicio: dateRange?.from ? startOfDay(dateRange.from) : undefined,
+          fechaFin: dateRange?.to ? endOfDay(dateRange.to) : undefined,
         };
         const fetchedFichajes = await getFichajesByCriteria(criteria);
         setAdminFichajes(fetchedFichajes);
@@ -207,10 +216,13 @@ export default function FichajesPage() {
   };
   
   const handleValidateFichaje = async (fichajeId: string) => {
-    if (!currentUser?.id) return;
+    if (!currentUser?.id || !currentUser.empresaId) {
+         toast({ title: "Error", description: "No se pudo identificar al usuario o empresa para validar.", variant: "destructive" });
+        return;
+    }
     setIsSubmitting(true);
     try {
-      const result = await validateFichaje(fichajeId, currentUser.id);
+      const result = await validateFichaje(fichajeId, currentUser.id, currentUser.empresaId);
       if (result.success && result.fichaje) {
         toast({ title: "Fichaje Validado", description: "El registro ha sido marcado como validado." });
         setAdminFichajes(prev => prev.map(f => f.id === fichajeId ? {...f, validado: true, validadoPor: currentUser.id} : f));
@@ -219,6 +231,25 @@ export default function FichajesPage() {
       }
     } catch (e) { toast({ title: "Error Inesperado", description: "Ocurrió un error.", variant: "destructive" });
     } finally { setIsSubmitting(false); }
+  };
+
+  const handleGeneratePartePDF = () => {
+    const validatedFichajes = adminFichajes.filter(f => f.validado);
+    if (validatedFichajes.length > 0) {
+      toast({
+        title: "Generación de PDF",
+        description: `Funcionalidad en desarrollo. Se procesarían ${validatedFichajes.length} fichajes validados.`,
+        duration: 5000,
+      });
+    } else {
+      toast({
+        title: "Sin Datos para PDF",
+        description: "No hay fichajes validados en la vista actual para generar un PDF.",
+        variant: "default"
+      });
+    }
+    // Aquí iría la lógica para llamar a una función que genere el PDF
+    console.log("Intentando generar PDF para fichajes:", validatedFichajes);
   };
   
   const selectedObraNombre = userObras.find(o => o.id === selectedObraId)?.nombre || "Desconocida";
@@ -299,14 +330,14 @@ export default function FichajesPage() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
               <div>
                 <label htmlFor="adminObraFilter" className="text-sm font-medium">Obra</label>
-                <Select value={filters.obraId || 'all'} onValueChange={(val) => setFilters(f => ({...f, obraId: val === 'all' ? undefined : val}))}>
+                <Select value={filters.obraId || 'all'} onValueChange={(val) => setFilters(f => ({...f, obraId: val === 'all' ? undefined : val}))} disabled={isLoadingAdminFichajes}>
                   <SelectTrigger id="adminObraFilter"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="all">Todas las Obras</SelectItem>{companyObras.map(o => <SelectItem key={o.id} value={o.id}>{o.nombre}</SelectItem>)}</SelectContent>
                 </Select>
               </div>
               <div>
                 <label htmlFor="adminUserFilter" className="text-sm font-medium">Trabajador</label>
-                <Select value={filters.usuarioId || 'all'} onValueChange={(val) => setFilters(f => ({...f, usuarioId: val === 'all' ? undefined : val}))}>
+                <Select value={filters.usuarioId || 'all'} onValueChange={(val) => setFilters(f => ({...f, usuarioId: val === 'all' ? undefined : val}))} disabled={isLoadingAdminFichajes}>
                   <SelectTrigger id="adminUserFilter"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="all">Todos los Trabajadores</SelectItem>{companyTrabajadores.map(u => <SelectItem key={u.id} value={u.id}>{u.nombre}</SelectItem>)}</SelectContent>
                 </Select>
@@ -315,7 +346,7 @@ export default function FichajesPage() {
                 <label htmlFor="adminDateFilter" className="text-sm font-medium">Rango de Fechas</label>
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button id="adminDateFilter" variant="outline" className={cn("w-full justify-start text-left font-normal", !dateRange && "text-muted-foreground")}>
+                      <Button id="adminDateFilter" variant="outline" className={cn("w-full justify-start text-left font-normal", !dateRange && "text-muted-foreground")} disabled={isLoadingAdminFichajes}>
                         <CalendarDays className="mr-2 h-4 w-4" />
                         {dateRange?.from ? (dateRange.to ? `${format(dateRange.from, "dd/MM/yy", {locale:es})} - ${format(dateRange.to, "dd/MM/yy", {locale:es})}` : format(dateRange.from, "dd/MM/yy", {locale:es})) : <span>Selecciona rango</span>}
                       </Button>
@@ -327,12 +358,20 @@ export default function FichajesPage() {
               </div>
               <div>
                 <label htmlFor="adminValidationFilter" className="text-sm font-medium">Estado Validación</label>
-                <Select value={filters.estadoValidacion || 'todos'} onValueChange={(val) => setFilters(f => ({...f, estadoValidacion: val as 'todos' | 'validados' | 'pendientes'}))}>
+                <Select value={filters.estadoValidacion || 'todos'} onValueChange={(val) => setFilters(f => ({...f, estadoValidacion: val as 'todos' | 'validados' | 'pendientes'}))} disabled={isLoadingAdminFichajes}>
                   <SelectTrigger id="adminValidationFilter"><SelectValue /></SelectTrigger>
                   <SelectContent><SelectItem value="todos">Todos</SelectItem><SelectItem value="validados">Validados</SelectItem><SelectItem value="pendientes">Pendientes</SelectItem></SelectContent>
                 </Select>
               </div>
             </div>
+             <Button 
+                onClick={handleGeneratePartePDF} 
+                variant="outline" 
+                className="mt-4 border-accent text-accent hover:bg-accent/10 w-full md:w-auto"
+                disabled={isLoadingAdminFichajes || adminFichajes.length === 0}
+            >
+                <PdfIcon className="mr-2 h-5 w-5" /> Generar Parte de Fichajes (PDF)
+            </Button>
           </Card>
 
           {/* Fichajes List/Table */}
@@ -383,4 +422,3 @@ export default function FichajesPage() {
     </div>
   );
 }
-
