@@ -119,7 +119,7 @@ export default function NuevoPartePage() {
     const result = await createParte(parteToCreate);
     if (result.success && result.parte) {
       toast({ title: 'Éxito', description: 'Nuevo parte de trabajo registrado.' });
-      router.push('/partes');
+      router.push(`/partes/${result.parte.id}`); // Redirect to the new parte's detail page
     } else {
       toast({ title: 'Error', description: result.message || 'No se pudo registrar el parte.', variant: 'destructive' });
     }
@@ -252,3 +252,4 @@ export default function NuevoPartePage() {
     </div>
   );
 }
+

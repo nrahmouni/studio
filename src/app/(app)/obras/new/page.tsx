@@ -87,7 +87,7 @@ export default function NuevaObraPage() {
     const result = await createObra(obraDataForAction, empresaId);
     if (result.success && result.obra) {
       toast({ title: 'Éxito', description: `Nueva obra "${result.obra.nombre}" creada correctamente.` });
-      router.push('/obras');
+      router.push(`/obras/${result.obra.id}`); // Redirect to the new obra's detail page
     } else {
       toast({ title: 'Error', description: result.message || 'No se pudo crear la obra.', variant: 'destructive' });
     }

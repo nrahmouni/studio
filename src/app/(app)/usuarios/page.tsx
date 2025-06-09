@@ -62,10 +62,12 @@ export default function UsuariosPage() {
         <h1 className="text-3xl font-bold font-headline text-primary">
           Gestión de Usuarios
         </h1>
-         <Button className="bg-primary hover:bg-primary/90 text-primary-foreground opacity-50 cursor-not-allowed" title="Funcionalidad en desarrollo">
-            <UserPlus className="mr-2 h-5 w-5" />
-            Añadir Usuario (Próximamente)
-          </Button>
+         <Link href="/company-profile" passHref>
+            <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+                <UserPlus className="mr-2 h-5 w-5" />
+                Añadir Trabajador
+            </Button>
+         </Link>
       </div>
 
       {isLoading && (
@@ -106,13 +108,15 @@ export default function UsuariosPage() {
             <CardDescription className="text-muted-foreground mt-2">
               Actualmente no hay usuarios para mostrar en esta empresa.
               <br />
-              La funcionalidad para añadir nuevos usuarios estará disponible próximamente.
+              Puedes añadir nuevos trabajadores desde la sección de Perfil de Empresa.
             </CardDescription>
           </CardHeader>
           <CardContent className="text-center pb-6">
-             <Button variant="outline" className="border-primary text-primary hover:bg-primary/10 opacity-50 cursor-not-allowed" title="Funcionalidad en desarrollo">
-                <UserPlus className="mr-2 h-4 w-4" /> Añadir Primer Usuario (Próximamente)
-            </Button>
+             <Link href="/company-profile" passHref>
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary/10">
+                    <UserPlus className="mr-2 h-4 w-4" /> Añadir Primer Trabajador
+                </Button>
+            </Link>
           </CardContent>
         </Card>
       )}
@@ -192,3 +196,4 @@ export default function UsuariosPage() {
     </div>
   );
 }
+
