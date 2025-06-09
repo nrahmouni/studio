@@ -2,7 +2,7 @@
 // src/app/(app)/control-diario/page.tsx
 'use client';
 
-import { useEffect, useState, useMemo } from 'react';
+import { useEffect, useState } from 'react';
 import { useForm, useFieldArray, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { Button } from '@/components/ui/button';
@@ -17,12 +17,14 @@ import { useToast } from '@/hooks/use-toast';
 import { Loader2, CalendarIcon, ChevronLeft, ChevronRight, Save, UserCheck, AlertTriangle, Info, Edit3, FileText as PdfIcon } from 'lucide-react';
 import { format, addDays, subDays, isEqual, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { getUsuarioById, getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
+import { getUsuarioById } from '@/lib/actions/user.actions';
 import { getObrasByEmpresaId } from '@/lib/actions/obra.actions';
 import { getControlDiario, saveControlDiario } from '@/lib/actions/controlDiario.actions';
-import type { UsuarioFirebase, Obra, ControlDiarioObra, ControlDiarioRegistroTrabajador } from '@/lib/types';
+import type { UsuarioFirebase, Obra } from '@/lib/types';
 import { ControlDiarioObraFormSchema, type ControlDiarioObraFormData } from '@/lib/types';
 import { useIsMobile } from '@/hooks/use-mobile';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 
 export default function ControlDiarioPage() {
@@ -48,13 +50,12 @@ export default function ControlDiarioPage() {
     },
   });
 
-  const { fields, append, remove, replace } = useFieldArray({
+  const { fields, replace } = useFieldArray({
     control: form.control,
     name: 'registrosTrabajadores',
     keyName: 'id',
   });
 
-  // Load current user and their obras
   useEffect(() => {
     const loadInitialUserData = async () => {
       setIsLoading(true);
@@ -95,14 +96,11 @@ export default function ControlDiarioPage() {
         }
       } catch (e) {
         setError("Error al cargar datos iniciales del usuario.");
-      } finally {
-        // setIsLoading(false); // Loading of daily data will handle this
       }
     };
     loadInitialUserData();
   }, []);
 
-  // Load control diario data when obra or date changes
   useEffect(() => {
     if (!selectedObraId || !currentUser || !empresaId) {
       replace([]);
@@ -111,10 +109,10 @@ export default function ControlDiarioPage() {
       return;
     }
     
- const fetchControlData = async () => {
+    const fetchControlData = async () => {
       setIsLoading(true);
       setError(null);
-      setIsCurrentDaySuccessfullySaved(false); // Reset save status when data changes
+      setIsCurrentDaySuccessfullySaved(false); 
       try {
         const data = await getControlDiario(selectedObraId, selectedDate, currentUser.id, empresaId);
         if (data) {
@@ -122,11 +120,11 @@ export default function ControlDiarioPage() {
             obraId: data.obraId,
             fecha: new Date(data.fecha),
             registrosTrabajadores: data.registrosTrabajadores.map(rt => ({
- ...rt,
- nombreTrabajador: rt.nombreTrabajador || 'Desconocido',
+              ...rt,
+              nombreTrabajador: rt.nombreTrabajador || 'Desconocido',
               horasReportadas: rt.horasReportadas === undefined ? null : rt.horasReportadas,
               horaInicio: rt.horaInicio === undefined ? null : rt.horaInicio,
- horaFin: rt.horaFin === undefined ? null : rt.horaFin,
+              horaFin: rt.horaFin === undefined ? null : rt.horaFin,
             })),
             firmaJefeObraURL: data.firmaJefeObraURL,
           });
@@ -156,7 +154,7 @@ export default function ControlDiarioPage() {
     }
   };
   
-  const calculateWorkedHours = (index: number) => {
+  const calculateWorkedHours = (index: number): string => {
     const horaInicioStr = form.watch(`registrosTrabajadores.${index}.horaInicio`);
     const horaFinStr = form.watch(`registrosTrabajadores.${index}.horaFin`);
 
@@ -182,11 +180,62 @@ export default function ControlDiarioPage() {
   };
 
   const handleGenerateDailyReportPDF = () => {
-    toast({
-      title: "Funcionalidad en Desarrollo",
-      description: "La generación del parte del día en PDF estará disponible pronto.",
+    const currentData = form.getValues();
+    const obraNombre = userObras.find(o => o.id === selectedObraId)?.nombre;
+
+    const doc = new jsPDF();
+
+    doc.setFontSize(18);
+    doc.text("ObraLink - Parte de Control Diario", 14, 22);
+    
+    doc.setFontSize(11);
+    doc.setTextColor(100);
+    doc.text(`Obra: ${obraNombre || 'N/A'}`, 14, 32);
+    doc.text(`Fecha: ${format(selectedDate, "PPP", { locale: es })}`, 14, 38);
+    doc.text(`Jefe de Obra: ${currentUser?.nombre || 'N/A'}`, 14, 44);
+    
+    const tableColumn = ["Trabajador", "Asistencia", "H. Inicio", "H. Fin", "H. Calculadas", "H. Reportadas", "Validado JO"];
+    const tableRows: (string | number | null)[][] = [];
+
+    currentData.registrosTrabajadores.forEach(reg => {
+      const rowData = [
+        reg.nombreTrabajador || reg.usuarioId,
+        reg.asistencia ? "Sí" : "No",
+        reg.horaInicio || "-",
+        reg.horaFin || "-",
+        calculateWorkedHours(currentData.registrosTrabajadores.indexOf(reg)),
+        reg.horasReportadas !== null ? reg.horasReportadas.toString() : "-",
+        reg.validadoPorJefeObra ? "Sí" : "No"
+      ];
+      tableRows.push(rowData);
     });
-    console.log("Solicitado PDF para obra:", selectedObraId, "fecha:", selectedDate);
+
+    autoTable(doc, {
+      head: [tableColumn],
+      body: tableRows,
+      startY: 50,
+      theme: 'grid',
+      styles: { fontSize: 9, cellPadding: 2 },
+      headStyles: { fillColor: [41, 75, 109], textColor: 255, fontStyle: 'bold' }, // Deep Blue header
+      alternateRowStyles: { fillColor: [240, 244, 248] }, // Light gray for alternate rows
+    });
+
+    let finalY = (doc as any).lastAutoTable.finalY || 60;
+
+    if (currentData.firmaJefeObraURL) {
+      doc.text("Firma Jefe de Obra:", 14, finalY + 10);
+      // For a real image, you'd use doc.addImage - for now, just text
+      doc.text(currentData.firmaJefeObraURL, 14, finalY + 16);
+    } else {
+      doc.text("Firma Jefe de Obra: __________________________", 14, finalY + 15);
+    }
+
+    doc.save(`Control_Diario_${(obraNombre || 'Obra').replace(/\s+/g, '_')}_${format(selectedDate, "yyyy-MM-dd")}.pdf`);
+    
+    toast({
+      title: "PDF Generado",
+      description: "El parte del día se ha descargado.",
+    });
   };
 
 
@@ -200,7 +249,7 @@ export default function ControlDiarioPage() {
         return;
     }
     setIsSaving(true);
-    setIsCurrentDaySuccessfullySaved(false); // Reset on new save attempt
+    setIsCurrentDaySuccessfullySaved(false);
     try {
       const result = await saveControlDiario(formData, currentUser.id);
       if (result.success) {
@@ -216,7 +265,7 @@ export default function ControlDiarioPage() {
               })),
             firmaJefeObraURL: updatedData.firmaJefeObraURL,
           });
-          setIsCurrentDaySuccessfullySaved(true); // Set to true after successful save & data reload
+          setIsCurrentDaySuccessfullySaved(true);
         }
       } else {
         toast({ title: "Error al Guardar", description: result.message || "No se pudo guardar el control.", variant: "destructive" });
@@ -250,7 +299,6 @@ export default function ControlDiarioPage() {
           </div>
         </CardHeader>
         <CardContent className="p-6 space-y-6">
-          {/* Obra and Date Selection */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-end">
             <div>
               <Label htmlFor="obraControlSelect" className="font-semibold">Obra</Label>
