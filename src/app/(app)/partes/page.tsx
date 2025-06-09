@@ -1,10 +1,11 @@
+
 // src/app/(app)/partes/page.tsx
 'use client';
 
 import { useEffect, useState } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { FileText, PlusCircle, Loader2, AlertTriangle, Eye, CheckCircle, ShieldAlert, Filter } from "lucide-react";
+import { FileText, PlusCircle, Loader2, AlertTriangle, Eye, CheckCircle, ShieldAlert, Filter, FileDown } from "lucide-react";
 import Link from "next/link";
 import { getPartesByEmpresaYObra, validateParte } from '@/lib/actions/parte.actions';
 import { getObrasByEmpresaId } from '@/lib/actions/obra.actions';
@@ -13,6 +14,8 @@ import { useToast } from '@/hooks/use-toast';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { getUsuarioById } from '@/lib/actions/user.actions';
 import Image from 'next/image';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
 
 export default function PartesPage() {
   const [partes, setPartes] = useState<Parte[]>([]);
@@ -100,7 +103,6 @@ export default function PartesPage() {
         if (result.success && result.parte) {
             toast({ title: "Parte Validado", description: `El parte ha sido validado con éxito.` });
             setPartes(prevPartes => prevPartes.map(p => p.id === parteId ? { ...p, validado: true, validadoPor: currentUser.id } : p));
-             // Update validator in usuariosMap if not already there
              if (currentUser && !usuariosMap[currentUser.id]) {
               setUsuariosMap(prevMap => ({ ...prevMap, [currentUser.id!]: currentUser.nombre }));
             }
@@ -112,6 +114,65 @@ export default function PartesPage() {
     }
   };
 
+  const handleGenerateIndividualPartePDF = (parte: Parte) => {
+    const doc = new jsPDF();
+    const obraNombre = obrasMap[parte.obraId] || 'Desconocida';
+    const trabajadorNombre = usuariosMap[parte.usuarioId] || 'Desconocido';
+    const validadorNombre = parte.validadoPor ? (usuariosMap[parte.validadoPor] || 'Sistema') : 'N/A';
+
+    doc.setFontSize(18);
+    doc.text("Parte de Trabajo Diario", 14, 22);
+
+    doc.setFontSize(11);
+    doc.setTextColor(100); // Light black for less stark text
+    doc.text(`Obra: ${obraNombre}`, 14, 32);
+    doc.text(`Trabajador: ${trabajadorNombre}`, 14, 38);
+    doc.text(`Fecha: ${new Date(parte.fecha).toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' })}`, 14, 44);
+    
+    let startY = 52;
+    
+    const tableData: (string | number | null)[][] = [
+      ["Horas Trabajadas", parte.horasTrabajadas != null ? `${parte.horasTrabajadas}h` : 'N/A'],
+      ["Tareas Realizadas", parte.tareasRealizadas],
+      ["Incidencias", parte.incidencias || "Ninguna"],
+      ["Estado", parte.validado ? `Validado por ${validadorNombre}` : "Pendiente de Validación"],
+    ];
+
+    if (parte.firmaURL) {
+      tableData.push(["Firma (URL)", parte.firmaURL]);
+    }
+    if (parte.fotosURLs && parte.fotosURLs.length > 0) {
+      tableData.push(["Fotos (URLs)", parte.fotosURLs.join('\n')]); // Join URLs with newline if multiple
+    }
+    
+    autoTable(doc, {
+      startY: startY,
+      head: [["Detalle", "Información"]],
+      body: tableData,
+      theme: 'grid',
+      styles: { fontSize: 9, cellPadding: 2, overflow: 'linebreak' },
+      headStyles: { fillColor: [41, 75, 109], textColor: 255, fontStyle: 'bold' }, // Deep Blue header
+      alternateRowStyles: { fillColor: [240, 244, 248] }, // Light gray for alternate rows
+      columnStyles: {
+        0: { cellWidth: 50 }, // Width for "Detalle" column
+        1: { cellWidth: 'auto' }, // "Información" column takes remaining space
+      },
+      didParseCell: function (data) {
+        if (data.column.dataKey === 1) { // Apply to "Información" column
+            // If content is a long string and looks like a URL list, try to keep it tidy.
+            if (typeof data.cell.raw === 'string' && data.cell.raw.includes('https://')) {
+                 data.cell.styles.fontSize = 7; // Smaller font for URLs
+            }
+        }
+      }
+    });
+
+    doc.save(`Parte_${trabajadorNombre.replace(/\s+/g, '_')}_${new Date(parte.fecha).toISOString().split('T')[0]}.pdf`);
+    toast({
+      title: "PDF Generado",
+      description: "El parte de trabajo se ha descargado.",
+    });
+  };
 
   return (
     <div className="container mx-auto py-8 px-4">
@@ -248,6 +309,9 @@ export default function PartesPage() {
                   {parte.validado && parte.validadoPor && (
                       <p className="text-xs text-muted-foreground italic">Validado por {usuariosMap[parte.validadoPor] || 'Admin'}</p>
                   )}
+                  <Button onClick={() => handleGenerateIndividualPartePDF(parte)} variant="outline" size="sm" className="text-primary border-primary/50 hover:bg-primary/10">
+                    <FileDown className="mr-2 h-4 w-4" /> Descargar PDF
+                  </Button>
                   <Link href={`/partes/${parte.id}`} passHref>
                     <Button variant="default" size="sm" className="bg-primary hover:bg-primary/90 text-primary-foreground">
                       <Eye className="mr-2 h-4 w-4" /> Ver Parte
