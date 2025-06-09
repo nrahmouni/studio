@@ -14,7 +14,7 @@ import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { Loader2, CalendarIcon, ChevronLeft, ChevronRight, Save, UserCheck, AlertTriangle, Info, Edit3 } from 'lucide-react';
+import { Loader2, CalendarIcon, ChevronLeft, ChevronRight, Save, UserCheck, AlertTriangle, Info, Edit3, FileText as PdfIcon } from 'lucide-react';
 import { format, addDays, subDays, isEqual, startOfDay } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { getUsuarioById, getUsuariosByEmpresaId } from '@/lib/actions/user.actions';
@@ -36,6 +36,7 @@ export default function ControlDiarioPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [isCurrentDaySuccessfullySaved, setIsCurrentDaySuccessfullySaved] = useState(false);
 
   const form = useForm<ControlDiarioObraFormData>({
     resolver: zodResolver(ControlDiarioObraFormSchema),
@@ -106,12 +107,14 @@ export default function ControlDiarioPage() {
     if (!selectedObraId || !currentUser || !empresaId) {
       replace([]);
       form.reset({ obraId: selectedObraId, fecha: selectedDate, registrosTrabajadores: [] });
+      setIsCurrentDaySuccessfullySaved(false);
       return;
     }
     
  const fetchControlData = async () => {
       setIsLoading(true);
       setError(null);
+      setIsCurrentDaySuccessfullySaved(false); // Reset save status when data changes
       try {
         const data = await getControlDiario(selectedObraId, selectedDate, currentUser.id, empresaId);
         if (data) {
@@ -178,6 +181,14 @@ export default function ControlDiarioPage() {
     return diffHours.toFixed(2) + 'h';
   };
 
+  const handleGenerateDailyReportPDF = () => {
+    toast({
+      title: "Funcionalidad en Desarrollo",
+      description: "La generación del parte del día en PDF estará disponible pronto.",
+    });
+    console.log("Solicitado PDF para obra:", selectedObraId, "fecha:", selectedDate);
+  };
+
 
   const onSubmit = async (formData: ControlDiarioObraFormData) => {
     if (!currentUser) {
@@ -189,6 +200,7 @@ export default function ControlDiarioPage() {
         return;
     }
     setIsSaving(true);
+    setIsCurrentDaySuccessfullySaved(false); // Reset on new save attempt
     try {
       const result = await saveControlDiario(formData, currentUser.id);
       if (result.success) {
@@ -204,6 +216,7 @@ export default function ControlDiarioPage() {
               })),
             firmaJefeObraURL: updatedData.firmaJefeObraURL,
           });
+          setIsCurrentDaySuccessfullySaved(true); // Set to true after successful save & data reload
         }
       } else {
         toast({ title: "Error al Guardar", description: result.message || "No se pudo guardar el control.", variant: "destructive" });
@@ -470,11 +483,23 @@ export default function ControlDiarioPage() {
                   </table>
                 </div>
               )}
-              <div className="flex justify-end pt-4">
+              <div className="flex justify-end pt-4 space-x-3">
                 <Button type="submit" className="bg-accent hover:bg-accent/90 text-accent-foreground" disabled={isSaving || isLoading || fields.length === 0}>
                   {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
                   Guardar / Validar Día
                 </Button>
+                {isCurrentDaySuccessfullySaved && (
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={handleGenerateDailyReportPDF}
+                    className="border-primary text-primary hover:bg-primary/10"
+                    disabled={isSaving || isLoading}
+                  >
+                    <PdfIcon className="mr-2 h-4 w-4" />
+                    Generar Parte del Día PDF
+                  </Button>
+                )}
               </div>
             </form>
           )}
