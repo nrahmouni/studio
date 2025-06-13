@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CheckCircle, Construction, FileText, Cpu, Users, BarChart3, Zap, TrendingUp, ShieldCheck } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
+import obraLinkLogo from "@/app/(app)/assets/logo.jpg"; // Importar el logo
 
 export default function HomePage() {
   const features = [
@@ -66,7 +67,7 @@ export default function HomePage() {
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link href="/" className="hover:opacity-90 transition-opacity">
             <Image
-              src="/obralink-logo.jpg"
+              src={obraLinkLogo} // Usar el logo importado
               alt="ObraLink Logo"
               width={160}
               height={36} 

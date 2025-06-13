@@ -16,6 +16,7 @@ import {
 import { AppSidebarNav } from "./AppSidebarNav"; 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import obraLinkLogo from "@/app/(app)/assets/logo.jpg"; // Importar el logo
 
 
 interface AppHeaderProps {
@@ -91,7 +92,7 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
                 <SheetTitle asChild>
                    {companyName === "ObraLink" ? (
                     <Image
-                      src="/obralink-logo.jpg"
+                      src={obraLinkLogo} // Usar el logo importado
                       alt="ObraLink Logo"
                       width={160}
                       height={36}
@@ -114,7 +115,7 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
           <Link href="/dashboard" className="hidden md:block">
             {companyName === "ObraLink" ? (
               <Image
-                src="/obralink-logo.jpg"
+                src={obraLinkLogo} // Usar el logo importado
                 alt="ObraLink Logo"
                 width={160}
                 height={36}
