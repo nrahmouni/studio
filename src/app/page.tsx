@@ -66,11 +66,11 @@ export default function HomePage() {
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link href="/" className="hover:opacity-90 transition-opacity">
             <Image
-              src="/obralink-logo.png"
+              src="/obralink-logo.jpg"
               alt="ObraLink Logo"
               width={160}
-              height={36} // Adjusted height for better aspect ratio in header
-              priority // Load logo quickly
+              height={36} 
+              priority 
             />
           </Link>
           <nav>

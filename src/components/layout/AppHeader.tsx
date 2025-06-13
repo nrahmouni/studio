@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { Menu, Settings, UserCircle, LogOut, Sun, Moon } from "lucide-react";
 import Link from "next/link";
-import Image from "next/image"; // Import Image
+import Image from "next/image"; 
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -91,10 +91,11 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
                 <SheetTitle asChild>
                    {companyName === "ObraLink" ? (
                     <Image
-                      src="/obralink-logo.png"
+                      src="/obralink-logo.jpg"
                       alt="ObraLink Logo"
-                      width={150}
-                      height={34}
+                      width={160}
+                      height={36}
+                      priority
                     />
                   ) : (
                     <h1 className="text-xl font-bold font-headline text-sidebar-primary">{companyName}</h1>
@@ -113,7 +114,7 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
           <Link href="/dashboard" className="hidden md:block">
             {companyName === "ObraLink" ? (
               <Image
-                src="/obralink-logo.png"
+                src="/obralink-logo.jpg"
                 alt="ObraLink Logo"
                 width={160}
                 height={36}
