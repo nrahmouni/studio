@@ -1,10 +1,13 @@
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Construction, FileText, Cpu, Users, BarChart3, Zap, TrendingUp, ShieldCheck } from "lucide-react";
+import { CheckCircle, Construction, FileText, Cpu, TrendingUp, ShieldCheck, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import obraLinkLogo from "@/app/(app)/assets/logo.jpg"; // Importar el logo
+import obraLinkLogo from "@/app/(app)/assets/logo.jpg"; 
+import benefitImg1 from "@/app/(app)/assets/img1.jpg";
+import benefitImg2 from "@/app/(app)/assets/img2.jpg";
+import benefitImg3 from "@/app/(app)/assets/img3.jpg";
 
 export default function HomePage() {
   const features = [
@@ -38,7 +41,7 @@ export default function HomePage() {
     {
       title: "Digitaliza y Simplifica",
       description: "Transforma tus partes de trabajo en papel a un formato digital, accesible y fácil de gestionar. Adjunta fotos, registra incidencias y obtén firmas digitales al instante.",
-      imageSrc: "https://placehold.co/600x450.png",
+      imageSrc: benefitImg1,
       imageAlt: "Trabajador usando tablet en obra",
       dataAiHint: "worker tablet",
       align: "left"
@@ -46,7 +49,7 @@ export default function HomePage() {
     {
       title: "Control Total de tus Proyectos",
       description: "Desde el perfil de tu empresa hasta el detalle de cada obra y usuario. Asigna jefes de obra, gestiona accesos y mantén toda la información organizada y segura.",
-      imageSrc: "https://placehold.co/600x450.png",
+      imageSrc: benefitImg2,
       imageAlt: "Panel de control de proyectos",
       dataAiHint: "dashboard interface",
       align: "right"
@@ -54,7 +57,7 @@ export default function HomePage() {
     {
       title: "Decisiones Inteligentes con IA",
       description: "Nuestra IA analiza los datos de tus partes para ofrecerte sugerencias de asignación de recursos, ayudándote a prevenir cuellos de botella y optimizar la productividad.",
-      imageSrc: "https://placehold.co/600x450.png",
+      imageSrc: benefitImg3,
       imageAlt: "Gráfico de optimización de recursos IA",
       dataAiHint: "ai optimization",
       align: "left"
@@ -225,3 +228,4 @@ export default function HomePage() {
     </div>
   );
 }
+
