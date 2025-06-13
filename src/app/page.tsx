@@ -172,15 +172,15 @@ export default function HomePage() {
                     <p className="text-md md:text-lg text-foreground/80 mb-6">{benefit.description}</p>
                     <ul className={`space-y-2 mb-6 text-left inline-block ${benefit.align === 'right' ? 'md:text-right' : ''}`}>
                       <li className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 shrink-0" />
+                        <CheckCircle className="h-5 w-5 text-accent mr-2 shrink-0" />
                         <span>Información centralizada y segura</span>
                       </li>
                       <li className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 shrink-0" />
+                        <CheckCircle className="h-5 w-5 text-accent mr-2 shrink-0" />
                         <span>Mejora la comunicación del equipo</span>
                       </li>
                       <li className="flex items-center">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 shrink-0" />
+                        <CheckCircle className="h-5 w-5 text-accent mr-2 shrink-0" />
                         <span>Acceso móvil para gestión en obra</span>
                       </li>
                     </ul>
