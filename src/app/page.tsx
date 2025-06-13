@@ -87,13 +87,13 @@ export default function HomePage() {
         <section className="relative py-20 md:py-32 text-white overflow-hidden">
           <div className="absolute inset-0">
             <Image
-              src="https://placehold.co/1920x1080.png" 
-              alt="Fondo de obra moderna"
+              src="/hero-image.jpg" 
+              alt="Equipo de construcción planificando en obra"
               fill
               objectFit="cover"
               quality={80}
               className="opacity-30"
-              data-ai-hint="construction background"
+              data-ai-hint="construction team planning"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/90 to-primary"></div>
           </div>
@@ -113,7 +113,7 @@ export default function HomePage() {
         </section>
 
         {/* Features Section */}
-        <section className="py-16 md:py-24 bg-background"> {/* Changed from bg-secondary/50 */}
+        <section className="py-16 md:py-24 bg-background">
           <div className="container mx-auto px-4">
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary">Todo lo que Necesitas para Triunfar</h2>
@@ -191,6 +191,16 @@ export default function HomePage() {
         {/* Final CTA Section */}
         <section className="py-16 md:py-24 bg-primary text-primary-foreground">
           <div className="container mx-auto px-4 text-center">
+            <div className="mb-8 animate-fade-in-up">
+               <Image
+                  src="/cta-image.jpg"
+                  alt="Trabajador de construcción sonriendo con casco"
+                  width={500} 
+                  height={350} 
+                  className="rounded-lg shadow-xl mx-auto object-cover"
+                  data-ai-hint="construction worker success"
+                />
+            </div>
             <ShieldCheck className="h-16 w-16 text-accent mx-auto mb-6 animate-bounce-subtle" />
             <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6">¿Listo para dar el Salto?</h2>
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
