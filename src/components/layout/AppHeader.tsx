@@ -66,7 +66,7 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
     return ( 
       <header className="sticky top-0 z-50 w-full border-b bg-card shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="h-8 w-32 bg-muted rounded animate-pulse" /> 
+          <div className="h-9 w-40 bg-muted rounded animate-pulse" /> 
           <div className="flex items-center gap-2">
             <div className="h-8 w-8 bg-muted rounded-full animate-pulse" /> 
             <div className="h-8 w-8 bg-muted rounded-full animate-pulse" /> 
@@ -90,17 +90,14 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
             <SheetContent side="left" className="w-72 bg-sidebar text-sidebar-foreground p-0">
               <SheetHeader className="p-4 border-b border-sidebar-border">
                 <SheetTitle asChild>
-                   {companyName === "ObraLink" ? (
+                   {/* Ensure consistent logo usage here */}
                     <Image
-                      src={obraLinkLogo} // Usar el logo importado
+                      src={obraLinkLogo} 
                       alt="ObraLink Logo"
                       width={160}
                       height={36}
                       priority
                     />
-                  ) : (
-                    <h1 className="text-xl font-bold font-headline text-sidebar-primary">{companyName}</h1>
-                  )}
                 </SheetTitle>
                 <SheetDescription className="text-sidebar-muted-foreground">
                   Menú de Navegación
@@ -113,17 +110,14 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
           </Sheet>
 
           <Link href="/dashboard" className="hidden md:block">
-            {companyName === "ObraLink" ? (
+             {/* Ensure consistent logo usage here */}
               <Image
-                src={obraLinkLogo} // Usar el logo importado
+                src={obraLinkLogo} 
                 alt="ObraLink Logo"
                 width={160}
                 height={36}
                 priority
               />
-            ) : (
-              <h1 className="text-xl font-bold font-headline text-primary">{companyName}</h1>
-            )}
           </Link>
         </div>
 
