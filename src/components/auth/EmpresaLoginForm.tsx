@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { authenticateEmpresa } from '@/lib/actions/user.actions';
+import { authenticateUser } from '@/lib/actions/user.actions'; // Changed to a generic auth function
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -47,7 +47,8 @@ export function EmpresaLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const result = await authenticateEmpresa(values);
+      // Authenticate as an admin or jefeObra
+      const result = await authenticateUser(values, ['admin', 'jefeObra']);
       if (result.success && result.empresaId && result.userId && result.role) {
         toast({
           title: 'Inicio de Sesión Exitoso',
@@ -58,22 +59,23 @@ export function EmpresaLoginForm() {
           localStorage.setItem('usuarioId_obra_link', result.userId); 
           localStorage.setItem('userRole_obra_link', result.role as UsuarioFirebase['rol']);
         }
+        // Redirect based on role if needed, e.g., jefeObra to control-diario
         if (result.role === 'jefeObra') {
-          router.push('/control-diario');
+           router.push('/control-diario');
         } else {
-          router.push('/dashboard');
+           router.push('/dashboard');
         }
       } else {
         toast({
           title: 'Error de Inicio de Sesión',
-          description: result.message || 'Credenciales incorrectas. Por favor, inténtalo de nuevo.',
+          description: result.message || 'Credenciales incorrectas o rol no autorizado para este acceso.',
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error Inesperado',
-        description: 'Ha ocurrido un error. Por favor, inténtalo más tarde.',
+        description: error.message || 'Ha ocurrido un error. Por favor, inténtalo más tarde.',
         variant: 'destructive',
       });
       console.error("Login error:", error);
@@ -85,9 +87,9 @@ export function EmpresaLoginForm() {
   return (
     <Card className="w-full max-w-md shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline">Acceso Empresa</CardTitle>
+        <CardTitle className="text-2xl font-headline">Acceso Empresa / Jefe de Obra</CardTitle>
         <CardDescription>
-          Introduce tus credenciales para gestionar tu empresa.
+          Introduce tus credenciales para gestionar tu empresa u obras.
         </CardDescription>
       </CardHeader>
       <CardContent>

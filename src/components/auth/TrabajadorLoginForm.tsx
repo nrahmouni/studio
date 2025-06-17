@@ -15,7 +15,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { authenticateTrabajador } from '@/lib/actions/user.actions';
+import { authenticateUser } from '@/lib/actions/user.actions'; // Changed to a generic auth function
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -48,18 +48,19 @@ export function TrabajadorLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      const result = await authenticateTrabajador(values);
-      if (result.success && result.usuarioId && result.empresaId && result.role) {
+      // Authenticate as a trabajador
+      const result = await authenticateUser(values, ['trabajador']);
+      if (result.success && result.userId && result.empresaId && result.role) {
         toast({
           title: 'Inicio de Sesión Exitoso',
           description: 'Bienvenido.',
         });
         if (typeof window !== 'undefined') {
-          localStorage.setItem('usuarioId_obra_link', result.usuarioId);
+          localStorage.setItem('usuarioId_obra_link', result.userId);
           localStorage.setItem('empresaId_obra_link', result.empresaId);
-          localStorage.setItem('userRole_obra_link', result.role as UsuarioFirebase['rol']); // Store the specific role
+          localStorage.setItem('userRole_obra_link', result.role as UsuarioFirebase['rol']);
         }
-        router.push('/dashboard');
+        router.push('/dashboard'); 
       } else {
         toast({
           title: 'Error de Inicio de Sesión',
@@ -67,10 +68,10 @@ export function TrabajadorLoginForm() {
           variant: 'destructive',
         });
       }
-    } catch (error) {
+    } catch (error: any) {
       toast({
         title: 'Error Inesperado',
-        description: 'Ha ocurrido un error. Por favor, inténtalo más tarde.',
+        description: error.message || 'Ha ocurrido un error. Por favor, inténtalo más tarde.',
         variant: 'destructive',
       });
        console.error("Login error:", error);
@@ -110,7 +111,7 @@ export function TrabajadorLoginForm() {
                 <FormItem>
                   <FormLabel>Contraseña</FormLabel>
                   <FormControl>
-                    <Input type="password" placeholder="••••••••" {...field} />
+                    <Input type="password" placeholder="•••••••• (tu DNI si es el primer acceso)" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

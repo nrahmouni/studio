@@ -9,93 +9,136 @@ import {
   type ControlDiarioObra,
   type ControlDiarioRegistroTrabajador,
   type ControlDiarioObraFormData,
-  type Parte, // Import Parte type
+  type Parte, 
+  UsuarioFirebaseSchema
 } from '@/lib/types';
-import { mockControlDiarioData } from '@/lib/mockData/controlDiario';
-import { mockUsuarios } from '@/lib/mockData/usuarios';
-import { mockObras } from '@/lib/mockData/obras';
-import { createParte, updateParte, getParteByWorkerObraDate } from './parte.actions'; // Import parte actions
-
-let CcontrolDiario: ControlDiarioObra[] = [...mockControlDiarioData];
+import { db } from '@/lib/firebase/firebase';
+import {
+  doc,
+  setDoc,
+  getDoc,
+  updateDoc,
+  collection,
+  query,
+  where,
+  getDocs,
+  serverTimestamp,
+  Timestamp
+} from 'firebase/firestore';
+import { createParte, updateParte, getParteByWorkerObraDate } from './parte.actions';
 
 export async function getControlDiario(
   obraId: string,
   fecha: Date,
-  jefeObraId: string,
-  empresaId: string
+  jefeObraId: string, // ID of the user viewing/requesting the control
+  empresaId: string    // Company ID of the user viewing/requesting
 ): Promise<ControlDiarioObra | null> {
-  await new Promise(resolve => setTimeout(resolve, 300)); 
-
+  
   const fechaString = fecha.toISOString().split('T')[0]; 
-  const existingRecord = CcontrolDiario.find(
-    (cd) => cd.obraId === obraId && cd.fecha.toISOString().split('T')[0] === fechaString
-  );
+  const controlDiarioId = `${obraId}-${fechaString}`;
+  const controlDiarioDocRef = doc(db, "controlDiario", controlDiarioId);
 
-  if (existingRecord) {
-    const obra = mockObras.find(o => o.id === obraId && o.empresaId === empresaId);
-    if (!obra) return existingRecord; 
+  try {
+    // Verify obra belongs to the company
+    const obraDocRef = doc(db, "obras", obraId);
+    const obraSnap = await getDoc(obraDocRef);
+    if (!obraSnap.exists() || obraSnap.data().empresaId !== empresaId) {
+      console.error(`Acceso denegado o obra no encontrada: Obra ID ${obraId} para Empresa ID ${empresaId}`);
+      return null;
+    }
+    const obraData = obraSnap.data();
 
-    const assignedWorkerIds = mockUsuarios
-      .filter(u => u.empresaId === empresaId && u.rol === 'trabajador' && u.obrasAsignadas?.includes(obraId))
-      .map(u => u.id);
+    const controlDiarioSnap = await getDoc(controlDiarioDocRef);
 
-    const recordWorkerIds = new Set(existingRecord.registrosTrabajadores.map(rt => rt.usuarioId));
+    let finalRegistros: ControlDiarioRegistroTrabajador[] = [];
 
-    assignedWorkerIds.forEach(workerId => {
-      if (!recordWorkerIds.has(workerId)) {
-        const worker = mockUsuarios.find(u => u.id === workerId);
-        existingRecord.registrosTrabajadores.push({
-          usuarioId: workerId,
-          nombreTrabajador: worker?.nombre || 'Desconocido',
-          asistencia: false,
-          horaInicio: null,
-          horaFin: null,
-          horasReportadas: null,
-          validadoPorJefeObra: false,
-        });
-      } else {
-        const registro = existingRecord.registrosTrabajadores.find(rt => rt.usuarioId === workerId);
-        if (registro && !registro.nombreTrabajador) {
-            const worker = mockUsuarios.find(u => u.id === workerId);
-            if(worker) registro.nombreTrabajador = worker.nombre;
-        }
-      }
+    // Fetch all active workers assigned to this obra within the company
+    const usersCollectionRef = collection(db, "usuarios");
+    const assignedWorkersQuery = query(
+      usersCollectionRef,
+      where("empresaId", "==", empresaId),
+      where("rol", "==", "trabajador"),
+      where("activo", "==", true),
+      where("obrasAsignadas", "array-contains", obraId)
+    );
+    const assignedWorkersSnap = await getDocs(assignedWorkersQuery);
+    const assignedWorkerDetails: Record<string, { id: string, nombre: string }> = {};
+    assignedWorkersSnap.forEach(doc => {
+      assignedWorkerDetails[doc.id] = { id: doc.id, nombre: doc.data().nombre };
     });
-    existingRecord.registrosTrabajadores.sort((a, b) => (a.nombreTrabajador || '').localeCompare(b.nombreTrabajador || ''));
-    return existingRecord;
+
+
+    if (controlDiarioSnap.exists()) {
+      const existingData = controlDiarioSnap.data();
+      const parsedExistingData = ControlDiarioObraSchema.partial().safeParse({
+          ...existingData,
+          fecha: (existingData.fecha as Timestamp).toDate(),
+          lastModified: existingData.lastModified ? (existingData.lastModified as Timestamp).toDate() : new Date(),
+      });
+
+      if (!parsedExistingData.success) {
+          console.warn("Invalid existing control diario data:", parsedExistingData.error);
+          // Proceed to build shell, but log this
+      } else {
+          finalRegistros = parsedExistingData.data.registrosTrabajadores || [];
+      }
+
+      // Ensure all currently assigned workers are in the list, add if missing
+      Object.values(assignedWorkerDetails).forEach(worker => {
+        if (!finalRegistros.find(rt => rt.usuarioId === worker.id)) {
+          finalRegistros.push({
+            usuarioId: worker.id,
+            nombreTrabajador: worker.nombre,
+            asistencia: false,
+            horaInicio: null,
+            horaFin: null,
+            horasReportadas: null,
+            validadoPorJefeObra: false,
+          });
+        } else {
+            // Ensure name is up-to-date
+            const registro = finalRegistros.find(rt => rt.usuarioId === worker.id);
+            if (registro && registro.nombreTrabajador !== worker.nombre) {
+                registro.nombreTrabajador = worker.nombre;
+            }
+        }
+      });
+      // Remove workers no longer assigned or inactive (if they have no data for this day)
+      finalRegistros = finalRegistros.filter(rt => 
+        assignedWorkerDetails[rt.usuarioId] || (rt.asistencia || rt.horasReportadas) // Keep if data exists
+      );
+
+
+    } else { // No existing record, create a new shell
+      finalRegistros = Object.values(assignedWorkerDetails).map(worker => ({
+        usuarioId: worker.id,
+        nombreTrabajador: worker.nombre,
+        asistencia: false,
+        horaInicio: null,
+        horaFin: null,
+        horasReportadas: null,
+        validadoPorJefeObra: false,
+      }));
+    }
+    
+    finalRegistros.sort((a, b) => (a.nombreTrabajador || '').localeCompare(b.nombreTrabajador || ''));
+    
+    const resultShell: ControlDiarioObra = {
+        id: controlDiarioId,
+        obraId: obraId,
+        fecha: fecha,
+        jefeObraId: jefeObraId, // The current user acting as JO
+        registrosTrabajadores: finalRegistros,
+        firmaJefeObraURL: controlDiarioSnap.exists() ? controlDiarioSnap.data().firmaJefeObraURL : null,
+        lastModified: controlDiarioSnap.exists() ? (controlDiarioSnap.data().lastModified as Timestamp).toDate() : new Date(),
+    };
+    
+    return ControlDiarioObraSchema.parse(resultShell);
+
+  } catch (error) {
+    console.error("Error getting control diario:", error);
+    return null;
   }
-
-  const obra = mockObras.find(o => o.id === obraId && o.empresaId === empresaId);
-  if (!obra) {
-    console.error(`Obra con ID ${obraId} no encontrada para la empresa ${empresaId}.`);
-    return null; 
-  }
-
-  const assignedWorkers = mockUsuarios.filter(
-    (user) => user.empresaId === empresaId && user.rol === 'trabajador' && user.obrasAsignadas?.includes(obraId)
-  );
-
-  const newShellRegistros: ControlDiarioRegistroTrabajador[] = assignedWorkers.map((worker) => ({
-    usuarioId: worker.id,
-    nombreTrabajador: worker.nombre,
-    asistencia: false,
-    horaInicio: null,
-    horaFin: null,
-    horasReportadas: null,
-    validadoPorJefeObra: false,
-  })).sort((a, b) => (a.nombreTrabajador || '').localeCompare(b.nombreTrabajador || ''));
-
-
-  const newShellRecord: ControlDiarioObra = {
-    id: `${obraId}-${fechaString}`, 
-    obraId,
-    fecha,
-    jefeObraId,
-    registrosTrabajadores: newShellRegistros,
-    firmaJefeObraURL: null,
-    lastModified: new Date(),
-  };
-  return newShellRecord;
 }
 
 export async function saveControlDiario(
@@ -105,12 +148,14 @@ export async function saveControlDiario(
 
   const dataToValidate = {
     ...data, 
-    jefeObraId: currentJefeObraId, 
+    jefeObraId: currentJefeObraId,
+    // Ensure fecha is a JS Date for validation, will be converted to Timestamp for Firestore
+    fecha: new Date(data.fecha), 
   };
 
   const InternalValidationSchema = ControlDiarioObraSchema.omit({
     id: true, 
-    lastModified: true, 
+    lastModified: true,
   });
 
   const validationResult = InternalValidationSchema.safeParse(dataToValidate);
@@ -120,82 +165,94 @@ export async function saveControlDiario(
     return { success: false, message: `Error de validación: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
   }
 
-  const validatedData = validationResult.data; 
-  const recordId = `${validatedData.obraId}-${validatedData.fecha.toISOString().split('T')[0]}`;
+  const validatedData = validationResult.data;
+  const controlDiarioId = `${validatedData.obraId}-${validatedData.fecha.toISOString().split('T')[0]}`;
+  const controlDiarioDocRef = doc(db, "controlDiario", controlDiarioId);
   
-  const obraDelControl = mockObras.find(o => o.id === validatedData.obraId);
-  if (!obraDelControl) {
-    return { success: false, message: 'Obra no encontrada para este control diario.' };
-  }
-  const empresaId = obraDelControl.empresaId;
+  try {
+    const obraDelControlRef = doc(db, "obras", validatedData.obraId);
+    const obraDelControlSnap = await getDoc(obraDelControlRef);
+    if (!obraDelControlSnap.exists()) {
+      return { success: false, message: 'Obra no encontrada para este control diario.' };
+    }
+    const empresaId = obraDelControlSnap.data().empresaId;
 
-  const recordToSave: ControlDiarioObra = {
-    ...validatedData, 
-    id: recordId,
-    lastModified: new Date(),
-  };
+    const recordToSaveForFirestore = {
+      ...validatedData,
+      id: controlDiarioId, // ensure id is part of the data being set/updated
+      fecha: Timestamp.fromDate(validatedData.fecha), // Convert JS Date to Firestore Timestamp
+      lastModified: serverTimestamp(),
+    };
 
-  const recordIndex = CcontrolDiario.findIndex((cd) => cd.id === recordId);
+    await setDoc(controlDiarioDocRef, recordToSaveForFirestore, { merge: true });
 
-  if (recordIndex > -1) {
-    CcontrolDiario[recordIndex] = recordToSave;
-  } else {
-    CcontrolDiario.push(recordToSave);
-  }
+    const jefeObraActualSnap = await getDoc(doc(db, "usuarios", currentJefeObraId));
+    const nombreJefeObra = jefeObraActualSnap.exists() ? jefeObraActualSnap.data().nombre : 'Jefe de Obra';
 
-  // --- Inicio de la lógica para crear/actualizar Partes ---
-  const jefeObraActual = mockUsuarios.find(u => u.id === recordToSave.jefeObraId);
-  const nombreJefeObra = jefeObraActual?.nombre || 'Jefe de Obra';
+    for (const registro of validatedData.registrosTrabajadores) {
+      if (registro.asistencia && registro.horasReportadas != null && registro.horasReportadas > 0) {
+        const existingParte = await getParteByWorkerObraDate(
+          registro.usuarioId,
+          validatedData.obraId,
+          validatedData.fecha,
+          empresaId 
+        );
 
-  for (const registro of recordToSave.registrosTrabajadores) {
-    if (registro.asistencia && registro.horasReportadas != null && registro.horasReportadas > 0) {
-      
-      const existingParte = await getParteByWorkerObraDate(
-        registro.usuarioId,
-        recordToSave.obraId,
-        recordToSave.fecha,
-        empresaId 
-      );
-
-      if (existingParte) {
-        if (!existingParte.validado) { 
-          const parteUpdateData: Partial<Omit<Parte, 'id' | 'usuarioId' | 'timestamp'>> = {
-            horasTrabajadas: registro.horasReportadas,
-            validado: true,
-            validadoPor: recordToSave.jefeObraId,
-            tareasRealizadas: existingParte.tareasRealizadas.includes("Control Diario") 
-              ? existingParte.tareasRealizadas 
-              : `${existingParte.tareasRealizadas}\n(Horas y asistencia actualizadas y validadas vía Control Diario por ${nombreJefeObra} el ${new Date().toLocaleDateString()}).`.trim(),
-          };
-          await updateParte(existingParte.id, parteUpdateData as UpdateParteData); // Cast to UpdateParteData
-        }
-      } else {
-        const parteCreateData = { 
+        const parteBaseData = {
           usuarioId: registro.usuarioId,
-          obraId: recordToSave.obraId,
-          fecha: recordToSave.fecha,
-          tareasRealizadas: `Trabajo registrado y validado mediante Control Diario por ${nombreJefeObra}.`,
+          obraId: validatedData.obraId,
+          fecha: validatedData.fecha, // JS Date
           horasTrabajadas: registro.horasReportadas,
-          incidencias: '', 
-          tareasSeleccionadas: [],
-          fotosURLs: [],
-          firmaURL: null,
-          validado: true, 
-          validadoPor: recordToSave.jefeObraId,
+          validado: registro.validadoPorJefeObra,
+          validadoPor: registro.validadoPorJefeObra ? currentJefeObraId : null,
         };
-        await createParte(parteCreateData);
+
+        if (existingParte) {
+            if (!existingParte.validado || registro.validadoPorJefeObra) { // Update if not validated or if JO is validating it now
+                const parteUpdateData = {
+                    ...parteBaseData,
+                    tareasRealizadas: existingParte.tareasRealizadas.includes("Control Diario") 
+                    ? existingParte.tareasRealizadas 
+                    : `${existingParte.tareasRealizadas}\n(Horas/asistencia validadas vía Control Diario por ${nombreJefeObra} el ${new Date().toLocaleDateString('es-ES')}).`.trim(),
+                    // Keep other existing parte fields like incidencias, fotos, etc.
+                    incidencias: existingParte.incidencias,
+                    tareasSeleccionadas: existingParte.tareasSeleccionadas,
+                    fotosURLs: existingParte.fotosURLs,
+                    firmaURL: existingParte.firmaURL,
+                };
+                await updateParte(existingParte.id, parteUpdateData as Partial<Omit<Parte, 'id' | 'usuarioId' | 'timestamp'>>);
+            }
+        } else {
+          const parteCreateData = {
+            ...parteBaseData,
+            tareasRealizadas: `Trabajo registrado y validado mediante Control Diario por ${nombreJefeObra}. Asistencia: Sí. Horas: ${registro.horasReportadas}.`,
+            incidencias: '', 
+            tareasSeleccionadas: ['Control Diario'], // Add a default task type
+            fotosURLs: [],
+            firmaURL: null,
+          };
+          await createParte(parteCreateData);
+        }
       }
     }
+
+    revalidatePath('/(app)/control-diario');
+    revalidatePath('/(app)/partes'); 
+
+    const savedSnap = await getDoc(controlDiarioDocRef);
+    const savedData = savedSnap.data();
+    const controlDiarioResult = ControlDiarioObraSchema.parse({
+        id: savedSnap.id,
+        ...savedData,
+        fecha: (savedData?.fecha as Timestamp).toDate(),
+        lastModified: (savedData?.lastModified as Timestamp).toDate(),
+    });
+
+    return { success: true, message: 'Control diario guardado y partes de trabajo actualizados/creados.', controlDiario: controlDiarioResult };
+  } catch (error: any) {
+    console.error("Error saving control diario:", error);
+    return { success: false, message: `Error al guardar el control diario: ${error.message || "Error desconocido."}` };
   }
-  // --- Fin de la lógica para crear/actualizar Partes ---
-
-  revalidatePath('/(app)/control-diario');
-  revalidatePath('/(app)/partes'); 
-
-  await new Promise(resolve => setTimeout(resolve, 500)); 
-  return { success: true, message: 'Control diario guardado y partes de trabajo actualizados/creados.', controlDiario: recordToSave };
 }
 
-// Definición local del tipo UpdateParteData ya que no se puede importar directamente desde parte.actions.ts
-// debido a las reglas de 'use server'. Esta definición debe coincidir con la de parte.actions.ts
-type UpdateParteData = Partial<Omit<Parte, 'id' | 'usuarioId' | 'timestamp'>>;
+// type UpdateParteData = Partial<Omit<Parte, 'id' | 'usuarioId' | 'timestamp'>>;

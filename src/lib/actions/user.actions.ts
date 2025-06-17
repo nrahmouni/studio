@@ -4,17 +4,19 @@
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { UsuarioFirebaseSchema, type UsuarioFirebase } from '@/lib/types';
-import { mockUsuarios } from '@/lib/mockData/usuarios';
+import { db, auth } from '@/lib/firebase/firebase';
+import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp, writeBatch, deleteDoc } from 'firebase/firestore';
 
-let CUsuarios: UsuarioFirebase[] = [...mockUsuarios];
-
-// Esquema para la autenticación
 const LoginSchema = z.object({
   email: z.string().email('Email inválido.'),
   password: z.string().min(1, 'Contraseña requerida.'),
 });
 
-export async function authenticateEmpresa(credentials: z.infer<typeof LoginSchema>): Promise<{ success: boolean; message: string; empresaId?: string; userId?: string; role?: UsuarioFirebase['rol'] }> {
+export async function authenticateUser(
+  credentials: z.infer<typeof LoginSchema>,
+  allowedRoles: Array<UsuarioFirebase['rol']>
+): Promise<{ success: boolean; message: string; empresaId?: string; userId?: string; role?: UsuarioFirebase['rol'] }> {
   const validatedCredentials = LoginSchema.safeParse(credentials);
   if (!validatedCredentials.success) {
     return { success: false, message: 'Datos de entrada inválidos.' };
@@ -22,73 +24,154 @@ export async function authenticateEmpresa(credentials: z.infer<typeof LoginSchem
 
   const { email, password } = validatedCredentials.data;
 
-  // Simulación de búsqueda de empresa/admin/jefeObra
-  const user = CUsuarios.find(
-    u => u.email === email && u.password === password && (u.rol === 'admin' || u.rol === 'jefeObra')
-  );
+  try {
+    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+    const firebaseUser = userCredential.user;
 
-  if (user) {
-    return { success: true, message: 'Login de empresa exitoso.', empresaId: user.empresaId, userId: user.id, role: user.rol };
-  } else {
-    return { success: false, message: 'Credenciales de empresa incorrectas o rol no autorizado para este acceso.' };
+    const userDocRef = doc(db, "usuarios", firebaseUser.uid);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+      const userData = UsuarioFirebaseSchema.omit({password: true}).safeParse({id: userDocSnap.id, ...userDocSnap.data()});
+      if (!userData.success) {
+        console.error("Firestore user data validation error:", userData.error);
+        return { success: false, message: 'Error en los datos del usuario en base de datos.' };
+      }
+      
+      const user = userData.data;
+
+      if (!user.activo) {
+        return { success: false, message: 'Esta cuenta de usuario está inactiva.' };
+      }
+
+      if (allowedRoles.includes(user.rol)) {
+        return { 
+          success: true, 
+          message: 'Login exitoso.', 
+          empresaId: user.empresaId, 
+          userId: user.id, 
+          role: user.rol 
+        };
+      } else {
+        return { success: false, message: 'Rol no autorizado para este tipo de acceso.' };
+      }
+    } else {
+      return { success: false, message: 'No se encontraron datos adicionales del usuario.' };
+    }
+  } catch (error: any) {
+    console.error("Authentication error:", error);
+    let message = 'Credenciales incorrectas o error de autenticación.';
+    if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      message = 'Email o contraseña incorrectos.';
+    }
+    return { success: false, message };
   }
 }
 
-export async function authenticateTrabajador(credentials: z.infer<typeof LoginSchema>): Promise<{ success: boolean; message: string; usuarioId?: string; empresaId?: string, role?: UsuarioFirebase['rol'] }> {
-  const validatedCredentials = LoginSchema.safeParse(credentials);
-  if (!validatedCredentials.success) {
-    return { success: false, message: 'Datos de entrada inválidos.' };
-  }
-
-  const { email, password } = validatedCredentials.data;
-
-  // Simulación de búsqueda de trabajador
-  const workerUser = CUsuarios.find(
-    user => user.email === email && user.password === password && user.rol === 'trabajador'
-  );
-
-  if (workerUser) {
-    return { success: true, message: 'Login de trabajador exitoso.', usuarioId: workerUser.id, empresaId: workerUser.empresaId, role: workerUser.rol };
-  } else {
-    return { success: false, message: 'Credenciales de trabajador incorrectas.' };
-  }
-}
 
 export async function getUsuariosByEmpresaId(empresaId: string): Promise<UsuarioFirebase[]> {
-  await new Promise(resolve => setTimeout(resolve, 300)); // Simulate delay
-  return CUsuarios.filter(user => user.empresaId === empresaId);
+  try {
+    const usuariosCollectionRef = collection(db, "usuarios");
+    const q = query(usuariosCollectionRef, where("empresaId", "==", empresaId));
+    const querySnapshot = await getDocs(q);
+    
+    const usuarios: UsuarioFirebase[] = [];
+    querySnapshot.forEach((docSnap) => {
+      const parseResult = UsuarioFirebaseSchema.omit({password: true}).safeParse({ id: docSnap.id, ...docSnap.data()});
+      if (parseResult.success) {
+        usuarios.push(parseResult.data);
+      } else {
+        console.warn("Invalid user data in Firestore, skipping:", docSnap.id, parseResult.error);
+      }
+    });
+    return usuarios;
+  } catch (error) {
+    console.error("Error fetching usuarios by empresaId:", error);
+    return [];
+  }
 }
 
 export async function getUsuarioById(usuarioId: string): Promise<UsuarioFirebase | null> {
-  await new Promise(resolve => setTimeout(resolve, 300)); // Simulate delay
-  const user = CUsuarios.find(user => user.id === usuarioId);
-  return user || null;
+ try {
+    const userDocRef = doc(db, "usuarios", usuarioId);
+    const userDocSnap = await getDoc(userDocRef);
+
+    if (userDocSnap.exists()) {
+      const parseResult = UsuarioFirebaseSchema.omit({password: true}).safeParse({ id: userDocSnap.id, ...userDocSnap.data()});
+       if (parseResult.success) {
+        return parseResult.data;
+      } else {
+        console.warn("Invalid user data in Firestore for ID:", usuarioId, parseResult.error);
+        return null;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error("Error fetching usuario by ID:", error);
+    return null;
+  }
 }
 
-const UpdateUsuarioSchema = UsuarioFirebaseSchema.partial().omit({ id: true, empresaId: true, password: true });
+const UpdateUsuarioSchemaFirebase = UsuarioFirebaseSchema.pick({
+  nombre: true,
+  email: true,
+  dni: true,
+  rol: true,
+  activo: true,
+  obrasAsignadas: true, // Keep this, will be handled by Obra update
+  dniAnversoURL: true,
+  dniReversoURL: true,
+}).partial();
 
-export async function updateUsuario(usuarioId: string, empresaIdAuth: string, data: Partial<Omit<UsuarioFirebase, 'id' | 'empresaId' | 'password'>>): Promise<{ success: boolean; message: string; usuario?: UsuarioFirebase }> {
-  const userIndex = CUsuarios.findIndex(u => u.id === usuarioId);
-  if (userIndex === -1) {
-    return { success: false, message: "Usuario no encontrado." };
-  }
 
-  if (CUsuarios[userIndex].empresaId !== empresaIdAuth) {
-    return { success: false, message: "No autorizado para modificar este usuario." };
-  }
+export async function updateUsuario(
+    usuarioId: string, 
+    empresaIdAuth: string, // Used to verify updater's company matches user's company
+    data: Partial<Omit<UsuarioFirebase, 'id' | 'empresaId' | 'password'>>
+): Promise<{ success: boolean; message: string; usuario?: UsuarioFirebase }> {
+  try {
+    const userDocRef = doc(db, "usuarios", usuarioId);
+    const userSnap = await getDoc(userDocRef);
 
-  const validationResult = UpdateUsuarioSchema.safeParse(data);
-  if (!validationResult.success) {
-    return { success: false, message: `Error de validación: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
-  }
+    if (!userSnap.exists()) {
+      return { success: false, message: "Usuario no encontrado." };
+    }
+    const existingUserData = userSnap.data();
+    if (existingUserData.empresaId !== empresaIdAuth) {
+       return { success: false, message: "No autorizado para modificar este usuario." };
+    }
 
-  CUsuarios[userIndex] = { ...CUsuarios[userIndex], ...validationResult.data };
+    const validationResult = UpdateUsuarioSchemaFirebase.safeParse(data);
+    if (!validationResult.success) {
+      const errors = validationResult.error.flatten().fieldErrors;
+      const errorMessages = Object.values(errors).flat().join(', ');
+      return { success: false, message: `Error de validación: ${errorMessages}` };
+    }
+    
+    const dataToUpdate = { ...validationResult.data, updatedAt: serverTimestamp()};
+    // Remove undefined fields
+    Object.keys(dataToUpdate).forEach(key => dataToUpdate[key as keyof typeof dataToUpdate] === undefined && delete dataToUpdate[key as keyof typeof dataToUpdate]);
+
+
+    await updateDoc(userDocRef, dataToUpdate);
+    
+    const updatedUserSnap = await getDoc(userDocRef);
+    const updatedUser = UsuarioFirebaseSchema.omit({password:true}).parse({id: updatedUserSnap.id, ...updatedUserSnap.data()});
+
+    revalidatePath('/(app)/usuarios');
+    revalidatePath(`/(app)/usuarios/${usuarioId}/edit`);
   
-  revalidatePath('/(app)/usuarios');
-  revalidatePath(`/(app)/usuarios/${usuarioId}/edit`);
-  
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return { success: true, message: 'Usuario actualizado con éxito.', usuario: CUsuarios[userIndex] };
+    return { success: true, message: 'Usuario actualizado con éxito.', usuario: updatedUser };
+  } catch (error: any) {
+      console.error("Error updating usuario:", error);
+      let message = 'Error al actualizar el usuario.';
+      if (error.code === 'auth/email-already-in-use' && data.email !== existingUserData?.email) {
+          message = 'El nuevo email ya está en uso por otra cuenta.';
+          // Note: Firebase Auth email update needs separate handling if email is changed here.
+          // This simplified version only updates Firestore. For real email change, update Firebase Auth email too.
+      }
+      return { success: false, message };
+  }
 }
 
 const RegisterTrabajadorSchema = z.object({
@@ -112,27 +195,116 @@ export async function registerTrabajador(
     return { success: false, message: `Error de validación: ${errorMessages}` };
   }
 
-  // Check if email or DNI already exists for this company
-  const existingUser = CUsuarios.find(u => u.empresaId === empresaId && (u.email === data.email || u.dni === data.dni));
-  if (existingUser) {
-    const field = existingUser.email === data.email ? 'email' : 'DNI';
-    return { success: false, message: `Ya existe un trabajador con este ${field} en tu empresa.` };
-  }
+  try {
+    // Check if email or DNI already exists for this company in Firestore
+    const emailQuery = query(collection(db, "usuarios"), where("empresaId", "==", empresaId), where("email", "==", data.email));
+    const emailSnapshot = await getDocs(emailQuery);
+    if (!emailSnapshot.empty) {
+      return { success: false, message: 'Ya existe un trabajador con este email en tu empresa.' };
+    }
 
-  const newUsuario: UsuarioFirebase = {
-    ...validationResult.data,
-    id: `user-${Date.now()}-${Math.random().toString(36).substring(2, 7)}`,
-    empresaId: empresaId,
-    rol: 'trabajador',
-    activo: true,
-    password: data.dni, // Using DNI as default password for simplicity in mock
-    obrasAsignadas: [],
-    // dniAnversoURL and dniReversoURL are already in validationResult.data
-  };
+    const dniQuery = query(collection(db, "usuarios"), where("empresaId", "==", empresaId), where("dni", "==", data.dni));
+    const dniSnapshot = await getDocs(dniQuery);
+    if (!dniSnapshot.empty) {
+      return { success: false, message: 'Ya existe un trabajador con este DNI en tu empresa.' };
+    }
+    
+    // Create Firebase Auth user for the trabajador
+    // IMPORTANT: For production, consider sending a verification email or a temporary password mechanism.
+    // Using DNI as password is for simplicity here.
+    const userCredential = await createUserWithEmailAndPassword(auth, data.email, data.dni);
+    const trabajadorUid = userCredential.user.uid;
 
-  CUsuarios.push(newUsuario);
-  revalidatePath('/(app)/usuarios');
+    const newUsuarioData: UsuarioFirebase = {
+      id: trabajadorUid,
+      empresaId: empresaId,
+      nombre: data.nombre,
+      email: data.email,
+      dni: data.dni,
+      password: '', // Not stored in Firestore
+      rol: 'trabajador',
+      activo: true,
+      obrasAsignadas: [],
+      dniAnversoURL: data.dniAnversoURL || null,
+      dniReversoURL: data.dniReversoURL || null,
+    };
+
+    await setDoc(doc(db, "usuarios", trabajadorUid), { ...newUsuarioData, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+
+    revalidatePath('/(app)/usuarios');
+    revalidatePath('/(app)/company-profile');
   
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return { success: true, message: 'Trabajador registrado con éxito.', usuario: newUsuario };
+    return { success: true, message: 'Trabajador registrado con éxito. Su contraseña inicial es su DNI.', usuario: newUsuarioData };
+  } catch (error: any) {
+    console.error("Error registering trabajador:", error);
+    let message = 'Error al registrar el trabajador.';
+    if (error.code === 'auth/email-already-in-use') {
+      message = 'El email proporcionado ya está en uso por otra cuenta en el sistema.';
+    } else if (error.code === 'auth/weak-password') {
+      // This might occur if DNI is too short/simple, though unlikely with typical DNI formats.
+      message = 'La contraseña (DNI) es demasiado débil. Contacte a soporte.';
+    }
+    return { success: false, message };
+  }
+}
+
+
+// Function to delete a user from Firebase Auth and Firestore
+// This is a sensitive operation and should be restricted (e.g., only admins can delete users of their company)
+export async function deleteUsuario(usuarioId: string, empresaIdAuth: string): Promise<{ success: boolean; message: string }> {
+  try {
+    const userDocRef = doc(db, "usuarios", usuarioId);
+    const userSnap = await getDoc(userDocRef);
+
+    if (!userSnap.exists()) {
+      return { success: false, message: "Usuario no encontrado." };
+    }
+    const userData = userSnap.data();
+    if (userData.empresaId !== empresaIdAuth) {
+      return { success: false, message: "No autorizado para eliminar este usuario." };
+    }
+    if (userData.rol === 'admin') {
+        // Prevent deletion of the last admin or handle company deletion logic separately
+        const adminQuery = query(collection(db, "usuarios"), where("empresaId", "==", empresaIdAuth), where("rol", "==", "admin"));
+        const adminSnapshot = await getDocs(adminQuery);
+        if (adminSnapshot.size <= 1) {
+            return { success: false, message: "No se puede eliminar el único administrador de la empresa." };
+        }
+    }
+
+    // It's generally not recommended to directly delete Firebase Auth users from server-side actions
+    // without proper admin SDK setup due to security.
+    // For now, we will only delete the Firestore record. Auth user deletion would need Firebase Admin SDK.
+    // Or, the client could call a Firebase function to handle Auth user deletion.
+    // For this context, we'll just mark as inactive if preferred or just delete Firestore record.
+    // Let's proceed with Firestore deletion.
+
+    // Before deleting user, consider impact on related data (obras assigned, partes, etc.)
+    // For instance, unassign from obras or mark partes as from "deleted user"
+    // This example only deletes the user document.
+    
+    // Example: Unassign user from obras they are Jefe de Obra for
+    const obrasComoJefeQuery = query(collection(db, "obras"), where("empresaId", "==", empresaIdAuth), where("jefeObraId", "==", usuarioId));
+    const obrasComoJefeSnap = await getDocs(obrasComoJefeQuery);
+    const batch = writeBatch(db);
+    obrasComoJefeSnap.forEach(obraDoc => {
+        batch.update(obraDoc.ref, { jefeObraId: null });
+    });
+    await batch.commit();
+
+
+    await deleteDoc(userDocRef);
+    // Note: Firebase Auth user is NOT deleted here. This requires Admin SDK or client-side re-authentication and deletion.
+    // This could lead to an orphaned Auth account.
+    // A better approach for "deletion" in many systems is to mark the user as inactive.
+    // await updateDoc(userDocRef, { activo: false, email: `deleted_${Date.now()}_${userData.email}` });
+
+
+    revalidatePath('/(app)/usuarios');
+    return { success: true, message: 'Usuario eliminado (solo registro en base de datos) con éxito.' };
+
+  } catch (error) {
+    console.error("Error deleting usuario:", error);
+    return { success: false, message: 'Error al eliminar el usuario.' };
+  }
 }
