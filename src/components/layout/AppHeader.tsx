@@ -93,7 +93,7 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
                    {/* Ensure consistent logo usage here */}
                     <Image
                       src={obraLinkLogo} 
-                      alt="ObraLink Logo"
+                      alt="Logo de ObraLink"
                       width={160}
                       height={36}
                       priority
@@ -113,7 +113,7 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
              {/* Ensure consistent logo usage here */}
               <Image
                 src={obraLinkLogo} 
-                alt="ObraLink Logo"
+                alt="Logo de ObraLink"
                 width={160}
                 height={36}
                 priority

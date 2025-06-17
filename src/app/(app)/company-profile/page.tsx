@@ -16,7 +16,7 @@ import { getEmpresaProfile, updateEmpresaProfile } from '@/lib/actions/company.a
 import { registerTrabajador } from '@/lib/actions/user.actions';
 import type { Empresa } from '@/lib/types';
 import { EmpresaSchema, UsuarioFirebaseSchema } from '@/lib/types';
-import { Loader2, Building, UserPlus } from 'lucide-react';
+import { Loader2, Building, UserPlus, BadgeInfo } from 'lucide-react';
 import Image from 'next/image';
 
 const UpdateEmpresaSchema = EmpresaSchema.partial().omit({ id: true });
@@ -29,9 +29,8 @@ const RegisterTrabajadorFormSchema = UsuarioFirebaseSchema.pick({
   dniAnversoURL: true,
   dniReversoURL: true,
 }).extend({
-  // Override to make optional for form input, they are optional in main schema anyway
-  dniAnversoURL: z.string().url("URL inválida").optional().or(z.literal('')),
-  dniReversoURL: z.string().url("URL inválida").optional().or(z.literal('')),
+  dniAnversoURL: z.string().url("URL inválida para DNI anverso").optional().or(z.literal('')),
+  dniReversoURL: z.string().url("URL inválida para DNI reverso").optional().or(z.literal('')),
 });
 type RegisterTrabajadorFormData = z.infer<typeof RegisterTrabajadorFormSchema>;
 
@@ -73,7 +72,7 @@ export default function CompanyProfilePage() {
       fetchProfile(storedEmpresaId);
     } else {
       toast({
-        title: 'Error',
+        title: 'Error de Autenticación',
         description: 'No se pudo identificar la empresa. Por favor, inicia sesión de nuevo.',
         variant: 'destructive',
       });
@@ -96,15 +95,15 @@ export default function CompanyProfilePage() {
         });
       } else {
         toast({
-          title: 'Error',
+          title: 'Error de Carga',
           description: 'No se pudo cargar el perfil de la empresa.',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
-        title: 'Error',
-        description: 'Ocurrió un error al cargar el perfil.',
+        title: 'Error Inesperado',
+        description: 'Ocurrió un error al cargar el perfil de la empresa.',
         variant: 'destructive',
       });
     } finally {
@@ -128,20 +127,20 @@ export default function CompanyProfilePage() {
             logoURL: result.empresa.logoURL || '',
         });
         toast({
-          title: 'Perfil Actualizado',
-          description: 'La información de tu empresa ha sido guardada.',
+          title: 'Éxito',
+          description: 'Los datos de la empresa se han actualizado correctamente.',
         });
       } else {
         toast({
           title: 'Error al Guardar',
-          description: result.message || 'No se pudo actualizar el perfil.',
+          description: result.message || 'No se pudo actualizar el perfil de la empresa.',
           variant: 'destructive',
         });
       }
     } catch (error) {
       toast({
         title: 'Error Inesperado',
-        description: 'Ocurrió un error al guardar los cambios.',
+        description: 'Ocurrió un error al guardar los cambios del perfil.',
         variant: 'destructive',
       });
     } finally {
@@ -151,7 +150,7 @@ export default function CompanyProfilePage() {
 
   const onTrabajadorSubmit = async (data: RegisterTrabajadorFormData) => {
     if (!empresaId) {
-      toast({ title: 'Error', description: 'ID de empresa no disponible.', variant: 'destructive' });
+      toast({ title: 'Error de Sistema', description: 'ID de empresa no disponible para el registro.', variant: 'destructive' });
       return;
     }
     setIsRegisteringTrabajador(true);
@@ -162,16 +161,17 @@ export default function CompanyProfilePage() {
         dniReversoURL: data.dniReversoURL === '' ? null : data.dniReversoURL,
       };
       const result = await registerTrabajador(empresaId, dataToSend);
-      if (result.success) {
+      if (result.success && result.usuario) {
         toast({
           title: 'Trabajador Registrado',
-          description: `${data.nombre} ha sido añadido a tu empresa.`,
+          description: `El trabajador ${result.usuario.nombre} ha sido añadido a tu empresa con éxito.`,
         });
         trabajadorForm.reset();
+        // Optionally, re-fetch users list if displayed on this page or trigger a global state update
       } else {
         toast({
-          title: 'Error al Registrar',
-          description: result.message || 'No se pudo registrar al trabajador.',
+          title: 'Error al Registrar Trabajador',
+          description: result.message || 'No se pudo registrar al trabajador. Revisa los datos e inténtalo de nuevo.',
           variant: 'destructive',
         });
       }
@@ -220,13 +220,13 @@ export default function CompanyProfilePage() {
                 data-ai-hint={empresa.dataAIHint || "company logo"}
               />
             ) : (
-              <div className="h-20 w-20 bg-muted rounded-md flex items-center justify-center">
+              <div className="h-20 w-20 bg-muted rounded-md flex items-center justify-center border">
                 <Building className="h-10 w-10 text-muted-foreground" />
               </div>
             )}
             <div>
               <CardTitle className="text-2xl font-bold font-headline text-primary">{empresa.nombre}</CardTitle>
-              <CardDescription className="text-md text-muted-foreground">Gestiona la información de tu empresa.</CardDescription>
+              <CardDescription className="text-md text-muted-foreground">Gestiona la información de tu empresa y registra nuevos trabajadores.</CardDescription>
             </div>
           </div>
         </CardHeader>
@@ -237,7 +237,7 @@ export default function CompanyProfilePage() {
               <Controller
                 name="nombre"
                 control={empresaForm.control}
-                render={({ field }) => <Input id="nombre" {...field} className="mt-1" />}
+                render={({ field }) => <Input id="nombre" {...field} className="mt-1" placeholder="Ej: Construcciones Modernas S.L." />}
               />
               {empresaForm.formState.errors.nombre && <p className="text-sm text-destructive mt-1">{empresaForm.formState.errors.nombre.message}</p>}
             </div>
@@ -247,7 +247,7 @@ export default function CompanyProfilePage() {
               <Controller
                 name="CIF"
                 control={empresaForm.control}
-                render={({ field }) => <Input id="CIF" {...field} className="mt-1" />}
+                render={({ field }) => <Input id="CIF" {...field} className="mt-1" placeholder="Ej: B12345678" />}
               />
               {empresaForm.formState.errors.CIF && <p className="text-sm text-destructive mt-1">{empresaForm.formState.errors.CIF.message}</p>}
             </div>
@@ -257,7 +257,7 @@ export default function CompanyProfilePage() {
               <Controller
                 name="emailContacto"
                 control={empresaForm.control}
-                render={({ field }) => <Input id="emailContacto" type="email" {...field} className="mt-1" />}
+                render={({ field }) => <Input id="emailContacto" type="email" {...field} className="mt-1" placeholder="Ej: contacto@empresa.com" />}
               />
               {empresaForm.formState.errors.emailContacto && <p className="text-sm text-destructive mt-1">{empresaForm.formState.errors.emailContacto.message}</p>}
             </div>
@@ -267,7 +267,7 @@ export default function CompanyProfilePage() {
               <Controller
                 name="telefono"
                 control={empresaForm.control}
-                render={({ field }) => <Input id="telefono" {...field} className="mt-1" />}
+                render={({ field }) => <Input id="telefono" {...field} className="mt-1" placeholder="Ej: 912345678" />}
               />
               {empresaForm.formState.errors.telefono && <p className="text-sm text-destructive mt-1">{empresaForm.formState.errors.telefono.message}</p>}
             </div>
@@ -283,7 +283,7 @@ export default function CompanyProfilePage() {
             </div>
 
             <Button type="submit" className="w-full bg-primary hover:bg-primary/90 text-primary-foreground" disabled={isSavingEmpresa}>
-              {isSavingEmpresa ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Guardar Cambios Empresa'}
+              {isSavingEmpresa ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : 'Guardar Datos de Empresa'}
             </Button>
           </form>
         </CardContent>
@@ -312,11 +312,11 @@ export default function CompanyProfilePage() {
             </div>
             
             <div>
-              <Label htmlFor="trabajadorEmail" className="font-semibold">Email del Trabajador</Label>
+              <Label htmlFor="trabajadorEmail" className="font-semibold">Email del Trabajador (para acceso)</Label>
               <Controller
                 name="email"
                 control={trabajadorForm.control}
-                render={({ field }) => <Input id="trabajadorEmail" type="email" {...field} className="mt-1" placeholder="ej: trabajador@email.com" />}
+                render={({ field }) => <Input id="trabajadorEmail" type="email" {...field} className="mt-1" placeholder="Ej: trabajador@email.com" />}
               />
               {trabajadorForm.formState.errors.email && <p className="text-sm text-destructive mt-1">{trabajadorForm.formState.errors.email.message}</p>}
             </div>
@@ -326,12 +326,16 @@ export default function CompanyProfilePage() {
               <Controller
                 name="dni"
                 control={trabajadorForm.control}
-                render={({ field }) => <Input id="trabajadorDni" {...field} className="mt-1" placeholder="Ej: 12345678A" />}
+                render={({ field }) => <Input id="trabajadorDni" {...field} className="mt-1" placeholder="Ej: 12345678A o X1234567B" />}
               />
               {trabajadorForm.formState.errors.dni && <p className="text-sm text-destructive mt-1">{trabajadorForm.formState.errors.dni.message}</p>}
             </div>
             
-            <p className="text-xs text-muted-foreground">La contraseña inicial del trabajador será su DNI/NIE.</p>
+            <div className="p-3 bg-primary/5 rounded-md border border-primary/20 text-sm text-primary/80 flex items-start">
+                <BadgeInfo className="mr-2 h-5 w-5 shrink-0 mt-0.5 text-primary" />
+                <span>La contraseña inicial del trabajador será su DNI/NIE. Podrá cambiarla después de su primer inicio de sesión.</span>
+            </div>
+
 
             <div>
               <Label htmlFor="dniAnversoURL" className="font-semibold">URL Foto Anverso DNI (opcional)</Label>

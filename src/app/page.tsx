@@ -14,52 +14,52 @@ export default function HomePage() {
     {
       icon: <Construction className="h-10 w-10 text-accent" />,
       title: "Gestión Centralizada",
-      description: "Perfiles de empresa, obras y usuarios en un solo lugar.",
+      description: "Administra perfiles de empresa, obras y usuarios en un solo lugar.",
       delay: "animate-fade-in-up animation-delay-200"
     },
     {
       icon: <FileText className="h-10 w-10 text-accent" />,
       title: "Partes Digitales Inteligentes",
-      description: "Digitaliza órdenes de trabajo con adjuntos y validación.",
+      description: "Crea y valida partes de trabajo digitales con fotos y firmas.",
       delay: "animate-fade-in-up animation-delay-400"
     },
     {
       icon: <Cpu className="h-10 w-10 text-accent" />,
       title: "Optimización con IA",
-      description: "Informes PDF y asignación de recursos potenciada por IA.",
+      description: "Genera informes y recibe sugerencias de asignación de recursos con IA.",
       delay: "animate-fade-in-up animation-delay-600"
     },
     {
       icon: <TrendingUp className="h-10 w-10 text-accent" />,
       title: "Eficiencia Comprobada",
-      description: "Reduce papeleo, minimiza errores y agiliza tus procesos.",
+      description: "Reduce el papeleo, minimiza errores y agiliza tus procesos diarios.",
       delay: "animate-fade-in-up animation-delay-800"
     },
   ];
 
   const benefits = [
     {
-      title: "Digitaliza y Simplifica",
+      title: "Digitaliza y Simplifica tus Partes",
       description: "Transforma tus partes de trabajo en papel a un formato digital, accesible y fácil de gestionar. Adjunta fotos, registra incidencias y obtén firmas digitales al instante.",
       imageSrc: benefitImg1,
-      imageAlt: "Trabajador usando tablet en obra",
-      dataAiHint: "worker tablet",
+      imageAlt: "Trabajador utilizando una tablet en una obra para gestionar partes digitales.",
+      dataAiHint: "worker tablet construction",
       align: "left"
     },
     {
       title: "Control Total de tus Proyectos",
       description: "Desde el perfil de tu empresa hasta el detalle de cada obra y usuario. Asigna jefes de obra, gestiona accesos y mantén toda la información organizada y segura.",
       imageSrc: benefitImg2,
-      imageAlt: "Panel de control de proyectos",
-      dataAiHint: "dashboard interface",
+      imageAlt: "Panel de control mostrando gráficos y datos de gestión de proyectos de construcción.",
+      dataAiHint: "dashboard project management",
       align: "right"
     },
     {
       title: "Decisiones Inteligentes con IA",
-      description: "Nuestra IA analiza los datos de tus partes para ofrecerte sugerencias de asignación de recursos, ayudándote a prevenir cuellos de botella y optimizar la productividad.",
+      description: "Nuestra IA analiza los datos de tus partes para ofrecerte sugerencias de asignación de recursos, ayudándote a prevenir cuellos de botella y optimizar la productividad de tu equipo.",
       imageSrc: benefitImg3,
-      imageAlt: "Gráfico de optimización de recursos IA",
-      dataAiHint: "ai optimization",
+      imageAlt: "Gráfico ilustrando la optimización de recursos mediante inteligencia artificial.",
+      dataAiHint: "ai resource optimization chart",
       align: "left"
     }
   ];
@@ -71,7 +71,7 @@ export default function HomePage() {
           <Link href="/" className="hover:opacity-90 transition-opacity">
             <Image
               src={obraLinkLogo} 
-              alt="ObraLink Logo"
+              alt="Logo de ObraLink"
               width={160}
               height={36} 
               priority 
@@ -91,12 +91,12 @@ export default function HomePage() {
           <div className="absolute inset-0">
             <Image
               src="/hero-image.jpg" 
-              alt="Equipo de construcción planificando en obra"
+              alt="Equipo de profesionales de la construcción colaborando y planificando un proyecto en una obra con planos y tabletas digitales."
               fill
               objectFit="cover"
               quality={80}
               className="opacity-30"
-              data-ai-hint="construction team planning"
+              data-ai-hint="construction planning team"
             />
             <div className="absolute inset-0 bg-gradient-to-b from-primary/80 via-primary/90 to-primary"></div>
           </div>
@@ -105,7 +105,7 @@ export default function HomePage() {
               La <span className="text-accent">Revolución Digital</span> para tus Obras
             </h1>
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-3xl mx-auto animate-fade-in-up animation-delay-200">
-              ObraLink transforma la gestión de tus proyectos de construcción y reformas. Digitaliza partes, optimiza recursos con IA y toma el control total.
+              ObraLink optimiza la gestión de tus proyectos de construcción y reformas. Digitaliza partes de trabajo, aprovecha la IA para la asignación de recursos y toma el control total de tu operación.
             </p>
             <Link href="/auth/select-role" passHref>
               <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-6 rounded-lg shadow-xl transform hover:scale-105 transition-transform duration-300 animate-fade-in-up animation-delay-400">
@@ -121,7 +121,7 @@ export default function HomePage() {
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary">Todo lo que Necesitas para Triunfar</h2>
               <p className="text-lg text-foreground/70 mt-2 max-w-2xl mx-auto">
-                Descubre las herramientas que potenciarán tu empresa de construcción.
+                Descubre las herramientas diseñadas para potenciar tu empresa de construcción y reformas, mejorando la eficiencia y el control.
               </p>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
@@ -151,7 +151,7 @@ export default function HomePage() {
             <div className="text-center mb-16">
               <h2 className="text-3xl md:text-4xl font-bold font-headline text-primary">Transforma tu Manera de Trabajar</h2>
               <p className="text-lg text-foreground/70 mt-2 max-w-2xl mx-auto">
-                ObraLink no es solo una app, es tu socio estratégico para la eficiencia.
+                ObraLink no es solo una app, es tu socio estratégico para la eficiencia, el control y la modernización de tus proyectos.
               </p>
             </div>
             <div className="space-y-16 md:space-y-24">
@@ -197,17 +197,17 @@ export default function HomePage() {
             <div className="mb-8 animate-fade-in-up">
                <Image
                   src="/cta-image.jpg"
-                  alt="Trabajador de construcción sonriendo con casco"
+                  alt="Trabajador de construcción sonriente con casco y herramientas, indicando éxito y satisfacción con la eficiencia obtenida."
                   width={500} 
                   height={350} 
                   className="rounded-lg shadow-xl mx-auto object-cover"
-                  data-ai-hint="construction worker success"
+                  data-ai-hint="happy construction worker success"
                 />
             </div>
             <ShieldCheck className="h-16 w-16 text-accent mx-auto mb-6 animate-bounce-subtle" />
-            <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6">¿Listo para dar el Salto?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold font-headline mb-6">¿Listo para dar el Salto Digital?</h2>
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
-              Únete a las empresas que ya están construyendo el futuro con ObraLink.
+              Únete a las empresas que ya están construyendo el futuro con ObraLink. Optimiza, gestiona y crece con la plataforma líder del sector.
             </p>
             <Link href="/auth/select-role" passHref>
               <Button size="lg" variant="secondary" className="text-primary hover:bg-background/90 text-lg px-10 py-6 rounded-lg shadow-xl transform hover:scale-105 transition-transform duration-300">
