@@ -1,3 +1,4 @@
+
 // src/lib/actions/seed.actions.ts
 'use server';
 
@@ -5,14 +6,9 @@ import { db } from '@/lib/firebase/firebase';
 import {
   collection,
   doc,
-  getDoc,
   setDoc,
-  query,
-  where,
-  getDocs,
   Timestamp,
   serverTimestamp,
-  arrayUnion,
   writeBatch,
 } from 'firebase/firestore';
 import {
@@ -32,103 +28,88 @@ import {
 } from '@/lib/types';
 import { revalidatePath } from 'next/cache';
 
-// --- IDs de Demostración (puedes cambiarlos si quieres) ---
+// --- IDs de Demostración ---
 const DEMO_EMPRESA_ID = 'demo-empresa-obralink';
-const DEMO_EMPRESA_CIF = 'A00000000DEMO';
 const DEMO_ADMIN_ID = 'demo-admin-user-uid'; // Simula un UID de Firebase Auth
 const DEMO_TRABAJADOR_ID = 'demo-trabajador-user-uid'; // Simula un UID
 const DEMO_OBRA_ID = 'demo-obra-001';
 const DEMO_PARTE_ID = 'demo-parte-001';
 const DEMO_FICHAJE_ID_ENTRADA = 'demo-fichaje-entrada-001';
 const DEMO_FICHAJE_ID_SALIDA = 'demo-fichaje-salida-001';
-const DEMO_CONTROLDIA_ID = `${DEMO_OBRA_ID}-${new Date().toISOString().split('T')[0]}`;
-
+const DEMO_CONTROLDIA_ID_BASE = `${DEMO_OBRA_ID}`; // Date part will be added
 
 export async function seedDemoData(): Promise<{ success: boolean; message: string; summary?: Record<string, string> }> {
   console.log('[SEED DATA] Iniciando proceso de seeding...');
   const summary: Record<string, string> = {};
+  const today = new Date();
+  const todayString = today.toISOString().split('T')[0];
+  const DEMO_CONTROLDIA_ID = `${DEMO_CONTROLDIA_ID_BASE}-${todayString}`;
 
   try {
-    // 0. Verificar si la empresa demo ya existe para evitar duplicados
-    const empresaCifQuery = query(collection(db, "empresas"), where("CIF", "==", DEMO_EMPRESA_CIF));
-    const empresaCifSnapshot = await getDocs(empresaCifQuery);
-    if (!empresaCifSnapshot.empty) {
-      const existingEmpresaId = empresaCifSnapshot.docs[0].id;
-      summary.empresa = `Empresa demo con CIF ${DEMO_EMPRESA_CIF} ya existe (ID: ${existingEmpresaId}). Saltando creación.`;
-      console.log(summary.empresa);
-      // Podrías optar por detener o continuar actualizando/verificando otros datos.
-      // Por ahora, si la empresa existe, asumimos que el resto también y no hacemos nada más para este script simple.
-      // return { success: true, message: "Los datos de demostración ya parecen existir.", summary };
-    }
-
     const batch = writeBatch(db);
 
     // 1. Crear Empresa Demo
     const empresaDemoRef = doc(db, "empresas", DEMO_EMPRESA_ID);
-    const empresaDemoData: Omit<Empresa, 'id'> = {
+    const empresaDemoDataRaw = {
       nombre: 'Constructora DemoLink',
-      CIF: DEMO_EMPRESA_CIF,
+      CIF: 'A00000000DEMO', // Consistent CIF
       emailContacto: 'contacto@demolink.com',
       telefono: '900123123',
       logoURL: `https://placehold.co/200x100.png`,
       dataAIHint: 'company logo',
+      // id is part of the ref, not the data
     };
-    // No necesitamos parsear con EmpresaSchema aquí si estamos seguros de la estructura,
-    // pero para consistencia, es buena práctica. Omitimos 'id' ya que lo gestiona Firestore.
-    const validatedEmpresaData = EmpresaSchema.omit({id: true}).parse(empresaDemoData);
+    const validatedEmpresaData = EmpresaSchema.omit({id: true}).parse(empresaDemoDataRaw);
     batch.set(empresaDemoRef, { ...validatedEmpresaData, id: DEMO_EMPRESA_ID, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    summary.empresa = `Empresa DemoLink creada (ID: ${DEMO_EMPRESA_ID}).`;
+    summary.empresa = `Empresa DemoLink (ID: ${DEMO_EMPRESA_ID}) preparada.`;
     console.log(summary.empresa);
 
-    // 2. Crear Usuario Administrador Demo
-    // IMPORTANTE: Esto crea el documento en Firestore, NO en Firebase Auth.
-    // Deberás crear manualmente un usuario en Firebase Auth con este email y contraseña 'password'
-    // o ajustar el script para llamar a `createUserWithEmailAndPassword`.
+    // 2. Crear Usuario Administrador Demo (Firestore Document)
     const adminDemoRef = doc(db, "usuarios", DEMO_ADMIN_ID);
-    const adminDemoData: Omit<UsuarioFirebase, 'id' | 'password'> = {
+    const adminDemoDataRaw = {
       empresaId: DEMO_EMPRESA_ID,
       nombre: 'Admin Demo',
-      email: 'admin@demolink.com',
-      dni: '00000000A',
-      rol: 'admin',
+      email: 'admin@demolink.com', // Email para Firebase Auth
+      dni: '00000000A',         // Contraseña para Firebase Auth
+      rol: 'admin' as UsuarioFirebase['rol'],
       activo: true,
       obrasAsignadas: [],
       dniAnversoURL: null,
       dniReversoURL: null,
     };
-    const validatedAdminData = UsuarioFirebaseSchema.omit({id: true, password: true}).parse(adminDemoData);
+    const validatedAdminData = UsuarioFirebaseSchema.omit({id: true, password: true}).parse(adminDemoDataRaw);
     batch.set(adminDemoRef, { ...validatedAdminData, id: DEMO_ADMIN_ID, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    summary.admin = `Usuario Admin Demo creado (ID: ${DEMO_ADMIN_ID}). Email: admin@demolink.com, Pass (simulada): password`;
+    summary.admin = `Usuario Admin Demo (ID: ${DEMO_ADMIN_ID}) preparado. Email: admin@demolink.com, Pass (para Auth): 00000000A`;
     console.log(summary.admin);
 
-    // 3. Crear Usuario Trabajador Demo
+    // 3. Crear Usuario Trabajador Demo (Firestore Document)
     const trabajadorDemoRef = doc(db, "usuarios", DEMO_TRABAJADOR_ID);
-    const trabajadorDemoData: Omit<UsuarioFirebase, 'id' | 'password'> = {
+    const trabajadorDemoDataRaw = {
       empresaId: DEMO_EMPRESA_ID,
       nombre: 'Trabajador Demo Uno',
-      email: 'trabajador1@demolink.com',
-      dni: '11111111T',
-      rol: 'trabajador',
+      email: 'trabajador1@demolink.com', // Email para Firebase Auth
+      dni: '11111111T',                 // Contraseña para Firebase Auth
+      rol: 'trabajador' as UsuarioFirebase['rol'],
       activo: true,
-      obrasAsignadas: [DEMO_OBRA_ID], // Pre-asignar a la obra demo
+      obrasAsignadas: [DEMO_OBRA_ID],
       dniAnversoURL: null,
       dniReversoURL: null,
     };
-    const validatedTrabajadorData = UsuarioFirebaseSchema.omit({id: true, password: true}).parse(trabajadorDemoData);
+    const validatedTrabajadorData = UsuarioFirebaseSchema.omit({id: true, password: true}).parse(trabajadorDemoDataRaw);
     batch.set(trabajadorDemoRef, { ...validatedTrabajadorData, id: DEMO_TRABAJADOR_ID, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    summary.trabajador = `Usuario Trabajador Demo creado (ID: ${DEMO_TRABAJADOR_ID}). Email: trabajador1@demolink.com, Pass (simulada): 11111111T`;
+    summary.trabajador = `Usuario Trabajador Demo (ID: ${DEMO_TRABAJADOR_ID}) preparado. Email: trabajador1@demolink.com, Pass (para Auth): 11111111T`;
     console.log(summary.trabajador);
 
     // 4. Crear Obra Demo
     const obraDemoRef = doc(db, "obras", DEMO_OBRA_ID);
-    const obraDemoData: Omit<Obra, 'id'> = {
+    const obraDemoDataRaw = {
       empresaId: DEMO_EMPRESA_ID,
       nombre: 'Proyecto Alfa Demo',
       direccion: 'Calle Falsa 123, Ciudad Demo',
-      fechaInicio: Timestamp.fromDate(new Date(new Date().setDate(new Date().getDate() - 30))), // Hace 30 días
-      fechaFin: Timestamp.fromDate(new Date(new Date().setDate(new Date().getDate() + 60))), // En 60 días
+      fechaInicio: Timestamp.fromDate(new Date(new Date().setDate(today.getDate() - 30))),
+      fechaFin: Timestamp.fromDate(new Date(new Date().setDate(today.getDate() + 60))),
       clienteNombre: 'Cliente Estrella S.L.',
-      jefeObraId: DEMO_ADMIN_ID, // Admin es jefe de obra para este demo
+      jefeObraId: DEMO_ADMIN_ID,
       descripcion: 'Obra de demostración para probar funcionalidades de ObraLink.',
       costosPorCategoria: [
         CostoCategoriaSchema.parse({ id: 'cost-cat-1', categoria: 'Materiales Iniciales', costo: 15000, notas: 'Compra cemento y ladrillos' }),
@@ -136,62 +117,65 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
       ],
       dataAIHint: 'construction site crane',
     };
-    const validatedObraData = ObraSchema.omit({id: true}).parse(obraDemoData);
+    const validatedObraData = ObraSchema.omit({id: true}).parse(obraDemoDataRaw);
     batch.set(obraDemoRef, { ...validatedObraData, id: DEMO_OBRA_ID, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    summary.obra = `Obra Demo creada (ID: ${DEMO_OBRA_ID}).`;
+    summary.obra = `Obra Demo (ID: ${DEMO_OBRA_ID}) preparada.`;
     console.log(summary.obra);
 
     // 5. Crear Parte de Trabajo Demo
     const parteDemoRef = doc(db, "partes", DEMO_PARTE_ID);
-    const parteDemoData: Omit<Parte, 'id' | 'timestamp'> = {
+    const parteDemoDataRaw = {
       usuarioId: DEMO_TRABAJADOR_ID,
       obraId: DEMO_OBRA_ID,
-      fecha: Timestamp.fromDate(new Date()), // Hoy
+      fecha: Timestamp.fromDate(today),
       tareasRealizadas: 'Se comenzó con la preparación del terreno y replanteo. Instalación de vallas perimetrales.',
       horasTrabajadas: 8,
       incidencias: 'Pequeño retraso por lluvia matutina.',
       tareasSeleccionadas: ['Replanteo', 'Excavación Pequeña', 'Seguridad'],
       fotosURLs: [`https://placehold.co/600x400.png`, `https://placehold.co/601x401.png`],
-      firmaURL: `https://placehold.co/300x150.png`, // Placeholder para URL de firma
+      firmaURL: `https://placehold.co/300x150.png`,
       validado: false,
       validadoPor: null,
       dataAIHint: 'construction safety fence',
+      // timestamp will be serverTimestamp
     };
-    const validatedParteData = ParteSchema.omit({id: true, timestamp: true}).parse(parteDemoData);
+    const validatedParteData = ParteSchema.omit({id: true, timestamp: true}).parse(parteDemoDataRaw);
     batch.set(parteDemoRef, { ...validatedParteData, id: DEMO_PARTE_ID, timestamp: serverTimestamp() });
-    summary.parte = `Parte Demo creado (ID: ${DEMO_PARTE_ID}).`;
+    summary.parte = `Parte Demo (ID: ${DEMO_PARTE_ID}) preparado.`;
     console.log(summary.parte);
     
-    // 6. Crear Fichajes Demo para el trabajador
+    // 6. Crear Fichajes Demo
     const fichajeEntradaRef = doc(db, "fichajes", DEMO_FICHAJE_ID_ENTRADA);
-    const fichajeEntradaData: Omit<Fichaje, 'id'> = {
+    const fichajeEntradaDataRaw = {
         usuarioId: DEMO_TRABAJADOR_ID,
         obraId: DEMO_OBRA_ID,
-        tipo: 'entrada',
-        timestamp: Timestamp.fromDate(new Date(new Date().setHours(8,0,0,0))), // Hoy a las 8 AM
+        tipo: 'entrada' as Fichaje['tipo'],
+        timestamp: Timestamp.fromDate(new Date(today.setHours(8,0,0,0))),
         validado: false,
         validadoPor: null,
     };
-    batch.set(fichajeEntradaRef, {...FichajeSchema.omit({id:true}).parse(fichajeEntradaData), id: DEMO_FICHAJE_ID_ENTRADA });
+    const validatedFichajeEntrada = FichajeSchema.omit({id:true}).parse(fichajeEntradaDataRaw);
+    batch.set(fichajeEntradaRef, { ...validatedFichajeEntrada, id: DEMO_FICHAJE_ID_ENTRADA });
     
     const fichajeSalidaRef = doc(db, "fichajes", DEMO_FICHAJE_ID_SALIDA);
-    const fichajeSalidaData: Omit<Fichaje, 'id'> = {
+    const fichajeSalidaDataRaw = {
         usuarioId: DEMO_TRABAJADOR_ID,
         obraId: DEMO_OBRA_ID,
-        tipo: 'salida',
-        timestamp: Timestamp.fromDate(new Date(new Date().setHours(17,0,0,0))), // Hoy a las 5 PM
+        tipo: 'salida' as Fichaje['tipo'],
+        timestamp: Timestamp.fromDate(new Date(today.setHours(17,0,0,0))),
         validado: false,
         validadoPor: null,
     };
-    batch.set(fichajeSalidaRef, {...FichajeSchema.omit({id:true}).parse(fichajeSalidaData), id: DEMO_FICHAJE_ID_SALIDA });
-    summary.fichajes = `Fichajes demo de entrada y salida creados para Trabajador Demo Uno.`;
+    const validatedFichajeSalida = FichajeSchema.omit({id:true}).parse(fichajeSalidaDataRaw);
+    batch.set(fichajeSalidaRef, { ...validatedFichajeSalida, id: DEMO_FICHAJE_ID_SALIDA });
+    summary.fichajes = `Fichajes demo preparados.`;
     console.log(summary.fichajes);
 
     // 7. Crear Control Diario Demo
     const controlDiarioRef = doc(db, "controlDiario", DEMO_CONTROLDIA_ID);
-    const controlDiarioData: Omit<ControlDiarioObra, 'id'> = {
+    const controlDiarioDataRaw = {
         obraId: DEMO_OBRA_ID,
-        fecha: Timestamp.fromDate(new Date()), // Hoy
+        fecha: Timestamp.fromDate(today),
         jefeObraId: DEMO_ADMIN_ID,
         registrosTrabajadores: [
             {
@@ -205,25 +189,30 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
             }
         ],
         firmaJefeObraURL: null,
-        lastModified: Timestamp.fromDate(new Date()), // Será serverTimestamp
+        // lastModified will be serverTimestamp
     };
-    const validatedControlDiarioData = ControlDiarioObraSchema.omit({id: true, lastModified: true}).parse(controlDiarioData);
+    const validatedControlDiarioData = ControlDiarioObraSchema.omit({id: true, lastModified: true}).parse(controlDiarioDataRaw);
     batch.set(controlDiarioRef, { ...validatedControlDiarioData, id: DEMO_CONTROLDIA_ID, lastModified: serverTimestamp()});
-    summary.controlDiario = `Entrada de Control Diario Demo creada (ID: ${DEMO_CONTROLDIA_ID}).`;
+    summary.controlDiario = `Control Diario Demo (ID: ${DEMO_CONTROLDIA_ID}) preparado.`;
     console.log(summary.controlDiario);
 
-
-    // Commitear todas las operaciones en un batch
     await batch.commit();
     console.log('[SEED DATA] Batch commit exitoso.');
 
-    revalidatePath('/(app)', 'layout'); // Revalidar todas las rutas bajo (app)
+    revalidatePath('/(app)', 'layout'); 
 
-    return { success: true, message: 'Datos de demostración creados con éxito en Firestore.', summary };
+    return { success: true, message: 'Datos de demostración creados/actualizados con éxito en Firestore.', summary };
 
   } catch (error: any) {
     console.error('[SEED DATA] Error al crear datos de demostración:', error);
-    summary.error = error.message;
+    summary.error_message = error.message;
+    if (error.stack) summary.error_stack = error.stack;
+    if (error instanceof z.ZodError) {
+      summary.zod_error = JSON.stringify(error.flatten().fieldErrors);
+      console.error('[SEED DATA] Zod Errors:', error.flatten().fieldErrors);
+    }
     return { success: false, message: `Error al crear datos de demostración: ${error.message}`, summary };
   }
 }
+
+    
