@@ -102,7 +102,7 @@ export default function DashboardPage() {
             <CardTitle className="text-amber-700 flex items-center"><Database className="mr-2"/>Herramienta de Datos Demo</CardTitle>
             <CardDescription className="text-amber-600">
               Este botón creará o actualizará los datos de demostración en Firestore (empresa, usuarios, obras, etc.).
-              Úsalo con precaución y solo una vez si es necesario.
+              Úsalo con precaución.
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -112,7 +112,7 @@ export default function DashboardPage() {
             </Button>
             <p className="text-xs text-muted-foreground mt-2">
               Después de ejecutar, deberás crear los usuarios en <strong>Firebase Authentication</strong> manualmente:
-              <br />- Admin: <code>admin@demolink.com</code> (pass: <code>00000000A</code>)
+              <br />- Admin: <code>admin@demolink.com</code> (pass: <code>admin1234</code>)
               <br />- Trabajador: <code>trabajador1@demolink.com</code> (pass: <code>11111111T</code>)
             </p>
           </CardContent>
@@ -190,5 +190,3 @@ function DashboardCard({ title, description, icon, link, actionText, className }
     </Card>
   );
 }
-
-    

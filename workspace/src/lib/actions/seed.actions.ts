@@ -50,14 +50,13 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
 
     // 1. Crear Empresa Demo
     const empresaDemoRef = doc(db, "empresas", DEMO_EMPRESA_ID);
-    const empresaDemoDataRaw = {
+    const empresaDemoDataRaw: Omit<Empresa, 'id' | 'dataAIHint'> & { dataAIHint?: string } = {
       nombre: 'Constructora DemoLink',
-      CIF: 'A00000000DEMO', // Consistent CIF
+      CIF: 'A00000000DEMO', 
       emailContacto: 'contacto@demolink.com',
       telefono: '900123123',
       logoURL: `https://placehold.co/200x100.png`,
       dataAIHint: 'company logo',
-      // id is part of the ref, not the data
     };
     const validatedEmpresaData = EmpresaSchema.omit({id: true}).parse(empresaDemoDataRaw);
     batch.set(empresaDemoRef, { ...validatedEmpresaData, id: DEMO_EMPRESA_ID, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
@@ -66,11 +65,11 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
 
     // 2. Crear Usuario Administrador Demo (Firestore Document)
     const adminDemoRef = doc(db, "usuarios", DEMO_ADMIN_ID);
-    const adminDemoDataRaw = {
+    const adminDemoDataRaw: Omit<UsuarioFirebase, 'id' | 'password'> = {
       empresaId: DEMO_EMPRESA_ID,
       nombre: 'Admin Demo',
-      email: 'admin@demolink.com', // Email para Firebase Auth
-      dni: '00000000A',         // Contraseña para Firebase Auth
+      email: 'admin@demolink.com',
+      dni: '00000000A',        
       rol: 'admin' as UsuarioFirebase['rol'],
       activo: true,
       obrasAsignadas: [],
@@ -79,16 +78,16 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
     };
     const validatedAdminData = UsuarioFirebaseSchema.omit({id: true, password: true}).parse(adminDemoDataRaw);
     batch.set(adminDemoRef, { ...validatedAdminData, id: DEMO_ADMIN_ID, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    summary.admin = `Usuario Admin Demo (ID: ${DEMO_ADMIN_ID}) preparado. Email: admin@demolink.com, Pass (para Auth): 00000000A`;
+    summary.admin = `Usuario Admin Demo (ID: ${DEMO_ADMIN_ID}) preparado. Email: admin@demolink.com, Pass (para Auth): admin1234`;
     console.log(summary.admin);
 
     // 3. Crear Usuario Trabajador Demo (Firestore Document)
     const trabajadorDemoRef = doc(db, "usuarios", DEMO_TRABAJADOR_ID);
-    const trabajadorDemoDataRaw = {
+    const trabajadorDemoDataRaw: Omit<UsuarioFirebase, 'id' | 'password'> = {
       empresaId: DEMO_EMPRESA_ID,
       nombre: 'Trabajador Demo Uno',
-      email: 'trabajador1@demolink.com', // Email para Firebase Auth
-      dni: '11111111T',                 // Contraseña para Firebase Auth
+      email: 'trabajador1@demolink.com', 
+      dni: '11111111T',                 
       rol: 'trabajador' as UsuarioFirebase['rol'],
       activo: true,
       obrasAsignadas: [DEMO_OBRA_ID],
@@ -102,12 +101,12 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
 
     // 4. Crear Obra Demo
     const obraDemoRef = doc(db, "obras", DEMO_OBRA_ID);
-    const obraDemoDataRaw = {
+    const obraDemoDataRaw: Omit<Obra, 'id' | 'dataAIHint'> & { dataAIHint?: string } = {
       empresaId: DEMO_EMPRESA_ID,
       nombre: 'Proyecto Alfa Demo',
       direccion: 'Calle Falsa 123, Ciudad Demo',
-      fechaInicio: Timestamp.fromDate(new Date(new Date().setDate(today.getDate() - 30))),
-      fechaFin: Timestamp.fromDate(new Date(new Date().setDate(today.getDate() + 60))),
+      fechaInicio: new Date(new Date().setDate(today.getDate() - 30)),
+      fechaFin: new Date(new Date().setDate(today.getDate() + 60)),
       clienteNombre: 'Cliente Estrella S.L.',
       jefeObraId: DEMO_ADMIN_ID,
       descripcion: 'Obra de demostración para probar funcionalidades de ObraLink.',
@@ -117,17 +116,21 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
       ],
       dataAIHint: 'construction site crane',
     };
-    const validatedObraData = ObraSchema.omit({id: true}).parse(obraDemoDataRaw);
+    const validatedObraData = ObraSchema.omit({id: true}).parse({
+      ...obraDemoDataRaw,
+      fechaInicio: Timestamp.fromDate(obraDemoDataRaw.fechaInicio as Date),
+      fechaFin: obraDemoDataRaw.fechaFin ? Timestamp.fromDate(obraDemoDataRaw.fechaFin as Date) : null,
+    });
     batch.set(obraDemoRef, { ...validatedObraData, id: DEMO_OBRA_ID, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
     summary.obra = `Obra Demo (ID: ${DEMO_OBRA_ID}) preparada.`;
     console.log(summary.obra);
 
     // 5. Crear Parte de Trabajo Demo
     const parteDemoRef = doc(db, "partes", DEMO_PARTE_ID);
-    const parteDemoDataRaw = {
+    const parteDemoDataRaw: Omit<Parte, 'id' | 'timestamp' | 'dataAIHint'> & {dataAIHint?: string} = {
       usuarioId: DEMO_TRABAJADOR_ID,
       obraId: DEMO_OBRA_ID,
-      fecha: Timestamp.fromDate(today),
+      fecha: today,
       tareasRealizadas: 'Se comenzó con la preparación del terreno y replanteo. Instalación de vallas perimetrales.',
       horasTrabajadas: 8,
       incidencias: 'Pequeño retraso por lluvia matutina.',
@@ -137,45 +140,53 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
       validado: false,
       validadoPor: null,
       dataAIHint: 'construction safety fence',
-      // timestamp will be serverTimestamp
     };
-    const validatedParteData = ParteSchema.omit({id: true, timestamp: true}).parse(parteDemoDataRaw);
+    const validatedParteData = ParteSchema.omit({id: true, timestamp: true}).parse({
+        ...parteDemoDataRaw,
+        fecha: Timestamp.fromDate(parteDemoDataRaw.fecha as Date),
+    });
     batch.set(parteDemoRef, { ...validatedParteData, id: DEMO_PARTE_ID, timestamp: serverTimestamp() });
     summary.parte = `Parte Demo (ID: ${DEMO_PARTE_ID}) preparado.`;
     console.log(summary.parte);
     
     // 6. Crear Fichajes Demo
     const fichajeEntradaRef = doc(db, "fichajes", DEMO_FICHAJE_ID_ENTRADA);
-    const fichajeEntradaDataRaw = {
+    const fichajeEntradaDataRaw: Omit<Fichaje, 'id'> = {
         usuarioId: DEMO_TRABAJADOR_ID,
         obraId: DEMO_OBRA_ID,
         tipo: 'entrada' as Fichaje['tipo'],
-        timestamp: Timestamp.fromDate(new Date(today.setHours(8,0,0,0))),
+        timestamp: new Date(new Date(today).setHours(8,0,0,0)),
         validado: false,
         validadoPor: null,
     };
-    const validatedFichajeEntrada = FichajeSchema.omit({id:true}).parse(fichajeEntradaDataRaw);
+    const validatedFichajeEntrada = FichajeSchema.omit({id:true}).parse({
+        ...fichajeEntradaDataRaw,
+        timestamp: Timestamp.fromDate(fichajeEntradaDataRaw.timestamp as Date),
+    });
     batch.set(fichajeEntradaRef, { ...validatedFichajeEntrada, id: DEMO_FICHAJE_ID_ENTRADA });
     
     const fichajeSalidaRef = doc(db, "fichajes", DEMO_FICHAJE_ID_SALIDA);
-    const fichajeSalidaDataRaw = {
+    const fichajeSalidaDataRaw: Omit<Fichaje, 'id'> = {
         usuarioId: DEMO_TRABAJADOR_ID,
         obraId: DEMO_OBRA_ID,
         tipo: 'salida' as Fichaje['tipo'],
-        timestamp: Timestamp.fromDate(new Date(today.setHours(17,0,0,0))),
+        timestamp: new Date(new Date(today).setHours(17,0,0,0)),
         validado: false,
         validadoPor: null,
     };
-    const validatedFichajeSalida = FichajeSchema.omit({id:true}).parse(fichajeSalidaDataRaw);
+    const validatedFichajeSalida = FichajeSchema.omit({id:true}).parse({
+        ...fichajeSalidaDataRaw,
+        timestamp: Timestamp.fromDate(fichajeSalidaDataRaw.timestamp as Date),
+    });
     batch.set(fichajeSalidaRef, { ...validatedFichajeSalida, id: DEMO_FICHAJE_ID_SALIDA });
     summary.fichajes = `Fichajes demo preparados.`;
     console.log(summary.fichajes);
 
     // 7. Crear Control Diario Demo
     const controlDiarioRef = doc(db, "controlDiario", DEMO_CONTROLDIA_ID);
-    const controlDiarioDataRaw = {
+    const controlDiarioDataRaw: Omit<ControlDiarioObra, 'id' | 'lastModified'> = {
         obraId: DEMO_OBRA_ID,
-        fecha: Timestamp.fromDate(today),
+        fecha: today,
         jefeObraId: DEMO_ADMIN_ID,
         registrosTrabajadores: [
             {
@@ -189,9 +200,11 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
             }
         ],
         firmaJefeObraURL: null,
-        // lastModified will be serverTimestamp
     };
-    const validatedControlDiarioData = ControlDiarioObraSchema.omit({id: true, lastModified: true}).parse(controlDiarioDataRaw);
+    const validatedControlDiarioData = ControlDiarioObraSchema.omit({id: true, lastModified: true}).parse({
+        ...controlDiarioDataRaw,
+        fecha: Timestamp.fromDate(controlDiarioDataRaw.fecha as Date),
+    });
     batch.set(controlDiarioRef, { ...validatedControlDiarioData, id: DEMO_CONTROLDIA_ID, lastModified: serverTimestamp()});
     summary.controlDiario = `Control Diario Demo (ID: ${DEMO_CONTROLDIA_ID}) preparado.`;
     console.log(summary.controlDiario);
@@ -214,5 +227,3 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
     return { success: false, message: `Error al crear datos de demostración: ${error.message}`, summary };
   }
 }
-
-    
