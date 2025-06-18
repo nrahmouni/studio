@@ -36,16 +36,10 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
       return { success: false, message: 'Ya existe una empresa registrada con este CIF.' };
     }
     
-     try {
-        const q = query(collection(db, "usuarios"), where("email", "==", adminEmail));
-        const querySnapshot = await getDocs(q);
-        if (!querySnapshot.empty) {
-            return { success: false, message: 'Este email de administrador ya está en uso.' };
-        }
-    } catch (e: any) {
-        if (e.code === 'auth/email-already-in-use') { // Should be caught by the query above mostly
-             return { success: false, message: 'Este email de administrador ya está registrado en el sistema.' };
-        }
+    const adminEmailQuery = query(collection(db, "usuarios"), where("email", "==", adminEmail));
+    const adminEmailSnapshot = await getDocs(adminEmailQuery);
+    if (!adminEmailSnapshot.empty) {
+        return { success: false, message: 'Este email de administrador ya está en uso en la base de datos de usuarios.' };
     }
 
     const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
@@ -61,8 +55,8 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
       emailContacto: empresaEmailContacto,
       telefono: empresaTelefono,
       logoURL: null,
+      // dataAIHint is optional in EmpresaSchema
     };
-    // Validate before saving
     const empresaDataToStore = EmpresaSchema.parse(rawEmpresaData);
     await setDoc(newEmpresaRef, { ...empresaDataToStore, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
 
@@ -71,7 +65,7 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
       empresaId: newEmpresaId,
       nombre: adminNombre,
       email: adminEmail,
-      password: adminPassword, // For schema validation, not stored
+      password: adminPassword, // Will be omitted by .omit({password:true}) before storing
       dni: adminDNI,
       rol: 'admin' as UsuarioFirebase['rol'],
       activo: true,
@@ -79,7 +73,6 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
       dniAnversoURL: null,
       dniReversoURL: null,
     };
-    // Validate before saving, omit password for storage
     const adminUserDataToStore = UsuarioFirebaseSchema.omit({password: true}).parse(rawAdminUserData);
     await setDoc(doc(db, "usuarios", adminUid), { ...adminUserDataToStore, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
 
@@ -87,16 +80,37 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
     return { success: true, message: 'Empresa y administrador creados con éxito.', empresa: empresaDataToStore, adminUser: adminUserDataToStore };
 
   } catch (error: any) {
-    console.error("Error creating empresa with admin:", error);
-    let message = 'Error al crear la empresa.';
-    if (error.code === 'auth/email-already-in-use') {
-      message = 'El email proporcionado para el administrador ya está en uso.';
-    } else if (error.code === 'auth/weak-password') {
-      message = 'La contraseña proporcionada es demasiado débil.';
-    } else if (error instanceof z.ZodError) {
-      message = `Error de validación de datos internos: ${JSON.stringify(error.flatten().fieldErrors)}`;
+    console.error("CreateEmpresaAdmin Action Failed. Full Error Object:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
+    console.error("Error Name:", error.name);
+    console.error("Error Message:", error.message);
+    console.error("Error Code:", error.code); // Firebase errors often have a code
+
+    let message = 'Un error desconocido ocurrió al crear la empresa. Por favor, revisa la consola del servidor para más detalles.';
+    
+    if (error instanceof z.ZodError) {
+      message = `Error de validación de datos Zod: ${JSON.stringify(error.flatten().fieldErrors)}`;
+    } else if (error.code) { // Check for Firebase error codes
+      switch (error.code) {
+        case 'auth/email-already-in-use':
+          message = 'El email proporcionado para el administrador ya está registrado en Firebase Authentication.';
+          break;
+        case 'auth/weak-password':
+          message = 'La contraseña proporcionada es demasiado débil (mínimo 6 caracteres).';
+          break;
+        // Example for a Firestore permission error (you'd need to know the exact code)
+        case 'permission-denied': // This is a common Firestore error code string
+          message = 'Error de permisos al intentar guardar datos en Firestore. Verifica las reglas de seguridad.';
+          break;
+        default:
+          // Keep the original message from Firebase if available and seems useful
+          message = error.message ? `Error de Firebase: ${error.message} (Código: ${error.code})` : `Error de Firebase (Código: ${error.code})`;
+      }
+    } else if (error.message) {
+        // For generic errors that have a message property
+        message = error.message;
     }
-    return { success: false, message };
+    
+    return { success: false, message: message };
   }
 }
 
@@ -107,7 +121,6 @@ export async function getEmpresaProfile(id: string): Promise<Empresa | null> {
     const empresaSnap = await getDoc(empresaRef);
 
     if (empresaSnap.exists()) {
-      // Ensure createdAt and updatedAt are either valid dates or excluded if not part of Empresa schema
       const data = empresaSnap.data();
       const dataToParse = {
         id: empresaSnap.id,
@@ -116,10 +129,15 @@ export async function getEmpresaProfile(id: string): Promise<Empresa | null> {
         emailContacto: data.emailContacto,
         telefono: data.telefono,
         logoURL: data.logoURL,
-        // dataAIHint is optional and might not be present
         ...(data.dataAIHint && { dataAIHint: data.dataAIHint }), 
       };
-      return EmpresaSchema.parse(dataToParse);
+      const parseResult = EmpresaSchema.safeParse(dataToParse);
+      if (parseResult.success) {
+        return parseResult.data;
+      } else {
+        console.warn(`Invalid empresa data in Firestore for ID ${id}:`, parseResult.error.flatten().fieldErrors);
+        return null;
+      }
     }
     return null;
   } catch (error) {
@@ -145,17 +163,17 @@ export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empres
       return { success: false, message: `Error de validación: ${errorMessages}` };
     }
     
-    const dataToUpdate = { ...validationResult.data, updatedAt: serverTimestamp()};
-    Object.keys(dataToUpdate).forEach(key => dataToUpdate[key as keyof typeof dataToUpdate] === undefined && delete dataToUpdate[key as keyof typeof dataToUpdate]);
+    const dataToUpdate: Record<string, any> = { ...validationResult.data, updatedAt: serverTimestamp()};
+    Object.keys(dataToUpdate).forEach(key => dataToUpdate[key] === undefined && delete dataToUpdate[key]);
 
     await updateDoc(empresaRef, dataToUpdate);
     
     const updatedEmpresaSnap = await getDoc(empresaRef);
     const updatedEmpresaData = updatedEmpresaSnap.data();
-    if (!updatedEmpresaData) { // Should not happen if updateDoc succeeded and doc existed
+    if (!updatedEmpresaData) { 
         return { success: false, message: "Error: No se encontraron datos de la empresa después de actualizar." };
     }
-    const dataToParse = { // Reconstruct for parsing, handling potential missing optional fields
+    const dataToParse = { 
         id: updatedEmpresaSnap.id,
         nombre: updatedEmpresaData.nombre,
         CIF: updatedEmpresaData.CIF,
@@ -164,7 +182,12 @@ export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empres
         logoURL: updatedEmpresaData.logoURL,
         ...(updatedEmpresaData.dataAIHint && { dataAIHint: updatedEmpresaData.dataAIHint }),
     };
-    const updatedEmpresa = EmpresaSchema.parse(dataToParse);
+    const parseResult = EmpresaSchema.safeParse(dataToParse);
+    if (!parseResult.success) {
+        console.warn(`Error parsing updated Empresa data for ID ${id}:`, parseResult.error.flatten().fieldErrors);
+        return { success: false, message: "Error al procesar los datos actualizados de la empresa." };
+    }
+    const updatedEmpresa = parseResult.data;
 
     revalidatePath('/(app)/company-profile');
     return { success: true, message: 'Perfil de empresa actualizado con éxito.', empresa: updatedEmpresa };
@@ -175,3 +198,5 @@ export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empres
     return { success: false, message: `Error al actualizar el perfil: ${errorMessage}` };
   }
 }
+
+    
