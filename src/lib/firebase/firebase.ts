@@ -4,13 +4,14 @@ import { getAuth, type Auth } from 'firebase/auth';
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
+// Your web app's Firebase configuration (Hardcoded as per user request)
 const firebaseConfig = {
-  apiKey: process.env.NEXT_PUBLIC_FIREBASE_API_KEY,
-  authDomain: process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN,
-  projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID,
-  storageBucket: process.env.NEXT_PUBLIC_FIREBASE_STORAGE_BUCKET,
-  messagingSenderId: process.env.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID,
-  appId: process.env.NEXT_PUBLIC_FIREBASE_APP_ID,
+  apiKey: "AIzaSyBuf2wYHrRR5_ZQXFFVZ8c53fJmao7P7UE",
+  authDomain: "obralink-keqrc.firebaseapp.com",
+  projectId: "obralink-keqrc",
+  storageBucket: "obralink-keqrc.firebasestorage.app", // Corrected from "obralink-keqrc.firebasestorage.app" in OCR to match typical Firebase naming
+  messagingSenderId: "412359783854",
+  appId: "1:412359783854:web:f60777fc833ebf6503c43f"
 };
 
 let app: FirebaseApp;
@@ -29,4 +30,3 @@ db = getFirestore(app);
 storage = getStorage(app);
 
 export { app, auth, db, storage };
-
