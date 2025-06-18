@@ -21,38 +21,44 @@ const RegisterEmpresaFormSchema = z.object({
 type RegisterEmpresaFormData = z.infer<typeof RegisterEmpresaFormSchema>;
 
 export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Promise<{ success: boolean; message: string; empresa?: Empresa; adminUser?: Omit<UsuarioFirebase, 'password'> }> {
+  console.log("createEmpresaWithAdmin action started with data:", JSON.stringify(data, null, 2));
+  const validationResult = RegisterEmpresaFormSchema.safeParse(data);
+  if (!validationResult.success) {
+    const errorDetails = JSON.stringify(validationResult.error.flatten().fieldErrors);
+    console.error("Server-side validation errors:", errorDetails);
+    return { success: false, message: `Error de validación del servidor: ${errorDetails}` };
+  }
+  const {
+    empresaNombre, empresaCIF, empresaEmailContacto, empresaTelefono,
+    adminNombre, adminEmail, adminPassword, adminDNI
+  } = validationResult.data;
+
+  const cifUpperCase = empresaCIF.toUpperCase();
+
   try {
-    const validationResult = RegisterEmpresaFormSchema.safeParse(data);
-    if (!validationResult.success) {
-      console.error("Server-side validation errors:", validationResult.error.flatten().fieldErrors);
-      return { success: false, message: `Error de validación del servidor: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
-    }
-    const {
-      empresaNombre, empresaCIF, empresaEmailContacto, empresaTelefono,
-      adminNombre, adminEmail, adminPassword, adminDNI
-    } = validationResult.data;
-
-    const cifUpperCase = empresaCIF.toUpperCase();
-
-    // Check if empresa with CIF already exists
+    console.log("[STEP 1] Checking for existing empresa CIF:", cifUpperCase);
     const empresaCifQuery = query(collection(db, "empresas"), where("CIF", "==", cifUpperCase));
     const empresaCifSnapshot = await getDocs(empresaCifQuery);
     if (!empresaCifSnapshot.empty) {
+      console.log("Empresa with this CIF already exists.");
       return { success: false, message: 'Ya existe una empresa registrada con este CIF.' };
     }
+    console.log("[STEP 1] CIF check passed.");
 
-    // Check if admin email is already in use in 'usuarios' collection
+    console.log("[STEP 2] Checking for existing admin email in 'usuarios':", adminEmail);
     const adminEmailDbQuery = query(collection(db, "usuarios"), where("email", "==", adminEmail));
     const adminEmailDbSnapshot = await getDocs(adminEmailDbQuery);
     if (!adminEmailDbSnapshot.empty) {
+        console.log("Admin email already in use in 'usuarios' collection.");
         return { success: false, message: 'Este email de administrador ya está en uso en la base de datos de usuarios.' };
     }
+    console.log("[STEP 2] Admin email check passed.");
 
-    // Create Firebase Auth user
+    console.log("[STEP 3] Attempting to create Firebase Auth user for:", adminEmail);
     const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
     const adminUid = userCredential.user.uid;
+    console.log("[STEP 3] Firebase Auth user created successfully. UID:", adminUid);
 
-    // Create empresa document in Firestore
     const newEmpresaRef = doc(collection(db, "empresas"));
     const newEmpresaId = newEmpresaRef.id;
 
@@ -64,12 +70,12 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
       telefono: empresaTelefono,
       logoURL: null,
       // dataAIHint is optional and not provided in the form, so it's omitted.
-      // Firestore handles optional fields not being present if they are undefined after Zod parsing.
     };
-    const empresaDataToStore = EmpresaSchema.parse(rawEmpresaData); // This will omit dataAIHint if not present
+    const empresaDataToStore = EmpresaSchema.parse(rawEmpresaData);
+    console.log("[STEP 4] Attempting to setDoc for new empresa:", newEmpresaId);
     await setDoc(newEmpresaRef, { ...empresaDataToStore, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    console.log("[STEP 4] New empresa document created successfully.");
 
-    // Create admin user document in Firestore
     const rawAdminUserData = {
       id: adminUid,
       empresaId: newEmpresaId,
@@ -83,29 +89,30 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
       dniReversoURL: null,
     };
     const adminUserDataToStore = UsuarioFirebaseSchema.omit({password: true}).parse(rawAdminUserData);
+    console.log("[STEP 5] Attempting to setDoc for new admin user:", adminUid);
     await setDoc(doc(db, "usuarios", adminUid), { ...adminUserDataToStore, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
+    console.log("[STEP 5] New admin user document created successfully.");
 
+    console.log("[STEP 6] Revalidating paths and returning success.");
     revalidatePath('/auth/login/empresa');
     return { success: true, message: 'Empresa y administrador creados con éxito.', empresa: empresaDataToStore, adminUser: adminUserDataToStore };
 
   } catch (error: any) {
     console.error("--- CreateEmpresaAdmin Action FAILED ---");
     let userMessage = 'Error desconocido al registrar la empresa. Contacta a soporte si el problema persiste.';
-    let errorCode = 'UNKNOWN_ERROR';
+    let errorCode = 'UNKNOWN_ERROR_IN_CATCH';
 
-    // Log detailed error information
-    if (error.name) console.error("Error Name:", error.name);
-    if (error.message) console.error("Error Message:", error.message);
+    console.error("Error Name:", error.name);
+    console.error("Error Message:", error.message);
     if (error.code) console.error("Error Code (Firebase/etc.):", error.code);
     if (error.stack) console.error("Error Stack:", error.stack);
     
     try {
-        const errorDetails = JSON.stringify(error, Object.getOwnPropertyNames(error));
-        console.error("Full Error (stringified):", errorDetails);
-    } catch (stringifyError) {
-        console.error("Could not stringify the full error object:", stringifyError);
+        const errorDetailsString = JSON.stringify(error, Object.getOwnPropertyNames(error));
+        console.error("Full Error (stringified):", errorDetailsString);
+    } catch (stringifyError: any) {
+        console.error("Could not stringify the full error object:", stringifyError.message);
     }
-
 
     if (error instanceof z.ZodError) {
       userMessage = `Error de validación de datos Zod: ${JSON.stringify(error.flatten().fieldErrors)}`;
@@ -123,7 +130,7 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
         case 'permission-denied':
           userMessage = 'Error de permisos con Firestore. Verifica las reglas de seguridad. Esto también puede ocurrir si la operación excede los límites de tiempo.';
           break;
-        case 'invalid-argument': // Specifically for Firestore setDoc issues like undefined fields
+        case 'invalid-argument':
            userMessage = `Error de Firebase: ${error.message || 'Argumento inválido al intentar guardar datos.'} (Código: ${error.code})`;
            break;
         default:
@@ -135,11 +142,12 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
     }
     
     if (typeof userMessage !== 'string' || userMessage.trim() === '') {
-        userMessage = 'Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde.';
+        userMessage = 'Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde (desde catch).';
     }
     
     console.error("Final userMessage to be returned to client:", userMessage);
     console.error("Final errorCode determined for server logs:", errorCode);
+    console.log("About to return from catch block in createEmpresaWithAdmin.");
     return { success: false, message: userMessage };
   }
 }
@@ -158,7 +166,7 @@ export async function getEmpresaProfile(id: string): Promise<Empresa | null> {
         CIF: data.CIF,
         emailContacto: data.emailContacto,
         telefono: data.telefono,
-        logoURL: data.logoURL !== undefined ? data.logoURL : null,
+        logoURL: data.logoURL === undefined ? null : data.logoURL, // Ensure null if undefined
         dataAIHint: data.dataAIHint, 
       };
       const parseResult = EmpresaSchema.safeParse(dataToParse);
@@ -199,17 +207,21 @@ export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empres
         dataToUpdate.logoURL = data.logoURL === '' || data.logoURL === undefined ? null : data.logoURL;
     }
     
-    // Ensure dataAIHint is either a string or removed if undefined, never set to undefined
     if (data.hasOwnProperty('dataAIHint')) {
         if (data.dataAIHint === undefined || data.dataAIHint === '') {
-            delete dataToUpdate.dataAIHint; // Remove if undefined or empty to prevent storing it
+            // If we want to remove it explicitly: dataToUpdate.dataAIHint = FieldValue.delete();
+            // For now, just don't set it if it's undefined/empty
+            delete dataToUpdate.dataAIHint;
         } else {
             dataToUpdate.dataAIHint = data.dataAIHint;
         }
     }
 
-
-    Object.keys(dataToUpdate).forEach(key => dataToUpdate[key] === undefined && delete dataToUpdate[key]);
+    Object.keys(dataToUpdate).forEach(key => {
+        if (dataToUpdate[key] === undefined) {
+            delete dataToUpdate[key];
+        }
+    });
 
 
     await updateDoc(empresaRef, dataToUpdate);
@@ -225,8 +237,8 @@ export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empres
         CIF: updatedEmpresaData.CIF,
         emailContacto: updatedEmpresaData.emailContacto,
         telefono: updatedEmpresaData.telefono,
-        logoURL: updatedEmpresaData.logoURL !== undefined ? updatedEmpresaData.logoURL : null,
-        dataAIHint: updatedEmpresaData.dataAIHint, // Zod will handle if it's undefined from db
+        logoURL: updatedEmpresaData.logoURL === undefined ? null : updatedEmpresaData.logoURL,
+        dataAIHint: updatedEmpresaData.dataAIHint, 
     };
     const parseResult = EmpresaSchema.safeParse(dataToParse);
     if (!parseResult.success) {
@@ -250,6 +262,7 @@ export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empres
     return { success: false, message: `Error al actualizar el perfil: ${userMessage}` };
   }
 }
-
     
+    
+
     
