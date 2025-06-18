@@ -1,4 +1,5 @@
 
+// src/lib/actions/company.actions.ts
 'use server';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
@@ -8,14 +9,14 @@ import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 
 const RegisterEmpresaFormSchema = z.object({
-  empresaNombre: z.string().min(2),
-  empresaCIF: z.string().min(9).regex(/^[A-HJ-NP-SUVW]{1}[0-9]{7}[0-9A-J]{1}$/i),
-  empresaEmailContacto: z.string().email(),
-  empresaTelefono: z.string().min(9),
-  adminNombre: z.string().min(2),
-  adminEmail: z.string().email(),
-  adminPassword: z.string().min(6),
-  adminDNI: z.string().min(9).regex(/^[0-9XYZxyz][0-9]{7}[A-HJ-NP-TV-Z]$/i),
+  empresaNombre: z.string().min(2, { message: "El nombre de la empresa debe tener al menos 2 caracteres." }),
+  empresaCIF: z.string().min(9, { message: "El CIF debe tener al menos 9 caracteres." }).regex(/^[A-HJ-NP-SUVW]{1}[0-9]{7}[0-9A-J]{1}$/i, "Formato de CIF inválido."),
+  empresaEmailContacto: z.string().email({ message: "Email de contacto de la empresa inválido." }),
+  empresaTelefono: z.string().min(9, { message: "El teléfono de la empresa debe tener al menos 9 dígitos." }),
+  adminNombre: z.string().min(2, { message: "Tu nombre debe tener al menos 2 caracteres." }),
+  adminEmail: z.string().email({ message: "Tu email de administrador es inválido." }),
+  adminPassword: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
+  adminDNI: z.string().min(9, "El DNI es requerido").regex(/^[0-9XYZxyz][0-9]{7}[A-HJ-NP-TV-Z]$/i, "Formato de DNI/NIE inválido"),
 });
 type RegisterEmpresaFormData = z.infer<typeof RegisterEmpresaFormSchema>;
 
@@ -30,15 +31,17 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
       adminNombre, adminEmail, adminPassword, adminDNI 
     } = validationResult.data;
 
-    const empresaCifQuery = query(collection(db, "empresas"), where("CIF", "==", empresaCIF));
+    const cifUpperCase = empresaCIF.toUpperCase();
+
+    const empresaCifQuery = query(collection(db, "empresas"), where("CIF", "==", cifUpperCase));
     const empresaCifSnapshot = await getDocs(empresaCifQuery);
     if (!empresaCifSnapshot.empty) {
       return { success: false, message: 'Ya existe una empresa registrada con este CIF.' };
     }
     
-    const adminEmailQuery = query(collection(db, "usuarios"), where("email", "==", adminEmail));
-    const adminEmailSnapshot = await getDocs(adminEmailQuery);
-    if (!adminEmailSnapshot.empty) {
+    const adminEmailDbQuery = query(collection(db, "usuarios"), where("email", "==", adminEmail));
+    const adminEmailDbSnapshot = await getDocs(adminEmailDbQuery);
+    if (!adminEmailDbSnapshot.empty) {
         return { success: false, message: 'Este email de administrador ya está en uso en la base de datos de usuarios.' };
     }
 
@@ -51,11 +54,10 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
     const rawEmpresaData = {
       id: newEmpresaId,
       nombre: empresaNombre,
-      CIF: empresaCIF,
+      CIF: cifUpperCase, // Store CIF in uppercase
       emailContacto: empresaEmailContacto,
       telefono: empresaTelefono,
       logoURL: null,
-      // dataAIHint is optional in EmpresaSchema
     };
     const empresaDataToStore = EmpresaSchema.parse(rawEmpresaData);
     await setDoc(newEmpresaRef, { ...empresaDataToStore, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
@@ -65,7 +67,6 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
       empresaId: newEmpresaId,
       nombre: adminNombre,
       email: adminEmail,
-      password: adminPassword, // Will be omitted by .omit({password:true}) before storing
       dni: adminDNI,
       rol: 'admin' as UsuarioFirebase['rol'],
       activo: true,
@@ -80,37 +81,48 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
     return { success: true, message: 'Empresa y administrador creados con éxito.', empresa: empresaDataToStore, adminUser: adminUserDataToStore };
 
   } catch (error: any) {
-    console.error("CreateEmpresaAdmin Action Failed. Full Error Object:", JSON.stringify(error, Object.getOwnPropertyNames(error)));
-    console.error("Error Name:", error.name);
-    console.error("Error Message:", error.message);
-    console.error("Error Code:", error.code); // Firebase errors often have a code
-
-    let message = 'Un error desconocido ocurrió al crear la empresa. Por favor, revisa la consola del servidor para más detalles.';
+    console.error("--- CreateEmpresaAdmin Action FAILED ---");
+    let detailedErrorLog = "Error details:\n";
+    if (error.name) detailedErrorLog += `Name: ${error.name}\n`;
+    if (error.message) detailedErrorLog += `Message: ${error.message}\n`;
+    if (error.code) detailedErrorLog += `Code: ${error.code}\n`;
+    if (error.stack) detailedErrorLog += `Stack: ${error.stack}\n`;
     
+    try {
+      const serializedError = JSON.stringify(error, Object.getOwnPropertyNames(error), 2); // Added indentation for readability
+      detailedErrorLog += `Full Error Object (JSON): ${serializedError}\n`;
+    } catch (stringifyError: any) {
+      detailedErrorLog += `Could not stringify full error object: ${stringifyError.message}\n`;
+      detailedErrorLog += `Error Keys: ${Object.keys(error).join(", ")}\n`; // Log available keys if stringify fails
+    }
+    console.error(detailedErrorLog);
+    console.error("--- End of Error Log ---");
+
+    let userMessage = 'Error desconocido al registrar la empresa. Contacta a soporte si el problema persiste.';
     if (error instanceof z.ZodError) {
-      message = `Error de validación de datos Zod: ${JSON.stringify(error.flatten().fieldErrors)}`;
-    } else if (error.code) { // Check for Firebase error codes
+      userMessage = `Error de validación de datos: ${JSON.stringify(error.flatten().fieldErrors)}`;
+    } else if (error.code) { 
       switch (error.code) {
         case 'auth/email-already-in-use':
-          message = 'El email proporcionado para el administrador ya está registrado en Firebase Authentication.';
+          userMessage = 'El email proporcionado para el administrador ya está registrado en Firebase Authentication.';
           break;
         case 'auth/weak-password':
-          message = 'La contraseña proporcionada es demasiado débil (mínimo 6 caracteres).';
+          userMessage = 'La contraseña proporcionada es demasiado débil (mínimo 6 caracteres).';
           break;
-        // Example for a Firestore permission error (you'd need to know the exact code)
-        case 'permission-denied': // This is a common Firestore error code string
-          message = 'Error de permisos al intentar guardar datos en Firestore. Verifica las reglas de seguridad.';
+        case 'permission-denied': 
+          userMessage = 'Error de permisos con Firebase. Verifica las reglas de seguridad de Firestore o Auth.';
           break;
         default:
-          // Keep the original message from Firebase if available and seems useful
-          message = error.message ? `Error de Firebase: ${error.message} (Código: ${error.code})` : `Error de Firebase (Código: ${error.code})`;
+          userMessage = error.message ? `Error de Firebase: ${error.message} (Código: ${error.code})` : `Error de Firebase (Código: ${error.code})`;
       }
-    } else if (error.message) {
-        // For generic errors that have a message property
-        message = error.message;
+    } else if (typeof error.message === 'string' && error.message.trim() !== '') {
+        userMessage = error.message;
+    } else if (typeof error.toString === 'function') {
+        const errorString = error.toString();
+        userMessage = errorString.replace(/^Error: /, '').trim() !== '' ? errorString : userMessage;
     }
     
-    return { success: false, message: message };
+    return { success: false, message: userMessage };
   }
 }
 
@@ -176,7 +188,7 @@ export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empres
     const dataToParse = { 
         id: updatedEmpresaSnap.id,
         nombre: updatedEmpresaData.nombre,
-        CIF: updatedEmpresaData.CIF,
+        CIF: updatedEmpresaData.CIF, 
         emailContacto: updatedEmpresaData.emailContacto,
         telefono: updatedEmpresaData.telefono,
         logoURL: updatedEmpresaData.logoURL,
@@ -192,11 +204,16 @@ export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empres
     revalidatePath('/(app)/company-profile');
     return { success: true, message: 'Perfil de empresa actualizado con éxito.', empresa: updatedEmpresa };
 
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error updating empresa profile:", error);
-    const errorMessage = error instanceof Error ? error.message : "Un error desconocido ocurrió.";
-    return { success: false, message: `Error al actualizar el perfil: ${errorMessage}` };
+    let userMessage = "Un error desconocido ocurrió al actualizar el perfil.";
+    if (typeof error.message === 'string' && error.message.trim() !== '') {
+        userMessage = error.message;
+    } else if (typeof error.toString === 'function') {
+        const errorString = error.toString();
+        userMessage = errorString.replace(/^Error: /, '').trim() !== '' ? errorString : userMessage;
+    }
+    return { success: false, message: `Error al actualizar el perfil: ${userMessage}` };
   }
 }
-
     
