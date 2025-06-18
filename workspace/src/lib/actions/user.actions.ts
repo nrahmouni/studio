@@ -42,24 +42,26 @@ export async function authenticateUser(
     console.timeEnd('[AUTH_USER] Firestore Get User Document');
 
     if (userDocSnap.exists()) {
-      console.log(`[AUTH_USER] STEP 5: User document found in Firestore. Data:`, userDocSnap.data());
+      console.log(`[AUTH_USER] STEP 5: User document found in Firestore. Raw Data:`, userDocSnap.data());
       const userDataFromDb = userDocSnap.data();
-      // Asegurarse de que los campos opcionales que son nullables lo sean
+      
+      // Prepare data for Zod parsing, ensuring optional fields are handled
       const dataToParse = {
         id: userDocSnap.id,
         ...userDataFromDb,
-        obrasAsignadas: userDataFromDb.obrasAsignadas || [],
-        dniAnversoURL: userDataFromDb.dniAnversoURL === undefined ? null : userDataFromDb.dniAnversoURL,
-        dniReversoURL: userDataFromDb.dniReversoURL === undefined ? null : userDataFromDb.dniReversoURL,
+        obrasAsignadas: userDataFromDb.obrasAsignadas || [], // Default to empty array if undefined/null
+        dniAnversoURL: userDataFromDb.dniAnversoURL === undefined ? null : userDataFromDb.dniAnversoURL, // Default to null if undefined
+        dniReversoURL: userDataFromDb.dniReversoURL === undefined ? null : userDataFromDb.dniReversoURL, // Default to null if undefined
       };
+      console.log(`[AUTH_USER] STEP 5.1: Data prepared for Zod parsing:`, dataToParse);
 
       const userData = UsuarioFirebaseSchema.omit({password: true}).safeParse(dataToParse);
       
       if (!userData.success) {
-        console.error('[AUTH_USER] STEP 5.1: Firestore user data validation error:', userData.error.flatten().fieldErrors);
+        console.error('[AUTH_USER] STEP 5.2: Firestore user data validation error with Zod:', userData.error.flatten().fieldErrors);
         return { success: false, message: 'Error en los datos del usuario en base de datos. Contacte al administrador.' };
       }
-      console.log('[AUTH_USER] STEP 5.2: Firestore user data parsed successfully.');
+      console.log('[AUTH_USER] STEP 5.3: Firestore user data parsed successfully with Zod.');
       
       const user = userData.data;
 
@@ -71,19 +73,19 @@ export async function authenticateUser(
 
       if (allowedRoles.includes(user.rol)) {
         console.log(`[AUTH_USER] STEP 7: User role '${user.rol}' is allowed. Login successful.`);
-        return {
-          success: true,
-          message: 'Login exitoso.',
-          empresaId: user.empresaId,
-          userId: user.id,
-          role: user.rol
+        return { 
+          success: true, 
+          message: 'Login exitoso.', 
+          empresaId: user.empresaId, 
+          userId: user.id, 
+          role: user.rol 
         };
       } else {
         console.log(`[AUTH_USER] STEP 7: User role '${user.rol}' is NOT in allowed roles: ${allowedRoles.join(', ')}.`);
         return { success: false, message: 'Rol no autorizado para este tipo de acceso.' };
       }
     } else {
-      console.log(`[AUTH_USER] STEP 5: User document NOT found in Firestore for UID: ${firebaseUser.uid}. This is an issue if user was seeded or should exist.`);
+      console.log(`[AUTH_USER] STEP 5: User document NOT found in Firestore for UID: ${firebaseUser.uid}. This means the user exists in Firebase Auth, but not in the 'usuarios' collection in Firestore with that UID.`);
       return { success: false, message: 'No se encontraron datos adicionales del usuario en Firestore. El usuario de Auth existe, pero falta su registro en la base de datos de la aplicación.' };
     }
   } catch (error: any) {
@@ -130,9 +132,7 @@ export async function getUsuariosByEmpresaId(empresaId: string): Promise<Usuario
       const dataToParse = {
         id: docSnap.id,
         ...data,
-        // Ensure optional fields that are arrays are defaulted to empty arrays if not present
         obrasAsignadas: data.obrasAsignadas || [],
-        // Ensure optional fields that are nullable are defaulted to null if undefined
         dniAnversoURL: data.dniAnversoURL === undefined ? null : data.dniAnversoURL,
         dniReversoURL: data.dniReversoURL === undefined ? null : data.dniReversoURL,
       };
@@ -218,7 +218,6 @@ export async function updateUsuario(
     
     const dataToUpdate: Record<string, any> = { ...validationResult.data, updatedAt: serverTimestamp()};
 
-    // Explicitly handle nullable fields if they are passed as undefined, or ensure optional arrays are handled.
     if (data.hasOwnProperty('dniAnversoURL') && data.dniAnversoURL === undefined) dataToUpdate.dniAnversoURL = null;
     if (data.hasOwnProperty('dniReversoURL') && data.dniReversoURL === undefined) dataToUpdate.dniReversoURL = null;
     if (data.hasOwnProperty('obrasAsignadas') && data.obrasAsignadas === undefined) dataToUpdate.obrasAsignadas = [];
