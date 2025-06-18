@@ -25,7 +25,7 @@ import {
   serverTimestamp,
   Timestamp
 } from 'firebase/firestore';
-import { createParte, updateParte, getParteByWorkerObraDate } from './parte.actions';
+import { createParte, updateParte, getParteByWorkerObraDate } from '@/lib/actions/parte.actions';
 
 export async function getControlDiario(
   obraId: string,
@@ -70,7 +70,7 @@ export async function getControlDiario(
       });
 
       if (!parsedExistingData.success) {
-          console.warn("Invalid existing control diario registros data:", parsedExistingData.error);
+          console.warn("Invalid existing control diario registros data:", parsedExistingData.error.flatten().fieldErrors);
       } else {
           finalRegistros = parsedExistingData.data.registrosTrabajadores || [];
       }
@@ -114,11 +114,12 @@ export async function getControlDiario(
     let lastModifiedDate: Date;
     if (controlDiarioSnap.exists() && existingDataRaw.lastModified instanceof Timestamp) {
         lastModifiedDate = existingDataRaw.lastModified.toDate();
-    } else if (controlDiarioSnap.exists()) {
-        lastModifiedDate = new Date(); // Fallback if timestamp is missing or not correct type
+    } else if (controlDiarioSnap.exists() && typeof existingDataRaw.lastModified === 'string') {
+        lastModifiedDate = new Date(existingDataRaw.lastModified); // Handle string timestamp if necessary
     } else {
-        lastModifiedDate = new Date(); // For new shell
+        lastModifiedDate = new Date(); // For new shell or missing timestamp
     }
+
 
     const resultShell: ControlDiarioObra = {
         id: controlDiarioId,
@@ -130,7 +131,14 @@ export async function getControlDiario(
         lastModified: lastModifiedDate,
     };
     
-    return ControlDiarioObraSchema.parse(resultShell);
+    const parseResult = ControlDiarioObraSchema.safeParse(resultShell);
+    if (!parseResult.success) {
+      console.error("Error parsing final control diario shell:", parseResult.error.flatten().fieldErrors);
+      // Depending on strictness, you might return null or a partially valid object.
+      // For now, let's return what we have, but log the error.
+      // This might need more sophisticated error handling based on requirements.
+    }
+    return parseResult.success ? parseResult.data : null; // Or handle error more gracefully
 
   } catch (error) {
     console.error("Error getting control diario:", error);
@@ -263,5 +271,3 @@ export async function saveControlDiario(
     return { success: false, message: `Error al guardar el control diario: ${error.message || "Error desconocido."}` };
   }
 }
-
-```
