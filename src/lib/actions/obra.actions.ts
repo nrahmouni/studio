@@ -28,9 +28,7 @@ const CreateObraFormInputSchemaFirebase = ObraSchema.pick({
   direccion: true,
   clienteNombre: true,
   fechaInicio: true,
-  // fechaFin is handled by fechaFinEstimada
   descripcion: true,
-  // costosPorCategoria will be empty array on creation
 }).extend({
   fechaFinEstimada: z.date().optional().nullable(),
   jefeObraEmail: z.string().email("Email del jefe de obra inválido").optional().or(z.literal('')),
@@ -47,15 +45,15 @@ export async function getObrasByEmpresaId(empresaId: string): Promise<Obra[]> {
     const obras: Obra[] = [];
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
-      // Convert Firestore Timestamps to JS Dates
       const obraDataWithDates = {
         ...data,
-        fechaInicio: data.fechaInicio instanceof Timestamp ? data.fechaInicio.toDate() : new Date(data.fechaInicio),
-        fechaFin: data.fechaFin && (data.fechaFin instanceof Timestamp ? data.fechaFin.toDate() : new Date(data.fechaFin)),
+        fechaInicio: data.fechaInicio instanceof Timestamp ? data.fechaInicio.toDate() : (data.fechaInicio ? new Date(data.fechaInicio) : new Date()), // Fallback to new Date if undefined, though schema requires it
+        fechaFin: data.fechaFin ? (data.fechaFin instanceof Timestamp ? data.fechaFin.toDate() : new Date(data.fechaFin)) : null,
         costosPorCategoria: (data.costosPorCategoria || []).map((costo: any) => ({
-          ...costo,
-          // Ensure costo values are numbers, Firestore might store them differently if not careful
-          costo: typeof costo.costo === 'number' ? costo.costo : parseFloat(costo.costo || '0') 
+          id: costo.id || `temp-${Math.random().toString(36).substr(2, 9)}`, // Ensure ID exists for schema
+          categoria: costo.categoria || '',
+          costo: typeof costo.costo === 'number' ? costo.costo : parseFloat(costo.costo || '0'),
+          notas: costo.notas || '',
         }))
       };
       const parseResult = ObraSchema.safeParse({ id: docSnap.id, ...obraDataWithDates });
@@ -81,11 +79,13 @@ export async function getObraById(obraId: string, empresaId: string): Promise<Ob
       const data = obraDocSnap.data();
       const obraDataWithDates = {
         ...data,
-        fechaInicio: data.fechaInicio instanceof Timestamp ? data.fechaInicio.toDate() : new Date(data.fechaInicio),
-        fechaFin: data.fechaFin && (data.fechaFin instanceof Timestamp ? data.fechaFin.toDate() : new Date(data.fechaFin)),
+        fechaInicio: data.fechaInicio instanceof Timestamp ? data.fechaInicio.toDate() : (data.fechaInicio ? new Date(data.fechaInicio) : new Date()),
+        fechaFin: data.fechaFin ? (data.fechaFin instanceof Timestamp ? data.fechaFin.toDate() : new Date(data.fechaFin)) : null,
          costosPorCategoria: (data.costosPorCategoria || []).map((costo: any) => ({
-          ...costo,
-          costo: typeof costo.costo === 'number' ? costo.costo : parseFloat(costo.costo || '0')
+          id: costo.id || `temp-${Math.random().toString(36).substr(2, 9)}`,
+          categoria: costo.categoria || '',
+          costo: typeof costo.costo === 'number' ? costo.costo : parseFloat(costo.costo || '0'),
+          notas: costo.notas || '',
         }))
       };
       const parseResult = ObraSchema.safeParse({ id: obraDocSnap.id, ...obraDataWithDates });
@@ -121,7 +121,6 @@ export async function createObra(data: CreateObraFormInputDataFirebase, empresaI
       jefeObraIdToAssign = querySnapshot.docs[0].id;
     } else {
       console.warn(`Jefe de Obra con email ${jefeObraEmail} no encontrado en la empresa ${empresaId} o no tiene el rol correcto.`);
-      // Optionally, you could return an error here if assigning a jefe de obra is mandatory and not found.
     }
   }
   
@@ -129,23 +128,32 @@ export async function createObra(data: CreateObraFormInputDataFirebase, empresaI
     const newObraRef = doc(collection(db, "obras"));
     const newObraId = newObraRef.id;
 
-    const obraToCreate = {
+    const rawObraToCreate = {
       ...obraCoreData,
       id: newObraId,
       empresaId,
       jefeObraId: jefeObraIdToAssign,
-      fechaFin: fechaFinEstimada, // Can be null
-      costosPorCategoria: [], // Initialize as empty
-      createdAt: serverTimestamp(),
-      updatedAt: serverTimestamp(),
+      fechaFin: fechaFinEstimada ? fechaFinEstimada : null, // Ensure it's Date or null
+      costosPorCategoria: [], 
     };
 
-    // Validate with the full ObraSchema before saving
-    const finalObraDataForDb = ObraSchema.omit({dataAIHint: true}).parse(obraToCreate);
+    // Validate with the full ObraSchema (omitting server-generated fields) before saving
+    const finalObraDataForDb = ObraSchema.omit({dataAIHint: true}).parse({
+      ...rawObraToCreate,
+      fechaInicio: new Date(rawObraToCreate.fechaInicio), // Ensure Date object
+      fechaFin: rawObraToCreate.fechaFin ? new Date(rawObraToCreate.fechaFin) : null, // Ensure Date or null
+    });
+    
+    const firestoreData = {
+        ...finalObraDataForDb,
+        fechaInicio: Timestamp.fromDate(finalObraDataForDb.fechaInicio),
+        fechaFin: finalObraDataForDb.fechaFin ? Timestamp.fromDate(finalObraDataForDb.fechaFin) : null,
+        createdAt: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+    }
 
-    await setDoc(newObraRef, finalObraDataForDb);
+    await setDoc(newObraRef, firestoreData);
 
-    // If a jefe de obra was found and assigned, update their obrasAsignadas array
     if (jefeObraIdToAssign) {
       const jefeObraDocRef = doc(db, "usuarios", jefeObraIdToAssign);
       await updateDoc(jefeObraDocRef, {
@@ -158,20 +166,28 @@ export async function createObra(data: CreateObraFormInputDataFirebase, empresaI
     revalidatePath('/(app)/obras');
     revalidatePath(`/(app)/obras/new`);
     
-    // Fetch the created obra to return it with server-generated timestamps
     const createdObraSnap = await getDoc(newObraRef);
     const createdObraData = createdObraSnap.data();
+
+    if (!createdObraData) {
+        throw new Error("Failed to fetch created obra data.");
+    }
+    
     const obraResult = ObraSchema.parse({ 
         id: createdObraSnap.id, 
         ...createdObraData,
-        fechaInicio: (createdObraData?.fechaInicio as Timestamp).toDate(),
-        fechaFin: createdObraData?.fechaFin ? (createdObraData.fechaFin as Timestamp).toDate() : null,
+        fechaInicio: (createdObraData.fechaInicio as Timestamp).toDate(),
+        fechaFin: createdObraData.fechaFin ? (createdObraData.fechaFin as Timestamp).toDate() : null,
+        costosPorCategoria: (createdObraData.costosPorCategoria || []).map((costo: any) => CostoCategoriaSchema.parse(costo))
     });
     
     return { success: true, message: `La obra "${obraResult.nombre}" ha sido creada correctamente.`, obra: obraResult };
 
   } catch (error: any) {
     console.error("Error creating obra in Firestore:", error);
+    if (error instanceof z.ZodError) {
+        return { success: false, message: `Error de validación de datos Zod: ${JSON.stringify(error.flatten().fieldErrors)}` };
+    }
     return { success: false, message: `Error al crear la obra: ${error.message || 'Error desconocido.'}` };
   }
 }
@@ -201,7 +217,7 @@ export async function updateObra(
   if (!obraSnap.exists() || obraSnap.data().empresaId !== empresaId) {
     return { success: false, message: 'Obra no encontrada o no pertenece a tu empresa.' };
   }
-  const currentObraData = obraSnap.data() as Obra; // Cast for easier access to old jefe
+  const currentObraData = obraSnap.data() as Obra; 
 
   const validationResult = UpdateObraFirebaseSchema.safeParse(data);
   if (!validationResult.success) {
@@ -210,27 +226,30 @@ export async function updateObra(
   }
   
   const { trabajadoresAsignados, ...obraCoreData } = validationResult.data;
+  
   const dataToUpdate: any = { ...obraCoreData, updatedAt: serverTimestamp() };
-   // Ensure dates are Timestamps if they are being updated
   if (dataToUpdate.fechaInicio) dataToUpdate.fechaInicio = Timestamp.fromDate(new Date(dataToUpdate.fechaInicio));
-  if (dataToUpdate.fechaFin) dataToUpdate.fechaFin = Timestamp.fromDate(new Date(dataToUpdate.fechaFin));
-  else if (data.fechaFin === null) dataToUpdate.fechaFin = null; // Explicitly set to null if provided
+  
+  if (data.fechaFin === null) {
+    dataToUpdate.fechaFin = null;
+  } else if (dataToUpdate.fechaFin) {
+    dataToUpdate.fechaFin = Timestamp.fromDate(new Date(dataToUpdate.fechaFin));
+  }
 
-  // Sanitize costosPorCategoria: ensure costo is a number
   if (dataToUpdate.costosPorCategoria) {
     dataToUpdate.costosPorCategoria = dataToUpdate.costosPorCategoria.map((c: any) => ({
-      ...c,
+      id: c.id || `temp-${Math.random().toString(36).substr(2, 9)}`,
+      categoria: c.categoria || '',
       costo: Number(c.costo) || 0,
+      notas: c.notas || '',
     }));
   }
 
   Object.keys(dataToUpdate).forEach(key => dataToUpdate[key] === undefined && delete dataToUpdate[key]);
 
-
   const batch = writeBatch(db);
   batch.update(obraDocRef, dataToUpdate);
 
-  // Handle Jefe de Obra change
   const oldJefeObraId = currentObraData.jefeObraId;
   const newJefeObraId = data.jefeObraId;
 
@@ -245,7 +264,6 @@ export async function updateObra(
     }
   }
 
-  // Handle trabajadoresAsignados
   if (trabajadoresAsignados !== undefined) {
     const allCompanyWorkersSnapshot = await getDocs(query(collection(db, "usuarios"), where("empresaId", "==", empresaId), where("rol", "==", "trabajador")));
     
@@ -268,15 +286,16 @@ export async function updateObra(
 
     const updatedObraSnap = await getDoc(obraDocRef);
     const updatedData = updatedObraSnap.data();
+     if (!updatedData) {
+        throw new Error("Failed to fetch updated obra data.");
+    }
+    
     const obraResult = ObraSchema.parse({ 
         id: updatedObraSnap.id, 
         ...updatedData,
-        fechaInicio: (updatedData?.fechaInicio as Timestamp).toDate(),
-        fechaFin: updatedData?.fechaFin ? (updatedData.fechaFin as Timestamp).toDate() : null,
-        costosPorCategoria: (updatedData?.costosPorCategoria || []).map((costo: any) => ({
-          ...costo,
-          costo: typeof costo.costo === 'number' ? costo.costo : parseFloat(costo.costo || '0')
-        }))
+        fechaInicio: (updatedData.fechaInicio as Timestamp).toDate(),
+        fechaFin: updatedData.fechaFin ? (updatedData.fechaFin as Timestamp).toDate() : null,
+        costosPorCategoria: (updatedData.costosPorCategoria || []).map((costo: any) => CostoCategoriaSchema.parse(costo))
     });
 
     revalidatePath('/(app)/obras');
@@ -289,6 +308,9 @@ export async function updateObra(
     return { success: true, message: `La obra "${obraResult.nombre}" ha sido actualizada.`, obra: obraResult };
   } catch (error: any) {
     console.error("Error updating obra in Firestore:", error);
+    if (error instanceof z.ZodError) {
+        return { success: false, message: `Error de validación de datos Zod: ${JSON.stringify(error.flatten().fieldErrors)}` };
+    }
     return { success: false, message: `Error al actualizar la obra: ${error.message || 'Error desconocido.'}` };
   }
 }
@@ -305,7 +327,6 @@ export async function deleteObra(obraId: string, empresaId: string): Promise<{ s
   try {
     const batch = writeBatch(db);
 
-    // Remove obraId from all users (jefes de obra and trabajadores)
     const usersQuery = query(collection(db, "usuarios"), where("empresaId", "==", empresaId), where("obrasAsignadas", "array-contains", obraId));
     const usersSnap = await getDocs(usersQuery);
     usersSnap.forEach(userDoc => {
@@ -313,7 +334,7 @@ export async function deleteObra(obraId: string, empresaId: string): Promise<{ s
     });
     
     // TODO: Consider deleting related 'partes', 'fichajes', 'controlDiario' or marking them as archived.
-    // This example only deletes the obra and unassigns users.
+    // For now, just deletes the obra and unassigns users.
 
     batch.delete(obraDocRef);
     await batch.commit();
@@ -327,3 +348,4 @@ export async function deleteObra(obraId: string, empresaId: string): Promise<{ s
     return { success: false, message: `Error al eliminar la obra: ${error.message || 'Error desconocido.'}` };
   }
 }
+
