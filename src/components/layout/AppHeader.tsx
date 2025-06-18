@@ -16,7 +16,7 @@ import {
 import { AppSidebarNav } from "./AppSidebarNav"; 
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import obraLinkLogo from "@/app/(app)/assets/logo.jpg"; // Importar el logo
+import obraLinkLogo from "@/app/(app)/assets/logo.png"; // Importar el logo
 
 
 interface AppHeaderProps {

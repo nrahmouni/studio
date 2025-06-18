@@ -4,7 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CheckCircle, Construction, FileText, Cpu, TrendingUp, ShieldCheck, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import obraLinkLogo from "@/app/(app)/assets/logo.jpg"; 
+import obraLinkLogo from "@/app/(app)/assets/logo.png"; 
 import benefitImg1 from "@/app/(app)/assets/img1.jpg";
 import benefitImg2 from "@/app/(app)/assets/img2.jpg";
 import benefitImg3 from "@/app/(app)/assets/img3.jpg";
