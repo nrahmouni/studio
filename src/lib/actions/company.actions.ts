@@ -54,7 +54,7 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
     const rawEmpresaData = {
       id: newEmpresaId,
       nombre: empresaNombre,
-      CIF: cifUpperCase, // Store CIF in uppercase
+      CIF: cifUpperCase,
       emailContacto: empresaEmailContacto,
       telefono: empresaTelefono,
       logoURL: null,
@@ -82,20 +82,18 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
 
   } catch (error: any) {
     console.error("--- CreateEmpresaAdmin Action FAILED ---");
-    let detailedErrorLog = "Error details:\n";
-    if (error.name) detailedErrorLog += `Name: ${error.name}\n`;
-    if (error.message) detailedErrorLog += `Message: ${error.message}\n`;
-    if (error.code) detailedErrorLog += `Code: ${error.code}\n`;
-    if (error.stack) detailedErrorLog += `Stack: ${error.stack}\n`;
-    
+    console.error("Error Name:", error.name);
+    console.error("Error Message:", error.message);
+    if (error.code) console.error("Error Code:", error.code);
+    if (error.stack) console.error("Error Stack:", error.stack);
     try {
-      const serializedError = JSON.stringify(error, Object.getOwnPropertyNames(error), 2); // Added indentation for readability
-      detailedErrorLog += `Full Error Object (JSON): ${serializedError}\n`;
-    } catch (stringifyError: any) {
-      detailedErrorLog += `Could not stringify full error object: ${stringifyError.message}\n`;
-      detailedErrorLog += `Error Keys: ${Object.keys(error).join(", ")}\n`; // Log available keys if stringify fails
+      // Attempt to log the full error object if it's not too complex
+      // Use JSON.parse(JSON.stringify(...)) as a trick to get a clean loggable object for some error types
+      console.error("Full Error Object (attempt):", JSON.parse(JSON.stringify(error, Object.getOwnPropertyNames(error))));
+    } catch (e) {
+      console.error("Could not stringify or parse the full error object for logging. Logging keys instead.");
+      console.error("Error Object Keys:", Object.keys(error));
     }
-    console.error(detailedErrorLog);
     console.error("--- End of Error Log ---");
 
     let userMessage = 'Error desconocido al registrar la empresa. Contacta a soporte si el problema persiste.';
@@ -110,6 +108,7 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
           userMessage = 'La contraseña proporcionada es demasiado débil (mínimo 6 caracteres).';
           break;
         case 'permission-denied': 
+        case 'firestore/permission-denied':
           userMessage = 'Error de permisos con Firebase. Verifica las reglas de seguridad de Firestore o Auth.';
           break;
         default:
@@ -119,7 +118,8 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
         userMessage = error.message;
     } else if (typeof error.toString === 'function') {
         const errorString = error.toString();
-        userMessage = errorString.replace(/^Error: /, '').trim() !== '' ? errorString : userMessage;
+        const cleanErrorString = errorString.replace(/^Error: /, '').trim();
+        userMessage = cleanErrorString !== '' ? cleanErrorString : userMessage;
     }
     
     return { success: false, message: userMessage };

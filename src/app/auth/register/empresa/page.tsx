@@ -65,7 +65,6 @@ export default function EmpresaRegisterPage() {
           title: 'Empresa Registrada con Éxito',
           description: `La empresa ${result.empresa.nombre} ha sido creada. Ya puedes iniciar sesión como administrador.`,
         });
-        // No guardamos en localStorage aquí, el usuario debe hacer login
         router.push('/auth/login/empresa');
       } else {
         toast({
@@ -75,9 +74,16 @@ export default function EmpresaRegisterPage() {
         });
       }
     } catch (error: any) {
+      let displayMessage = 'Ha ocurrido un error durante el registro. Inténtalo más tarde.';
+      // Check if it's the generic "unexpected response" which might follow a 504
+      if (error.message === "An unexpected response was received from the server.") {
+        displayMessage = "El servidor no respondió a tiempo. Verifica tu conexión o inténtalo más tarde. Esto podría ser un problema temporal del servidor (Error 504).";
+      } else if (error.message) {
+        displayMessage = error.message;
+      }
       toast({
         title: 'Error Inesperado',
-        description: error.message || 'Ha ocurrido un error durante el registro. Inténtalo más tarde.',
+        description: displayMessage,
         variant: 'destructive',
       });
       console.error("Registration error:", error);
