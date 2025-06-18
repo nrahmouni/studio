@@ -30,8 +30,8 @@ import { createParte, updateParte, getParteByWorkerObraDate } from './parte.acti
 export async function getControlDiario(
   obraId: string,
   fecha: Date,
-  jefeObraId: string, // ID of the user viewing/requesting the control
-  empresaId: string    // Company ID of the user viewing/requesting
+  jefeObraId: string, 
+  empresaId: string    
 ): Promise<ControlDiarioObra | null> {
   
   const fechaString = fecha.toISOString().split('T')[0]; 
@@ -39,20 +39,17 @@ export async function getControlDiario(
   const controlDiarioDocRef = doc(db, "controlDiario", controlDiarioId);
 
   try {
-    // Verify obra belongs to the company
     const obraDocRef = doc(db, "obras", obraId);
     const obraSnap = await getDoc(obraDocRef);
     if (!obraSnap.exists() || obraSnap.data().empresaId !== empresaId) {
       console.error(`Acceso denegado o obra no encontrada: Obra ID ${obraId} para Empresa ID ${empresaId}`);
       return null;
     }
-    const obraData = obraSnap.data();
 
     const controlDiarioSnap = await getDoc(controlDiarioDocRef);
-
     let finalRegistros: ControlDiarioRegistroTrabajador[] = [];
+    const existingDataRaw = controlDiarioSnap.exists() ? controlDiarioSnap.data() : {};
 
-    // Fetch all active workers assigned to this obra within the company
     const usersCollectionRef = collection(db, "usuarios");
     const assignedWorkersQuery = query(
       usersCollectionRef,
@@ -67,23 +64,17 @@ export async function getControlDiario(
       assignedWorkerDetails[doc.id] = { id: doc.id, nombre: doc.data().nombre };
     });
 
-
     if (controlDiarioSnap.exists()) {
-      const existingData = controlDiarioSnap.data();
-      const parsedExistingData = ControlDiarioObraSchema.partial().safeParse({
-          ...existingData,
-          fecha: (existingData.fecha as Timestamp).toDate(),
-          lastModified: existingData.lastModified ? (existingData.lastModified as Timestamp).toDate() : new Date(),
+      const parsedExistingData = ControlDiarioObraSchema.pick({registrosTrabajadores: true}).partial().safeParse({
+          registrosTrabajadores: existingDataRaw.registrosTrabajadores,
       });
 
       if (!parsedExistingData.success) {
-          console.warn("Invalid existing control diario data:", parsedExistingData.error);
-          // Proceed to build shell, but log this
+          console.warn("Invalid existing control diario registros data:", parsedExistingData.error);
       } else {
           finalRegistros = parsedExistingData.data.registrosTrabajadores || [];
       }
 
-      // Ensure all currently assigned workers are in the list, add if missing
       Object.values(assignedWorkerDetails).forEach(worker => {
         if (!finalRegistros.find(rt => rt.usuarioId === worker.id)) {
           finalRegistros.push({
@@ -96,20 +87,17 @@ export async function getControlDiario(
             validadoPorJefeObra: false,
           });
         } else {
-            // Ensure name is up-to-date
             const registro = finalRegistros.find(rt => rt.usuarioId === worker.id);
             if (registro && registro.nombreTrabajador !== worker.nombre) {
                 registro.nombreTrabajador = worker.nombre;
             }
         }
       });
-      // Remove workers no longer assigned or inactive (if they have no data for this day)
       finalRegistros = finalRegistros.filter(rt => 
-        assignedWorkerDetails[rt.usuarioId] || (rt.asistencia || rt.horasReportadas) // Keep if data exists
+        assignedWorkerDetails[rt.usuarioId] || (rt.asistencia || rt.horasReportadas)
       );
 
-
-    } else { // No existing record, create a new shell
+    } else { 
       finalRegistros = Object.values(assignedWorkerDetails).map(worker => ({
         usuarioId: worker.id,
         nombreTrabajador: worker.nombre,
@@ -123,14 +111,23 @@ export async function getControlDiario(
     
     finalRegistros.sort((a, b) => (a.nombreTrabajador || '').localeCompare(b.nombreTrabajador || ''));
     
+    let lastModifiedDate: Date;
+    if (controlDiarioSnap.exists() && existingDataRaw.lastModified instanceof Timestamp) {
+        lastModifiedDate = existingDataRaw.lastModified.toDate();
+    } else if (controlDiarioSnap.exists()) {
+        lastModifiedDate = new Date(); // Fallback if timestamp is missing or not correct type
+    } else {
+        lastModifiedDate = new Date(); // For new shell
+    }
+
     const resultShell: ControlDiarioObra = {
         id: controlDiarioId,
         obraId: obraId,
         fecha: fecha,
-        jefeObraId: jefeObraId, // The current user acting as JO
+        jefeObraId: jefeObraId, 
         registrosTrabajadores: finalRegistros,
-        firmaJefeObraURL: controlDiarioSnap.exists() ? controlDiarioSnap.data().firmaJefeObraURL : null,
-        lastModified: controlDiarioSnap.exists() ? (controlDiarioSnap.data().lastModified as Timestamp).toDate() : new Date(),
+        firmaJefeObraURL: existingDataRaw.firmaJefeObraURL ?? null,
+        lastModified: lastModifiedDate,
     };
     
     return ControlDiarioObraSchema.parse(resultShell);
@@ -149,7 +146,6 @@ export async function saveControlDiario(
   const dataToValidate = {
     ...data, 
     jefeObraId: currentJefeObraId,
-    // Ensure fecha is a JS Date for validation, will be converted to Timestamp for Firestore
     fecha: new Date(data.fecha), 
   };
 
@@ -179,8 +175,8 @@ export async function saveControlDiario(
 
     const recordToSaveForFirestore = {
       ...validatedData,
-      id: controlDiarioId, // ensure id is part of the data being set/updated
-      fecha: Timestamp.fromDate(validatedData.fecha), // Convert JS Date to Firestore Timestamp
+      id: controlDiarioId, 
+      fecha: Timestamp.fromDate(validatedData.fecha), 
       lastModified: serverTimestamp(),
     };
 
@@ -201,20 +197,19 @@ export async function saveControlDiario(
         const parteBaseData = {
           usuarioId: registro.usuarioId,
           obraId: validatedData.obraId,
-          fecha: validatedData.fecha, // JS Date
+          fecha: validatedData.fecha, 
           horasTrabajadas: registro.horasReportadas,
           validado: registro.validadoPorJefeObra,
           validadoPor: registro.validadoPorJefeObra ? currentJefeObraId : null,
         };
 
         if (existingParte) {
-            if (!existingParte.validado || registro.validadoPorJefeObra) { // Update if not validated or if JO is validating it now
+            if (!existingParte.validado || registro.validadoPorJefeObra) { 
                 const parteUpdateData = {
                     ...parteBaseData,
                     tareasRealizadas: existingParte.tareasRealizadas.includes("Control Diario") 
                     ? existingParte.tareasRealizadas 
                     : `${existingParte.tareasRealizadas}\n(Horas/asistencia validadas vía Control Diario por ${nombreJefeObra} el ${new Date().toLocaleDateString('es-ES')}).`.trim(),
-                    // Keep other existing parte fields like incidencias, fotos, etc.
                     incidencias: existingParte.incidencias,
                     tareasSeleccionadas: existingParte.tareasSeleccionadas,
                     fotosURLs: existingParte.fotosURLs,
@@ -227,7 +222,7 @@ export async function saveControlDiario(
             ...parteBaseData,
             tareasRealizadas: `Trabajo registrado y validado mediante Control Diario por ${nombreJefeObra}. Asistencia: Sí. Horas: ${registro.horasReportadas}.`,
             incidencias: '', 
-            tareasSeleccionadas: ['Control Diario'], // Add a default task type
+            tareasSeleccionadas: ['Control Diario'], 
             fotosURLs: [],
             firmaURL: null,
           };
@@ -240,13 +235,27 @@ export async function saveControlDiario(
     revalidatePath('/(app)/partes'); 
 
     const savedSnap = await getDoc(controlDiarioDocRef);
+    if (!savedSnap.exists()) {
+      console.error("ControlDiario document not found after save:", controlDiarioId);
+      return { success: false, message: "Error: el documento de control diario no se encontró después de guardar." };
+    }
     const savedData = savedSnap.data();
-    const controlDiarioResult = ControlDiarioObraSchema.parse({
+    
+    const fechaFromDb = savedData.fecha instanceof Timestamp ? savedData.fecha.toDate() : new Date();
+    const lastModifiedFromDb = savedData.lastModified instanceof Timestamp ? savedData.lastModified.toDate() : new Date();
+
+    const parseResult = ControlDiarioObraSchema.safeParse({
         id: savedSnap.id,
         ...savedData,
-        fecha: (savedData?.fecha as Timestamp).toDate(),
-        lastModified: (savedData?.lastModified as Timestamp).toDate(),
+        fecha: fechaFromDb,
+        lastModified: lastModifiedFromDb,
     });
+
+    if (!parseResult.success) {
+        console.error("Error parsing saved ControlDiario:", parseResult.error.flatten().fieldErrors);
+        return { success: false, message: "Error al procesar los datos guardados del control diario." };
+    }
+    const controlDiarioResult = parseResult.data;
 
     return { success: true, message: 'Control diario guardado y partes de trabajo actualizados/creados.', controlDiario: controlDiarioResult };
   } catch (error: any) {
@@ -255,4 +264,4 @@ export async function saveControlDiario(
   }
 }
 
-// type UpdateParteData = Partial<Omit<Parte, 'id' | 'usuarioId' | 'timestamp'>>;
+```
