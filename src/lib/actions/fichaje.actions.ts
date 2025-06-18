@@ -6,7 +6,6 @@ import { FichajeSchema, type Fichaje, type FichajeTipo, GetFichajesCriteriaSchem
 import { db } from '@/lib/firebase/firebase';
 import {
   doc,
-  addDoc,
   setDoc,
   getDoc,
   updateDoc,
@@ -30,6 +29,7 @@ type CreateFichajeDataFirebase = z.infer<typeof CreateFichajeDataSchemaFirebase>
 export async function createFichaje(data: CreateFichajeDataFirebase): Promise<{ success: boolean; message: string; fichaje?: Fichaje }> {
   const validationResult = CreateFichajeDataSchemaFirebase.safeParse(data);
   if (!validationResult.success) {
+    console.error("Validation errors creating fichaje:", validationResult.error.flatten().fieldErrors);
     return { success: false, message: `Error de validación: ${JSON.stringify(validationResult.error.flatten().fieldErrors)}` };
   }
 
@@ -49,35 +49,45 @@ export async function createFichaje(data: CreateFichajeDataFirebase): Promise<{ 
     const newFichajeRef = doc(collection(db, "fichajes"));
     const newFichajeId = newFichajeRef.id;
 
-    const newFichajeData = {
+    const rawFichajeDataForDb = {
       id: newFichajeId,
       usuarioId,
       obraId,
       tipo,
-      timestamp: serverTimestamp(), 
+      timestamp: new Date(), // Will be replaced by serverTimestamp
       validado: false, 
       validadoPor: null,
     };
     
-    // Validate with full schema before saving
-    const finalFichajeDataForDb = FichajeSchema.parse(newFichajeData);
-    await setDoc(newFichajeRef, finalFichajeDataForDb);
+    const finalFichajeDataForDb = FichajeSchema.parse(rawFichajeDataForDb);
     
-    // Fetch the created fichaje to return it with server-generated timestamps resolved
+    const firestoreFichajeData = {
+        ...finalFichajeDataForDb,
+        timestamp: serverTimestamp(),
+    };
+    const {id, ...dataToSet} = firestoreFichajeData;
+
+    await setDoc(newFichajeRef, dataToSet);
+    
     const createdFichajeSnap = await getDoc(newFichajeRef);
     const createdData = createdFichajeSnap.data();
+    if (!createdData) {
+        throw new Error("Document not found after creation");
+    }
     const fichajeResult = FichajeSchema.parse({
         id: createdFichajeSnap.id,
         ...createdData,
-        timestamp: (createdData?.timestamp as Timestamp).toDate(),
+        timestamp: (createdData.timestamp as Timestamp).toDate(),
     });
-
 
     revalidatePath('/(app)/fichajes'); 
     return { success: true, message: `Fichaje de ${tipo} registrado.`, fichaje: fichajeResult };
 
   } catch (error: any) {
-    console.error("Error creating fichaje:", error);
+    console.error("Error creating fichaje:", error.message, error.stack);
+    if (error instanceof z.ZodError) {
+        return { success: false, message: `Error de validación Zod al crear fichaje: ${JSON.stringify(error.flatten().fieldErrors)}` };
+    }
     return { success: false, message: `Error al registrar el fichaje: ${error.message || "Error desconocido."}` };
   }
 }
@@ -101,17 +111,20 @@ export async function getFichajesHoyUsuarioObra(usuarioId: string, obraId: strin
     const fichajes: Fichaje[] = [];
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
-      const fichajeDataWithDate = { ...data, timestamp: (data.timestamp as Timestamp).toDate() };
+      const fichajeDataWithDate = { 
+        ...data, 
+        timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date(data.timestamp || Date.now())
+      };
       const parseResult = FichajeSchema.safeParse({ id: docSnap.id, ...fichajeDataWithDate });
       if (parseResult.success) {
         fichajes.push(parseResult.data);
       } else {
-        console.warn(`Invalid fichaje data for ID ${docSnap.id}:`, parseResult.error);
+        console.warn(`Invalid fichaje data (hoyUsuarioObra) for ID ${docSnap.id}:`, parseResult.error.flatten().fieldErrors);
       }
     });
     return fichajes;
-  } catch (error) {
-    console.error("Error fetching fichajes hoy usuario obra:", error);
+  } catch (error:any) {
+    console.error("Error fetching fichajes hoy usuario obra:", error.message, error.stack);
     return [];
   }
 }
@@ -127,30 +140,27 @@ export async function getFichajesByCriteria(criteria: GetFichajesCriteria): Prom
   try {
     let fichajesQuery = query(collection(db, "fichajes"));
 
-    // First, filter by obras belonging to the empresaId
     const obrasEmpresaRef = collection(db, "obras");
     const obrasEmpresaQuery = query(obrasEmpresaRef, where("empresaId", "==", empresaId));
     const obrasEmpresaSnap = await getDocs(obrasEmpresaQuery);
     const obraIdsDeEmpresa = obrasEmpresaSnap.docs.map(doc => doc.id);
 
-    if (obraIdsDeEmpresa.length === 0) return []; // No obras for this company
+    if (obraIdsDeEmpresa.length === 0) return []; 
 
     let targetObraIds = obraIdsDeEmpresa;
     if (obraIdFiltro) {
-      if (!obraIdsDeEmpresa.includes(obraIdFiltro)) return []; // obraIdFiltro not in company's obras
+      if (!obraIdsDeEmpresa.includes(obraIdFiltro)) return []; 
       targetObraIds = [obraIdFiltro];
     }
     
-    // Firestore 'in' query limit is 30.
-     if (targetObraIds.length > 30) {
-        console.warn("Querying fichajes for more than 30 obras, this might fail or be slow. Consider pagination or alternative query strategy.");
+    if (targetObraIds.length === 0) return [];
+    
+    if (targetObraIds.length > 30) {
+        console.warn("Querying fichajes for more than 30 obras, this might be slow or incomplete.");
         fichajesQuery = query(fichajesQuery, where("obraId", "in", targetObraIds.slice(0,30)));
-    } else if (targetObraIds.length > 0) {
+    } else {
         fichajesQuery = query(fichajesQuery, where("obraId", "in", targetObraIds));
-    } else { // Should not happen if obraIdsDeEmpresa had items and obraIdFiltro was valid or undefined
-        return [];
     }
-
 
     if (usuarioIdFiltro) {
       fichajesQuery = query(fichajesQuery, where("usuarioId", "==", usuarioIdFiltro));
@@ -175,17 +185,20 @@ export async function getFichajesByCriteria(criteria: GetFichajesCriteria): Prom
     const fichajes: Fichaje[] = [];
     querySnapshot.forEach((docSnap) => {
       const data = docSnap.data();
-      const fichajeDataWithDate = { ...data, timestamp: (data.timestamp as Timestamp).toDate() };
+      const fichajeDataWithDate = { 
+        ...data, 
+        timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date(data.timestamp || Date.now())
+      };
       const parseResult = FichajeSchema.safeParse({ id: docSnap.id, ...fichajeDataWithDate });
       if (parseResult.success) {
         fichajes.push(parseResult.data);
       } else {
-        console.warn(`Invalid fichaje data for ID ${docSnap.id}:`, parseResult.error);
+        console.warn(`Invalid fichaje data (byCriteria) for ID ${docSnap.id}:`, parseResult.error.flatten().fieldErrors);
       }
     });
     return fichajes;
-  } catch (error) {
-    console.error("Error fetching fichajes by criteria:", error);
+  } catch (error: any) {
+    console.error("Error fetching fichajes by criteria:", error.message, error.stack);
     return [];
   }
 }
@@ -221,17 +234,24 @@ export async function validateFichaje(fichajeId: string, validadorId: string, em
     
     const updatedFichajeSnap = await getDoc(fichajeDocRef);
     const updatedData = updatedFichajeSnap.data();
+    if (!updatedData) {
+        throw new Error("Document not found after validation update");
+    }
     const fichajeResult = FichajeSchema.parse({
         id: updatedFichajeSnap.id,
         ...updatedData,
-        timestamp: (updatedData?.timestamp as Timestamp).toDate(),
+        timestamp: (updatedData.timestamp as Timestamp).toDate(),
+        updatedAt: updatedData.updatedAt ? (updatedData.updatedAt as Timestamp).toDate() : new Date()
     });
-
 
     revalidatePath('/(app)/fichajes');
     return { success: true, message: 'Fichaje validado con éxito.', fichaje: fichajeResult };
   } catch (error: any) {
-    console.error("Error validating fichaje:", error);
+    console.error(`Error validating fichaje ${fichajeId}:`, error.message, error.stack);
+    if (error instanceof z.ZodError) {
+        return { success: false, message: `Error de validación Zod al validar fichaje: ${JSON.stringify(error.flatten().fieldErrors)}` };
+    }
     return { success: false, message: `Error al validar el fichaje: ${error.message || "Error desconocido."}` };
   }
 }
+

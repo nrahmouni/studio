@@ -7,11 +7,9 @@ import { ParteSchema, type Parte } from '@/lib/types';
 import { db } from '@/lib/firebase/firebase';
 import {
   doc,
-  addDoc,
   setDoc,
   getDoc,
   updateDoc,
-  deleteDoc,
   collection,
   query,
   where,
@@ -31,9 +29,7 @@ const CreateParteInputSchemaFirebase = ParteSchema.pick({
   tareasSeleccionadas: true,
   fotosURLs: true,
   firmaURL: true,
-  // validado and validadoPor are typically set by a separate action or default to false/null
 }).extend({
-    // Default validado to false if not provided by specific creation contexts (like control diario)
     validado: z.boolean().default(false).optional(),
     validadoPor: z.string().optional().nullable(),
 });
@@ -59,34 +55,31 @@ export async function getPartesByEmpresaYObra(empresaId: string, obraIdFiltro?: 
     const partesCollectionRef = collection(db, "partes");
     let q;
 
+    const obrasRef = collection(db, "obras");
+    const obrasQuery = query(obrasRef, where("empresaId", "==", empresaId));
+    const obrasSnap = await getDocs(obrasQuery);
+    const obraIdsEmpresa = obrasSnap.docs.map(doc => doc.id);
+
+    if (obraIdsEmpresa.length === 0) return [];
+
+    let targetObraIds = obraIdsEmpresa;
     if (obraIdFiltro && obraIdFiltro !== 'all') {
-      // Filter by specific obraId (ensure this obra belongs to the company)
-      const obraDocRef = doc(db, "obras", obraIdFiltro);
-      const obraDocSnap = await getDoc(obraDocRef);
-      if (!obraDocSnap.exists() || obraDocSnap.data().empresaId !== empresaId) {
+      if (!obraIdsEmpresa.includes(obraIdFiltro)) {
         console.warn(`Obra ${obraIdFiltro} no encontrada o no pertenece a la empresa ${empresaId}.`);
         return [];
       }
-      q = query(partesCollectionRef, where("obraId", "==", obraIdFiltro), orderBy("fecha", "desc"), orderBy("timestamp", "desc"));
+      targetObraIds = [obraIdFiltro];
+    }
+    
+    if (targetObraIds.length === 0) return [];
+
+
+    // Firestore 'in' query limit is 30.
+    if (targetObraIds.length > 30) {
+        console.warn("Empresa tiene más de 30 obras. El filtro de partes podría ser incompleto. Mostrando para las primeras 30 obras.");
+        q = query(partesCollectionRef, where("obraId", "in", targetObraIds.slice(0,30)), orderBy("fecha", "desc"), orderBy("timestamp", "desc"));
     } else {
-      // Fetch all obras for the company first
-      const obrasRef = collection(db, "obras");
-      const obrasQuery = query(obrasRef, where("empresaId", "==", empresaId));
-      const obrasSnap = await getDocs(obrasQuery);
-      const obraIdsEmpresa = obrasSnap.docs.map(doc => doc.id);
-
-      if (obraIdsEmpresa.length === 0) return []; // No obras for this company, so no partes
-      
-      // Firestore 'in' query limit is 30. If more obras, this needs pagination or different strategy.
-      // For now, assuming company has <30 obras.
-      if (obraIdsEmpresa.length > 30) {
-          console.warn("Empresa tiene más de 30 obras. El filtro de partes podría ser incompleto o fallar. Implementar paginación.");
-           // Fallback to fetching all partes and filtering client-side or implement server-side pagination
-          q = query(partesCollectionRef, where("obraId", "in", obraIdsEmpresa.slice(0,30)), orderBy("fecha", "desc"), orderBy("timestamp", "desc"));
-
-      } else {
-         q = query(partesCollectionRef, where("obraId", "in", obraIdsEmpresa), orderBy("fecha", "desc"), orderBy("timestamp", "desc"));
-      }
+         q = query(partesCollectionRef, where("obraId", "in", targetObraIds), orderBy("fecha", "desc"), orderBy("timestamp", "desc"));
     }
 
     const querySnapshot = await getDocs(q);
@@ -95,8 +88,8 @@ export async function getPartesByEmpresaYObra(empresaId: string, obraIdFiltro?: 
       const data = docSnap.data();
       const parteDataWithDates = {
         ...data,
-        fecha: (data.fecha as Timestamp).toDate(),
-        timestamp: (data.timestamp as Timestamp).toDate(),
+        fecha: data.fecha instanceof Timestamp ? data.fecha.toDate() : new Date(data.fecha || Date.now()),
+        timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date(data.timestamp || Date.now()),
       };
       const parseResult = ParteSchema.safeParse({ id: docSnap.id, ...parteDataWithDates });
       if (parseResult.success) {
@@ -106,8 +99,8 @@ export async function getPartesByEmpresaYObra(empresaId: string, obraIdFiltro?: 
       }
     });
     return partes;
-  } catch (error) {
-    console.error("Error fetching partes:", error);
+  } catch (error: any) {
+    console.error("Error fetching partes by empresa and obra:", error.message, error.stack);
     return [];
   }
 }
@@ -119,7 +112,6 @@ export async function getParteById(parteId: string, empresaIdAuth: string): Prom
 
     if (parteDocSnap.exists()) {
       const parteData = parteDocSnap.data();
-      // Verify this parte belongs to an obra of the authenticated empresa
       const obraDocRef = doc(db, "obras", parteData.obraId);
       const obraDocSnap = await getDoc(obraDocRef);
       if (!obraDocSnap.exists() || obraDocSnap.data().empresaId !== empresaIdAuth) {
@@ -129,8 +121,8 @@ export async function getParteById(parteId: string, empresaIdAuth: string): Prom
 
       const parteDataWithDates = {
         ...parteData,
-        fecha: (parteData.fecha as Timestamp).toDate(),
-        timestamp: (parteData.timestamp as Timestamp).toDate(),
+        fecha: parteData.fecha instanceof Timestamp ? parteData.fecha.toDate() : new Date(parteData.fecha || Date.now()),
+        timestamp: parteData.timestamp instanceof Timestamp ? parteData.timestamp.toDate() : new Date(parteData.timestamp || Date.now()),
       };
        const parseResult = ParteSchema.safeParse({ id: parteDocSnap.id, ...parteDataWithDates });
         if (parseResult.success) {
@@ -141,8 +133,8 @@ export async function getParteById(parteId: string, empresaIdAuth: string): Prom
         }
     }
     return null;
-  } catch (error) {
-    console.error("Error fetching parte by ID:", error);
+  } catch (error: any) {
+    console.error(`Error fetching parte by ID ${parteId}:`, error.message, error.stack);
     return null;
   }
 }
@@ -152,7 +144,7 @@ export async function getParteByWorkerObraDate(
   usuarioId: string,
   obraId: string,
   fecha: Date,
-  empresaId: string // To ensure obra belongs to company, though indirect here
+  empresaId: string 
 ): Promise<Parte | null> {
   try {
     const fechaInicio = new Date(fecha);
@@ -169,26 +161,26 @@ export async function getParteByWorkerObraDate(
     );
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
-      const docSnap = querySnapshot.docs[0]; // Assuming one parte per worker/obra/date
+      const docSnap = querySnapshot.docs[0];
       const data = docSnap.data();
-      // Verify obra belongs to company if needed, though this function might be called internally where that's already established
       const obraDoc = await getDoc(doc(db, "obras", data.obraId));
       if (!obraDoc.exists() || obraDoc.data().empresaId !== empresaId) {
-        return null; // Parte is for an obra not of this empresa
+        console.warn(`Parte found for worker ${usuarioId} in obra ${data.obraId}, but obra does not belong to empresa ${empresaId}`);
+        return null; 
       }
 
       const parteDataWithDates = {
         ...data,
-        fecha: (data.fecha as Timestamp).toDate(),
-        timestamp: (data.timestamp as Timestamp).toDate(),
+        fecha: data.fecha instanceof Timestamp ? data.fecha.toDate() : new Date(data.fecha || Date.now()),
+        timestamp: data.timestamp instanceof Timestamp ? data.timestamp.toDate() : new Date(data.timestamp || Date.now()),
       };
       const parseResult = ParteSchema.safeParse({id: docSnap.id, ...parteDataWithDates});
       if (parseResult.success) return parseResult.data;
-      console.warn("Invalid parte data for worker/obra/date", parseResult.error);
+      console.warn(`Invalid parte data for worker ${usuarioId}, obra ${obraId}, date ${fecha.toISOString()}:`, parseResult.error.flatten().fieldErrors);
     }
     return null;
-  } catch (error) {
-    console.error("Error fetching parte by worker/obra/date:", error);
+  } catch (error: any) {
+    console.error(`Error fetching parte by worker/obra/date (w:${usuarioId}, o:${obraId}, d:${fecha.toISOString()}):`, error.message, error.stack);
     return null;
   }
 }
@@ -207,40 +199,58 @@ export async function createParte(data: CreateParteDataFirebase): Promise<{ succ
     const newParteRef = doc(collection(db, "partes"));
     const newParteId = newParteRef.id;
 
-    const parteToCreate = {
-      ...validatedInputData,
+    // Ensure all fields are defined as per ParteSchema before final parse for DB
+    const rawParteToCreateForDb = {
       id: newParteId,
-      fecha: Timestamp.fromDate(new Date(validatedInputData.fecha)), // Ensure it's a Firestore Timestamp
+      usuarioId: validatedInputData.usuarioId,
+      obraId: validatedInputData.obraId,
+      fecha: new Date(validatedInputData.fecha), // Ensure it's a Date object
+      tareasRealizadas: validatedInputData.tareasRealizadas,
       horasTrabajadas: validatedInputData.horasTrabajadas === undefined ? null : validatedInputData.horasTrabajadas,
       incidencias: validatedInputData.incidencias || '',
       tareasSeleccionadas: validatedInputData.tareasSeleccionadas || [],
       fotosURLs: validatedInputData.fotosURLs || [],
       firmaURL: validatedInputData.firmaURL || null,
-      validado: validatedInputData.validado || false, // Default to false if not provided
+      validado: validatedInputData.validado || false,
       validadoPor: validatedInputData.validadoPor || null,
-      timestamp: serverTimestamp(), // Firestore server timestamp
+      timestamp: new Date(), // Will be replaced by serverTimestamp
+      dataAIHint: undefined, // Explicitly undefined if not provided
     };
     
-    // Validate with full schema before saving
-    const finalParteDataForDb = ParteSchema.omit({dataAIHint:true}).parse(parteToCreate);
-    await setDoc(newParteRef, finalParteDataForDb);
+    const finalParteDataForDb = ParteSchema.parse(rawParteToCreateForDb);
+    
+    const firestoreParteData = {
+      ...finalParteDataForDb,
+      fecha: Timestamp.fromDate(finalParteDataForDb.fecha),
+      timestamp: serverTimestamp(), // Firestore server timestamp
+    };
+    // Remove id from data being sent to setDoc as it's the doc ref's id
+    const { id, ...dataToSet } = firestoreParteData;
+
+    await setDoc(newParteRef, dataToSet);
 
     revalidatePath('/(app)/partes');
     revalidatePath(`/(app)/partes/new`);
     
-    // Fetch the created parte to return it with server-generated timestamps resolved
     const createdParteSnap = await getDoc(newParteRef);
     const createdData = createdParteSnap.data();
+    if (!createdData) {
+        throw new Error("Document not found after creation");
+    }
+    
     const parteResult = ParteSchema.parse({
         id: createdParteSnap.id,
         ...createdData,
-        fecha: (createdData?.fecha as Timestamp).toDate(),
-        timestamp: (createdData?.timestamp as Timestamp).toDate(),
+        fecha: (createdData.fecha as Timestamp).toDate(),
+        timestamp: (createdData.timestamp as Timestamp).toDate(),
     });
 
     return { success: true, message: 'Nuevo parte de trabajo registrado.', parte: parteResult };
   } catch (error: any) {
-     console.error("Error creating parte in Firestore:", error);
+     console.error("Error creating parte in Firestore:", error.message, error.stack);
+     if (error instanceof z.ZodError) {
+        return { success: false, message: `Error de validación Zod al crear parte: ${JSON.stringify(error.flatten().fieldErrors)}` };
+     }
     return { success: false, message: `Error al registrar el parte: ${error.message || "Error desconocido."}` };
   }
 }
@@ -261,18 +271,21 @@ export async function updateParte(parteId: string, data: UpdateParteDataFirebase
     
     const dataToUpdate: any = { ...validationResult.data, updatedAt: serverTimestamp() };
     if (dataToUpdate.fecha) dataToUpdate.fecha = Timestamp.fromDate(new Date(dataToUpdate.fecha));
-    // Remove undefined fields
-    Object.keys(dataToUpdate).forEach(key => dataToUpdate[key] === undefined && delete dataToUpdate[key]);
+    Object.keys(dataToUpdate).forEach(key => dataToUpdate[key as keyof typeof dataToUpdate] === undefined && delete dataToUpdate[key as keyof typeof dataToUpdate]);
 
     await updateDoc(parteDocRef, dataToUpdate);
     
     const updatedParteSnap = await getDoc(parteDocRef);
     const updatedData = updatedParteSnap.data();
+     if (!updatedData) {
+        throw new Error("Document not found after update");
+    }
     const parteResult = ParteSchema.parse({ 
         id: updatedParteSnap.id, 
         ...updatedData,
-        fecha: (updatedData?.fecha as Timestamp).toDate(),
-        timestamp: (updatedData?.timestamp as Timestamp).toDate(),
+        fecha: (updatedData.fecha as Timestamp).toDate(),
+        timestamp: (updatedData.timestamp as Timestamp).toDate(), // Assuming timestamp is also updated or present
+        updatedAt: updatedData.updatedAt ? (updatedData.updatedAt as Timestamp).toDate() : new Date() // Handle potential missing updatedAt
     });
 
     revalidatePath('/(app)/partes');
@@ -280,7 +293,10 @@ export async function updateParte(parteId: string, data: UpdateParteDataFirebase
 
     return { success: true, message: 'Parte actualizado con éxito.', parte: parteResult };
   } catch (error: any) {
-    console.error("Error updating parte in Firestore:", error);
+    console.error(`Error updating parte ${parteId}:`, error.message, error.stack);
+    if (error instanceof z.ZodError) {
+        return { success: false, message: `Error de validación Zod al actualizar parte: ${JSON.stringify(error.flatten().fieldErrors)}` };
+     }
     return { success: false, message: `Error al actualizar el parte: ${error.message || "Error desconocido."}` };
   }
 }
@@ -296,7 +312,7 @@ export async function validateParte(parteId: string, validadorId: string, empres
     const parteData = parteSnap.data();
     const obraDoc = await getDoc(doc(db, "obras", parteData.obraId));
     if (!obraDoc.exists() || obraDoc.data().empresaId !== empresaIdAuth) {
-        return { success: false, message: 'No autorizado para validar este parte.' };
+        return { success: false, message: 'No autorizado para validar este parte (obra no pertenece a empresa).' };
     }
     
     const validadorDoc = await getDoc(doc(db, "usuarios", validadorId));
@@ -312,11 +328,15 @@ export async function validateParte(parteId: string, validadorId: string, empres
 
     const updatedParteSnap = await getDoc(parteDocRef);
     const updatedData = updatedParteSnap.data();
+    if (!updatedData) {
+        throw new Error("Document not found after validation update");
+    }
     const parteResult = ParteSchema.parse({ 
         id: updatedParteSnap.id, 
         ...updatedData,
-        fecha: (updatedData?.fecha as Timestamp).toDate(),
-        timestamp: (updatedData?.timestamp as Timestamp).toDate(),
+        fecha: (updatedData.fecha as Timestamp).toDate(),
+        timestamp: (updatedData.timestamp as Timestamp).toDate(),
+        updatedAt: updatedData.updatedAt ? (updatedData.updatedAt as Timestamp).toDate() : new Date()
     });
 
     revalidatePath('/(app)/partes');
@@ -324,7 +344,11 @@ export async function validateParte(parteId: string, validadorId: string, empres
 
     return { success: true, message: 'Parte validado con éxito.', parte: parteResult };
   } catch (error: any) {
-    console.error("Error validating parte:", error);
+    console.error(`Error validating parte ${parteId}:`, error.message, error.stack);
+     if (error instanceof z.ZodError) {
+        return { success: false, message: `Error de validación Zod al validar parte: ${JSON.stringify(error.flatten().fieldErrors)}` };
+     }
     return { success: false, message: `Error al validar el parte: ${error.message || "Error desconocido."}` };
   }
 }
+
