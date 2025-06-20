@@ -8,62 +8,46 @@ import { db, auth } from '@/lib/firebase/firebase';
 import { createUserWithEmailAndPassword } from 'firebase/auth';
 import { doc, setDoc, getDoc, updateDoc, collection, query, where, getDocs, serverTimestamp } from 'firebase/firestore';
 
+// Simplified schema for registration input
 const RegisterEmpresaFormSchema = z.object({
   empresaNombre: z.string().min(2, { message: "El nombre de la empresa debe tener al menos 2 caracteres." }),
-  empresaCIF: z.string().min(9, { message: "El CIF debe tener al menos 9 caracteres." }).regex(/^[A-HJ-NP-SUVW]{1}[0-9]{7}[0-9A-J]{1}$/i, "Formato de CIF inválido."),
-  empresaEmailContacto: z.string().email({ message: "Email de contacto de la empresa inválido." }),
-  empresaTelefono: z.string().min(9, { message: "El teléfono de la empresa debe tener al menos 9 dígitos." }),
-  adminNombre: z.string().min(2, { message: "Tu nombre debe tener al menos 2 caracteres." }),
   adminEmail: z.string().email({ message: "Tu email de administrador es inválido." }),
   adminPassword: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
-  adminDNI: z.string().min(9, "El DNI es requerido").regex(/^[0-9XYZxyz][0-9]{7}[A-HJ-NP-TV-Z]$/i, "Formato de DNI/NIE inválido"),
 });
 type RegisterEmpresaFormData = z.infer<typeof RegisterEmpresaFormSchema>;
 
 export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Promise<{ success: boolean; message: string; empresa?: Empresa; adminUser?: Omit<UsuarioFirebase, 'password'> }> {
-  console.log("[CREATE EMPRESA ADMIN] Action started with data:", JSON.stringify(data, (key, value) => key === 'adminPassword' ? '********' : value, 2));
+  console.log(`[CREATE EMPRESA ADMIN] Action started at: ${new Date().toISOString()}`);
+  console.log("[CREATE EMPRESA ADMIN] Input data (password masked):", JSON.stringify({ ...data, adminPassword: '***' }, null, 2));
+  
   const validationResult = RegisterEmpresaFormSchema.safeParse(data);
   if (!validationResult.success) {
     const errorDetails = JSON.stringify(validationResult.error.flatten().fieldErrors);
     console.error("[CREATE EMPRESA ADMIN] Server-side validation errors:", errorDetails);
     return { success: false, message: `Error de validación del servidor: ${errorDetails}` };
   }
-  const {
-    empresaNombre, empresaCIF, empresaEmailContacto, empresaTelefono,
-    adminNombre, adminEmail, adminPassword, adminDNI
-  } = validationResult.data;
+  const { empresaNombre, adminEmail, adminPassword } = validationResult.data;
 
-  const cifUpperCase = empresaCIF.toUpperCase();
+  // CIF will be null initially, so no check for existing CIF here. User will add it later.
 
   try {
-    console.time("[Firestore Check CIF]");
-    console.log("[STEP 1] Checking for existing empresa CIF:", cifUpperCase);
-    const empresaCifQuery = query(collection(db, "empresas"), where("CIF", "==", cifUpperCase));
-    const empresaCifSnapshot = await getDocs(empresaCifQuery);
-    console.timeEnd("[Firestore Check CIF]");
-    if (!empresaCifSnapshot.empty) {
-      console.log("[CREATE EMPRESA ADMIN] Empresa with this CIF already exists.");
-      return { success: false, message: 'Ya existe una empresa registrada con este CIF.' };
-    }
-    console.log("[STEP 1] CIF check passed.");
-
-    console.time("[Firestore Check Admin Email]");
-    console.log("[STEP 2] Checking for existing admin email in 'usuarios':", adminEmail);
+    console.time("[CREATE EMPRESA ADMIN] Firestore Check Admin Email");
+    console.log("[STEP 1] Checking for existing admin email in 'usuarios':", adminEmail);
     const adminEmailDbQuery = query(collection(db, "usuarios"), where("email", "==", adminEmail));
     const adminEmailDbSnapshot = await getDocs(adminEmailDbQuery);
-    console.timeEnd("[Firestore Check Admin Email]");
+    console.timeEnd("[CREATE EMPRESA ADMIN] Firestore Check Admin Email");
     if (!adminEmailDbSnapshot.empty) {
         console.log("[CREATE EMPRESA ADMIN] Admin email already in use in 'usuarios' collection.");
         return { success: false, message: 'Este email de administrador ya está en uso en la base de datos de usuarios.' };
     }
-    console.log("[STEP 2] Admin email check passed.");
+    console.log("[STEP 1] Admin email check passed.");
 
-    console.time("[Firebase Auth Create User]");
-    console.log("[STEP 3] Attempting to create Firebase Auth user for:", adminEmail);
+    console.time("[CREATE EMPRESA ADMIN] Firebase Auth Create User");
+    console.log("[STEP 2] Attempting to create Firebase Auth user for:", adminEmail);
     const userCredential = await createUserWithEmailAndPassword(auth, adminEmail, adminPassword);
     const adminUid = userCredential.user.uid;
-    console.timeEnd("[Firebase Auth Create User]");
-    console.log("[STEP 3] Firebase Auth user created successfully. UID:", adminUid);
+    console.timeEnd("[CREATE EMPRESA ADMIN] Firebase Auth Create User");
+    console.log("[STEP 2] Firebase Auth user created successfully. UID:", adminUid);
 
     const newEmpresaRef = doc(collection(db, "empresas"));
     const newEmpresaId = newEmpresaRef.id;
@@ -71,27 +55,26 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
     const rawEmpresaData = {
       id: newEmpresaId,
       nombre: empresaNombre,
-      CIF: cifUpperCase,
-      emailContacto: empresaEmailContacto,
-      telefono: empresaTelefono,
+      CIF: null, 
+      emailContacto: null, 
+      telefono: null, 
       logoURL: null,
-      // dataAIHint is optional and not provided in the form, so it's omitted.
     };
-    // dataAIHint is correctly omitted here if not provided in rawEmpresaData, Zod will handle it.
-    const empresaDataToStore = EmpresaSchema.parse(rawEmpresaData);
+    const empresaDataToStore = EmpresaSchema.parse(rawEmpresaData); 
     
-    console.time("[Firestore Create Empresa Doc]");
-    console.log("[STEP 4] Attempting to setDoc for new empresa:", newEmpresaId);
+    console.time("[CREATE EMPRESA ADMIN] Firestore Create Empresa Doc");
+    console.log("[STEP 3] Attempting to setDoc for new empresa:", newEmpresaId, "Data:", JSON.stringify(empresaDataToStore));
     await setDoc(newEmpresaRef, { ...empresaDataToStore, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    console.timeEnd("[Firestore Create Empresa Doc]");
-    console.log("[STEP 4] New empresa document created successfully.");
+    console.timeEnd("[CREATE EMPRESA ADMIN] Firestore Create Empresa Doc");
+    console.log("[STEP 3] New empresa document created successfully.");
 
+    const adminNombrePlaceholder = adminEmail.split('@')[0] || "Administrador";
     const rawAdminUserData = {
       id: adminUid,
       empresaId: newEmpresaId,
-      nombre: adminNombre,
+      nombre: adminNombrePlaceholder,
       email: adminEmail,
-      dni: adminDNI,
+      dni: null, 
       rol: 'admin' as UsuarioFirebase['rol'],
       activo: true,
       obrasAsignadas: [],
@@ -100,13 +83,13 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
     };
     const adminUserDataToStore = UsuarioFirebaseSchema.omit({password: true}).parse(rawAdminUserData);
     
-    console.time("[Firestore Create Admin User Doc]");
-    console.log("[STEP 5] Attempting to setDoc for new admin user:", adminUid);
+    console.time("[CREATE EMPRESA ADMIN] Firestore Create Admin User Doc");
+    console.log("[STEP 4] Attempting to setDoc for new admin user:", adminUid, "Data:", JSON.stringify(adminUserDataToStore));
     await setDoc(doc(db, "usuarios", adminUid), { ...adminUserDataToStore, createdAt: serverTimestamp(), updatedAt: serverTimestamp() });
-    console.timeEnd("[Firestore Create Admin User Doc]");
-    console.log("[STEP 5] New admin user document created successfully.");
+    console.timeEnd("[CREATE EMPRESA ADMIN] Firestore Create Admin User Doc");
+    console.log("[STEP 4] New admin user document created successfully.");
 
-    console.log("[STEP 6] Revalidating paths and returning success.");
+    console.log("[STEP 5] Revalidating paths and returning success.");
     revalidatePath('/auth/login/empresa');
     return { success: true, message: 'Empresa y administrador creados con éxito.', empresa: empresaDataToStore, adminUser: adminUserDataToStore };
 
@@ -118,9 +101,7 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
     console.error("[CREATE EMPRESA ADMIN] Error Name:", error.name);
     console.error("[CREATE EMPRESA ADMIN] Error Message:", error.message);
     if (error.code) console.error("[CREATE EMPRESA ADMIN] Error Code (Firebase/etc.):", error.code);
-    if (error.stack) console.error("[CREATE EMPRESA ADMIN] Error Stack:", error.stack);
     
-    // Attempt to stringify the full error object for more details, if possible
     try {
         const errorDetailsString = JSON.stringify(error, Object.getOwnPropertyNames(error));
         console.error("[CREATE EMPRESA ADMIN] Full Error (stringified):", errorDetailsString);
@@ -151,12 +132,10 @@ export async function createEmpresaWithAdmin(data: RegisterEmpresaFormData): Pro
           userMessage = error.message ? `Error de Firebase: ${error.message} (Código: ${error.code})` : `Error de Firebase (Código: ${error.code})`;
       }
     } else if (error && typeof error.message === 'string' && error.message.trim() !== '') {
-        // Catch other generic errors that have a message
         userMessage = error.message;
         errorCode = 'GENERAL_ERROR_WITH_MESSAGE';
     }
     
-    // Ensure userMessage is always a string.
     if (typeof userMessage !== 'string' || userMessage.trim() === '') {
         userMessage = 'Ocurrió un error inesperado. Por favor, inténtalo de nuevo más tarde.';
     }
@@ -179,11 +158,11 @@ export async function getEmpresaProfile(id: string): Promise<Empresa | null> {
       const dataToParse = {
         id: empresaSnap.id,
         nombre: data.nombre,
-        CIF: data.CIF,
-        emailContacto: data.emailContacto,
-        telefono: data.telefono,
+        CIF: data.CIF === undefined ? null : data.CIF,
+        emailContacto: data.emailContacto === undefined ? null : data.emailContacto,
+        telefono: data.telefono === undefined ? null : data.telefono,
         logoURL: data.logoURL === undefined ? null : data.logoURL,
-        dataAIHint: data.dataAIHint, // Will be undefined if not present, which is fine for optional field
+        dataAIHint: data.dataAIHint, 
       };
       const parseResult = EmpresaSchema.safeParse(dataToParse);
       if (parseResult.success) {
@@ -200,9 +179,9 @@ export async function getEmpresaProfile(id: string): Promise<Empresa | null> {
   }
 }
 
-const UpdateEmpresaSchemaInternal = EmpresaSchema.partial().omit({ id: true, CIF: true });
+const UpdateEmpresaSchemaInternal = EmpresaSchema.partial().omit({ id: true });
 
-export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empresa, 'id' | 'CIF'>>): Promise<{ success: boolean; message: string; empresa?: Empresa }> {
+export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empresa, 'id'>>): Promise<{ success: boolean; message: string; empresa?: Empresa }> {
   try {
     const empresaRef = doc(db, "empresas", id);
     const currentEmpresaSnap = await getDoc(empresaRef);
@@ -222,22 +201,19 @@ export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empres
     if (data.hasOwnProperty('logoURL')) {
         dataToUpdate.logoURL = data.logoURL === '' || data.logoURL === undefined ? null : data.logoURL;
     }
-    
-    // If dataAIHint is explicitly passed as undefined or an empty string, we should handle it.
-    // If it's part of `data` but undefined, Zod's partial will mean it's not in `validationResult.data`.
-    // If it IS in validationResult.data (e.g., passed as empty string), and we want to remove it or set null:
-    if (validationResult.data.hasOwnProperty('dataAIHint')) {
-        if (validationResult.data.dataAIHint === '' || validationResult.data.dataAIHint === undefined) {
-            // dataToUpdate.dataAIHint = null; // Or FieldValue.delete() if you want to remove it
-            // For now, if empty string, it will be saved as empty string. If undefined from Zod, it's omitted.
-        }
+    if (data.hasOwnProperty('CIF')) {
+        dataToUpdate.CIF = data.CIF === '' || data.CIF === undefined ? null : data.CIF;
     }
-
-
-    // Remove any top-level undefined properties before sending to Firestore
+    if (data.hasOwnProperty('emailContacto')) {
+        dataToUpdate.emailContacto = data.emailContacto === '' || data.emailContacto === undefined ? null : data.emailContacto;
+    }
+    if (data.hasOwnProperty('telefono')) {
+        dataToUpdate.telefono = data.telefono === '' || data.telefono === undefined ? null : data.telefono;
+    }
+   
     Object.keys(dataToUpdate).forEach(key => {
         if (dataToUpdate[key] === undefined) {
-            delete dataToUpdate[key]; // Firestore doesn't like undefined top-level fields
+            delete dataToUpdate[key]; 
         }
     });
 
@@ -249,12 +225,12 @@ export async function updateEmpresaProfile(id: string, data: Partial<Omit<Empres
     if (!updatedEmpresaData) {
         return { success: false, message: "Error: No se encontraron datos de la empresa después de actualizar." };
     }
-    const dataToParse = {
+    const dataToParse = { // Ensure all fields for EmpresaSchema are present or handled
         id: updatedEmpresaSnap.id,
         nombre: updatedEmpresaData.nombre,
-        CIF: updatedEmpresaData.CIF,
-        emailContacto: updatedEmpresaData.emailContacto,
-        telefono: updatedEmpresaData.telefono,
+        CIF: updatedEmpresaData.CIF === undefined ? null : updatedEmpresaData.CIF,
+        emailContacto: updatedEmpresaData.emailContacto === undefined ? null : updatedEmpresaData.emailContacto,
+        telefono: updatedEmpresaData.telefono === undefined ? null : updatedEmpresaData.telefono,
         logoURL: updatedEmpresaData.logoURL === undefined ? null : updatedEmpresaData.logoURL,
         dataAIHint: updatedEmpresaData.dataAIHint, 
     };
