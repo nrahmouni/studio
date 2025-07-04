@@ -1,73 +1,41 @@
-# ObraLink: Análisis Detallado de la Aplicación
+# ObraLink: Construyendo el Futuro de la Gestión de Obras
 
-## 1. Resumen General de la Aplicación
+## ¿Qué es ObraLink?
 
-*   **Nombre de la App:** ObraLink
-*   **Propósito Principal:** Una aplicación web diseñada para empresas de construcción y reformas con el objetivo de digitalizar y optimizar sus operaciones diarias. Se centra en la gestión de proyectos (obras), trabajadores y partes de trabajo diarios, incorporando funcionalidades de Inteligencia Artificial para la optimización de recursos.
-*   **Pila Tecnológica:**
-    ```
-    - Framework: Next.js (con App Router)
-    - Lenguaje: TypeScript
-    - UI: React, Componentes de ShadCN UI, Tailwind CSS
-    - Backend y Base de Datos: Firebase (Cloud Firestore para la base de datos, Firebase Authentication para la gestión de usuarios).
-    - Inteligencia Artificial: Google Genkit
-    ```
+¿Cansado del papeleo, la desorganización y la falta de visibilidad en tus proyectos de construcción? **ObraLink** es la solución definitiva para digitalizar y potenciar tu empresa. Olvídate de los partes de trabajo en papel y las llamadas interminentes. Con nuestra plataforma intuitiva, tendrás el control total de tus obras, equipos y recursos, todo en un solo lugar y accesible desde cualquier dispositivo.
 
-## 2. Roles de Usuario y Autenticación
+## ¿Por Qué Elegir ObraLink?
 
-La aplicación soporta tres roles de usuario distintos, cada uno con permisos y paneles de control diferentes:
+*   🚀 **Transformación Digital Real:** Pasa del caos del papel a la eficiencia digital. Partes de trabajo con fotos, incidencias y validaciones al instante.
+*   ✅ **Control 360°:** Gestiona múltiples obras, asigna personal, supervisa el progreso diario y controla los costes con una facilidad sin precedentes.
+*   🧠 **Decisiones Inteligentes:** Utiliza nuestro asistente de Inteligencia Artificial para analizar la carga de trabajo y optimizar la asignación de tus equipos, evitando cuellos de botella antes de que ocurran.
+*   ⏱️ **Máxima Eficiencia:** Reduce drásticamente el tiempo administrativo, minimiza los errores humanos y mejora la comunicación entre la oficina y el campo.
 
-*   **`admin` (Administrador):** Tiene acceso completo a todas las funcionalidades. Puede gestionar el perfil de la empresa, crear, editar y eliminar todos los datos (obras, usuarios, partes), y utilizar las herramientas de informes y de IA. El usuario inicial creado durante el registro de la empresa es un administrador.
-*   **`jefeObra` (Jefe de Obra / Encargado):** Tiene capacidades de gestión, pero puede estar restringido a proyectos específicos (`obrasAsignadas`). Puede crear/ver obras, gestionar usuarios, validar partes de trabajo, y usar herramientas de gestión como el "Control Diario" y la asignación de recursos con IA.
-*   **`trabajador` (Trabajador):** Tiene el acceso más limitado. Puede ver sus proyectos asignados, crear sus propios partes de trabajo diarios y usar la función de fichaje (`fichajes`).
+---
 
-La autenticación se gestiona a través de páginas de inicio de sesión separadas para "Empresa/Jefe de Obra" y "Trabajador", con una página central de selección de rol (`/auth/select-role`).
+## Funcionalidades Clave
 
-## 3. Funcionalidades Principales
+*   🏢 **Gestión de Empresa Simplificada:** Registra tu empresa en segundos y gestiona tu perfil, logo y datos de contacto de forma centralizada.
+*   👷‍♂️ **Registro y Gestión de Personal:** Da de alta a tus administradores, jefes de obra y trabajadores, asignando roles y permisos específicos para cada uno.
+*   🏗️ **Administración Integral de Obras:** Crea y detalla todos tus proyectos. Asigna personal, define fechas y supervisa el estado de cada obra en tiempo real.
+*   ✍️ **Partes de Trabajo Digitales:** Tus trabajadores pueden registrar sus tareas, horas, materiales e incidencias directamente desde la obra, adjuntando fotos como evidencia. ¡Se acabaron los partes ilegibles!
+*   ✅ **Control Diario y Validación:** Los jefes de obra pueden verificar la asistencia y las horas de su equipo cada día, validando el trabajo con un solo clic y generando los partes automáticamente.
+*   ⏰ **Sistema de Fichajes Preciso:** Controla las horas de entrada, salida y descansos de tus trabajadores de manera fiable y sencilla, con un portal para el trabajador y otro para la gestión y validación.
+*   🤖 **Asistente de Recursos con IA:** Nuestra herramienta exclusiva analiza los partes pendientes y te ofrece recomendaciones inteligentes para distribuir a tu personal de la manera más eficiente.
+*   📊 **Informes y Analíticas:** Visualiza rápidamente la actividad de tus proyectos con gráficos claros, facilitando la toma de decisiones y la supervisión.
 
-*   **Gestión de la Empresa (`/company-profile`):**
-    *   **Registro Simplificado:** Se puede crear una nueva empresa solo con el nombre de la empresa, un email de administrador y una contraseña.
-    *   **Edición del Perfil:** Los administradores pueden completar posteriormente detalles opcionales como el CIF, información de contacto, teléfono y la URL de un logo.
-    *   **Registro de Trabajadores:** Los administradores/jefes de obra pueden registrar nuevos trabajadores para la empresa directamente desde esta página. La contraseña inicial del trabajador se establece como su DNI/NIE.
+---
 
-*   **Gestión de Obras (Proyectos) (`/obras`):**
-    *   Funcionalidad CRUD (Crear, Leer, Actualizar, Eliminar) completa para los proyectos.
-    *   Las obras contienen detalles como nombre, dirección, cliente, fechas de inicio/fin y una descripción opcional.
-    *   Los administradores pueden asignar un `jefeObra` y múltiples `trabajadores` a cada proyecto.
-    *   Incluye un sistema para registrar y gestionar los costes por categoría (`costosPorCategoria`).
+## ¿Para Quién es ObraLink?
 
-*   **Gestión de Partes de Trabajo (`/partes`):**
-    *   Los trabajadores pueden crear nuevos partes de trabajo, detallando las tareas realizadas, horas trabajadas y cualquier incidencia.
-    *   Los administradores/jefes de obra pueden ver una lista de todos los partes, filtrarlos por proyecto y validarlos.
-    *   Los partes pueden incluir fotos adjuntas y firmas digitales (aunque actualmente se implementan mediante campos de URL).
+*   **Gerentes y Administradores:** Obtén una visión global del negocio, optimiza costes y aumenta la rentabilidad.
+*   **Jefes de Obra y Encargados:** Gestiona tus equipos en el día a día, valida el trabajo eficientemente y mantén tus proyectos bajo control sin esfuerzo.
+*   **Trabajadores:** Reporta tu trabajo de forma rápida y sencilla, consulta tus obras asignadas y ficha sin complicaciones.
 
-*   **Control Diario de Obra (`/control-diario`):**
-    *   Una herramienta especializada para administradores y jefes de obra.
-    *   Para un proyecto y fecha seleccionados, muestra una lista de todos los trabajadores asignados.
-    *   El gestor puede marcar la asistencia, introducir las horas de inicio y fin, y reportar las horas totales.
-    *   Guardar este formulario puede crear o actualizar automáticamente un `Parte` para el trabajador, agilizando la entrada de datos.
+## Empieza Hoy Mismo
 
-*   **Fichaje Horario (`/fichajes`):**
-    *   **Vista de Trabajador:** Una interfaz simple para que los trabajadores fichen su entrada (`entrada`), inicien/finalicen un descanso (`inicioDescanso`/`finDescanso`), y fichen su salida (`salida`) para un proyecto seleccionado.
-    *   **Vista de Gestor:** Los administradores/jefes de obra ven una tabla de todos los eventos de fichaje. Pueden filtrar por obra, trabajador y rango de fechas, y también pueden validar estos eventos.
+ObraLink es más que una herramienta; es tu socio estratégico para llevar tu empresa de construcción al siguiente nivel. **¿Listo para construir el futuro?**
 
-*   **Asignación de Recursos con IA (`/resource-allocation`):**
-    *   Esta página utiliza un flujo de Genkit (`analyzeResourceAllocationFlow`).
-    *   Recopila todos los `partes de trabajo` pendientes (no validados) de Firestore.
-    *   Envía estos datos a un modelo de Gemini, que analiza la carga de trabajo y proporciona una sugerencia en español sobre cómo reasignar recursos para prevenir cuellos de botella, junto con su razonamiento.
+---
 
-*   **Informes (`/reports`):**
-    *   Una página de informes sencilla que muestra un gráfico de barras visualizando el número de partes de trabajo creados para cada obra.
-
-*   **Poblado de Datos de Demostración (`seed.actions.ts`):**
-    *   Una herramienta interna (activada desde un botón en el dashboard para administradores) para poblar la base de datos de Firestore con un conjunto completo de datos de demostración, incluyendo una empresa, usuarios, una obra, un parte, etc. Esto es crucial para el desarrollo y la demostración.
-
-## 4. Arquitectura Técnica y Flujo de Datos
-
-*   **Lógica del Servidor (`src/lib/actions/`):** Toda la lógica de backend y la comunicación con Firebase se manejan a través de Server Actions de Next.js. Cada modelo de datos tiene su propio archivo de acciones (ej. `user.actions.ts`, `obra.actions.ts`). Estas acciones son responsables de todas las operaciones CRUD, la validación de datos y la revalidación de las rutas de caché de Next.js (`revalidatePath`).
-
-*   **Modelos de Datos (`src/lib/types.ts`):** Se utilizan esquemas Zod como única fuente de verdad para todas las estructuras de datos (`Empresa`, `Obra`, `UsuarioFirebase`, etc.). Esto garantiza la seguridad de tipos y proporciona reglas de validación tanto para los formularios del frontend como para las acciones del backend. Los campos que no son obligatorios en el registro inicial (como `CIF`, `dni`) se definen como `.optional().nullable()`.
-
-*   **Integración con Firebase (`src/lib/firebase/firebase.ts`):** Un único archivo inicializa y exporta las instancias de la App de Firebase, Auth, Firestore y Storage, utilizando una configuración codificada.
-
-*   **Estilos (`src/app/globals.css`):** El tema de la aplicación se define mediante variables CSS para los modos claro y oscuro, siguiendo el sistema de diseño especificado (Azul Profundo como primario, Naranja Vibrante como acento, Gris Claro como fondo). Las fuentes (`Poppins`, `PT Sans`) también se configuran aquí.
+*   **Pila Tecnológica:** Para los interesados en la tecnología, ObraLink está construido con las herramientas más modernas, incluyendo Next.js, React, Firebase (Firestore) y Google Genkit para IA, garantizando una experiencia rápida, segura y escalable.
