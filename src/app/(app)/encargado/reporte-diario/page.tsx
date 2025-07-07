@@ -1,7 +1,6 @@
 
 'use client';
 import { useState, useEffect, useRef } from 'react';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -9,7 +8,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getSubcontratas, getProyectosBySubcontrata, getTrabajadoresByProyecto, saveDailyReport } from '@/lib/actions/app.actions';
 import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador } from '@/lib/types';
-import { Loader2, Send, Building, HardHat, User } from 'lucide-react';
+import { Loader2, Send, Building, HardHat, User, Plus, Minus } from 'lucide-react';
 
 interface TrabajadorConEstado extends Trabajador {
   asistencia: boolean;
@@ -205,32 +204,46 @@ export default function ReporteDiarioPage() {
               trabajadores.length > 0 ? (
                 <div className="space-y-4">
                   {trabajadores.map(t => (
-                    <div key={t.id} className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                      <Label htmlFor={`asistencia-${t.id}`} className="text-lg font-medium flex items-center gap-3">
-                        <User className="h-5 w-5 text-muted-foreground"/>
-                        {t.nombre}
+                    <div key={t.id} className="flex flex-col sm:flex-row items-center justify-between p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors gap-4">
+                      <Label htmlFor={`asistencia-${t.id}`} className="text-lg font-medium flex items-center gap-3 cursor-pointer">
+                          <User className="h-5 w-5 text-muted-foreground"/>
+                          {t.nombre}
                       </Label>
-                      <div className="flex flex-col items-center gap-1">
-                        <Label htmlFor={`asistencia-${t.id}`} className="text-xs text-muted-foreground">Asiste</Label>
-                        <Checkbox
-                            id={`asistencia-${t.id}`}
-                            checked={t.asistencia}
-                            onCheckedChange={(checked) => handleTrabajadorChange(t.id, 'asistencia', !!checked)}
-                            className="w-6 h-6"
-                        />
-                      </div>
-                      <div className="flex flex-col items-center gap-1">
-                         <Label className="text-xs text-muted-foreground">Horas</Label>
-                          <Select
-                              value={t.horas.toString()}
-                              onValueChange={(value) => handleTrabajadorChange(t.id, 'horas', parseInt(value, 10))}
-                              disabled={!t.asistencia}
-                          >
-                              <SelectTrigger className="w-28 h-12 text-base"/>
-                              <SelectContent>
-                                  {[...Array(13).keys()].map(i => <SelectItem key={i} value={i.toString()}>{i} horas</SelectItem>)}
-                              </SelectContent>
-                          </Select>
+                      <div className="flex items-center gap-4 sm:gap-6">
+                          <div className="flex items-center gap-2">
+                              <Checkbox
+                                  id={`asistencia-${t.id}`}
+                                  checked={t.asistencia}
+                                  onCheckedChange={(checked) => handleTrabajadorChange(t.id, 'asistencia', !!checked)}
+                                  className="w-6 h-6"
+                              />
+                              <Label htmlFor={`asistencia-${t.id}`} className="text-md font-medium cursor-pointer">Asiste</Label>
+                          </div>
+                          <div className="flex items-center gap-2">
+                              <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-10 w-10 rounded-full"
+                                  onClick={() => handleTrabajadorChange(t.id, 'horas', Math.max(0, t.horas - 1))}
+                                  disabled={!t.asistencia || t.horas <= 0}
+                              >
+                                  <Minus className="h-5 w-5" />
+                              </Button>
+                              <span className="font-bold text-xl w-12 text-center tabular-nums">
+                                  {t.horas}h
+                              </span>
+                              <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="icon"
+                                  className="h-10 w-10 rounded-full"
+                                  onClick={() => handleTrabajadorChange(t.id, 'horas', Math.min(12, t.horas + 1))}
+                                  disabled={!t.asistencia || t.horas >= 12}
+                              >
+                                  <Plus className="h-5 w-5" />
+                              </Button>
+                          </div>
                       </div>
                     </div>
                   ))}
