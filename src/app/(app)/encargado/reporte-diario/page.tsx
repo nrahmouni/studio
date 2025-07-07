@@ -161,85 +161,91 @@ export default function ReporteDiarioPage() {
 
       {/* Step 1: Select Subcontrata */}
       <Card className="animate-fade-in-up transition-all duration-300">
-        <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">1</div>
-            <span>{selectedSubcontrata ? 'Empresa Seleccionada' : 'Selecciona Empresa Subcontratada'}</span>
-          </CardTitle>
-          {!selectedSubcontrata && (
-            <CardDescription>Elige la empresa para la que vas a reportar.</CardDescription>
-          )}
-        </CardHeader>
-        <CardContent>
-          {isLoadingSubcontratas ? (
-            <Loader2 className="animate-spin h-8 w-8 text-primary" />
-          ) : selectedSubcontrata ? (
-             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+        { selectedSubcontrata ? (
+            <div className="flex items-center justify-between p-3">
                 <div className="flex items-center gap-3">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">1</div>
                     <Building className="h-5 w-5 text-primary" />
                     <p className="text-md font-semibold">{getSelectedSubcontrataName()}</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={handleClearSelection}>Cambiar</Button>
             </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {subcontratas.map(s => (
-                <Button
-                  key={s.id}
-                  variant={'outline'}
-                  className="h-20 text-lg justify-start p-4"
-                  onClick={() => handleSelectSubcontrata(s.id)}
-                >
-                  <Building className="mr-4 h-6 w-6"/> {s.nombre}
-                </Button>
-              ))}
-            </div>
-          )}
-        </CardContent>
+        ) : (
+            <>
+                <CardHeader>
+                    <CardTitle className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">1</div>
+                        <span>Selecciona Empresa Subcontratada</span>
+                    </CardTitle>
+                    <CardDescription>Elige la empresa para la que vas a reportar.</CardDescription>
+                </CardHeader>
+                <CardContent>
+                {isLoadingSubcontratas ? (
+                    <Loader2 className="animate-spin h-8 w-8 text-primary" />
+                ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {subcontratas.map(s => (
+                        <Button
+                        key={s.id}
+                        variant={'outline'}
+                        className="h-20 text-lg justify-start p-4"
+                        onClick={() => handleSelectSubcontrata(s.id)}
+                        >
+                        <Building className="mr-4 h-6 w-6"/> {s.nombre}
+                        </Button>
+                    ))}
+                    </div>
+                )}
+                </CardContent>
+            </>
+        )}
       </Card>
 
       {/* Step 2: Select Proyecto */}
       {selectedSubcontrata && (
         <Card ref={proyectosCardRef} className="animate-fade-in-up">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">2</div>
-              <span>{selectedProyecto ? 'Proyecto Seleccionado' : 'Selecciona el Proyecto'}</span>
-            </CardTitle>
-            {!selectedProyecto && (
-                <CardDescription>Elige el proyecto que vas a reportar hoy.</CardDescription>
-            )}
-          </CardHeader>
-          <CardContent>
-            {isLoadingProyectos ? (
-              <Loader2 className="animate-spin h-8 w-8 text-primary" />
-            ) : selectedProyecto ? (
-                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+            { selectedProyecto ? (
+                 <div className="flex items-center justify-between p-3">
                     <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">2</div>
                         <HardHat className="h-5 w-5 text-primary" />
                         <p className="text-md font-semibold">{getSelectedProyectoName()}</p>
                     </div>
                     <Button variant="outline" size="sm" onClick={handleClearProyectoSelection}>Cambiar</Button>
                 </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {proyectos.length > 0 ? (
-                  proyectos.map(p => (
-                    <Button
-                      key={p.id}
-                      variant={'outline'}
-                      className="h-20 text-lg justify-start p-4"
-                      onClick={() => handleSelectProyecto(p.id)}
-                    >
-                      <HardHat className="mr-4 h-6 w-6"/> {p.nombre}
-                    </Button>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground">No hay proyectos para esta subcontrata.</p>
-                )}
-              </div>
+                <>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">2</div>
+                        <span>Selecciona el Proyecto</span>
+                        </CardTitle>
+                        <CardDescription>Elige el proyecto que vas a reportar hoy.</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoadingProyectos ? (
+                        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+                        ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {proyectos.length > 0 ? (
+                            proyectos.map(p => (
+                                <Button
+                                key={p.id}
+                                variant={'outline'}
+                                className="h-20 text-lg justify-start p-4"
+                                onClick={() => handleSelectProyecto(p.id)}
+                                >
+                                <HardHat className="mr-4 h-6 w-6"/> {p.nombre}
+                                </Button>
+                            ))
+                            ) : (
+                            <p className="text-muted-foreground">No hay proyectos para esta subcontrata.</p>
+                            )}
+                        </div>
+                        )}
+                    </CardContent>
+                </>
             )}
-          </CardContent>
         </Card>
       )}
       
