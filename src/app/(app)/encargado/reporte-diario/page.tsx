@@ -1,6 +1,6 @@
 
 'use client';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -30,6 +30,9 @@ export default function ReporteDiarioPage() {
   const [isLoadingTrabajadores, setIsLoadingTrabajadores] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const proyectosCardRef = useRef<HTMLDivElement>(null);
+  const trabajadoresCardRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const fetchSubcontratas = async () => {
       setIsLoadingSubcontratas(true);
@@ -39,6 +42,24 @@ export default function ReporteDiarioPage() {
     };
     fetchSubcontratas();
   }, []);
+
+  useEffect(() => {
+    // Scroll to project selection when subcontrata is selected
+    if (selectedSubcontrata && proyectosCardRef.current) {
+      setTimeout(() => {
+        proyectosCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150); // Small delay to allow for animation
+    }
+  }, [selectedSubcontrata]);
+
+  useEffect(() => {
+    // Scroll to worker validation when project is selected
+    if (selectedProyecto && trabajadoresCardRef.current) {
+      setTimeout(() => {
+        trabajadoresCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150); // Small delay to allow for animation
+    }
+  }, [selectedProyecto]);
 
   const handleSelectSubcontrata = async (subcontrataId: string) => {
     setSelectedSubcontrata(subcontrataId);
@@ -136,7 +157,7 @@ export default function ReporteDiarioPage() {
 
       {/* Step 2: Select Proyecto */}
       {selectedSubcontrata && (
-        <Card className="animate-fade-in-up">
+        <Card ref={proyectosCardRef} className="animate-fade-in-up">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">2</div>
@@ -169,7 +190,7 @@ export default function ReporteDiarioPage() {
       )}
       
       {selectedProyecto && (
-         <Card className="animate-fade-in-up">
+         <Card ref={trabajadoresCardRef} className="animate-fade-in-up">
            <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-accent-foreground font-bold text-lg">3</div>

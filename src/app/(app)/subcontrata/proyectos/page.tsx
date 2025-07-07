@@ -1,5 +1,5 @@
 'use client';
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Building, Trash2, UserPlus, HardHat, User, CheckCircle } from 'lucide-react';
@@ -21,6 +21,9 @@ export default function GestionProyectosPage() {
   const [loadingTrabajadores, setLoadingTrabajadores] = useState(false);
   const { toast } = useToast();
 
+  const proyectosCardRef = useRef<HTMLDivElement>(null);
+  const trabajadoresCardRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const fetchConstructoras = async () => {
       setLoadingConstructoras(true);
@@ -30,6 +33,24 @@ export default function GestionProyectosPage() {
     };
     fetchConstructoras();
   }, []);
+
+  useEffect(() => {
+    // Scroll to project selection when constructora is selected
+    if (selectedConstructora && proyectosCardRef.current) {
+      setTimeout(() => {
+        proyectosCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+    }
+  }, [selectedConstructora]);
+
+  useEffect(() => {
+    // Scroll to worker management when project is selected
+    if (selectedProyecto && trabajadoresCardRef.current) {
+      setTimeout(() => {
+        trabajadoresCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+    }
+  }, [selectedProyecto]);
 
   const handleSelectConstructora = async (constructora: Constructora) => {
     setSelectedConstructora(constructora);
@@ -103,7 +124,7 @@ export default function GestionProyectosPage() {
 
       {/* Step 2: Select Proyecto */}
       {selectedConstructora && (
-        <Card className="animate-fade-in-up">
+        <Card ref={proyectosCardRef} className="animate-fade-in-up">
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">2</div>
@@ -137,7 +158,7 @@ export default function GestionProyectosPage() {
 
       {/* Step 3: Manage Trabajadores */}
       {selectedProyecto && (
-         <Card className="animate-fade-in-up">
+         <Card ref={trabajadoresCardRef} className="animate-fade-in-up">
            <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-accent-foreground font-bold text-lg">3</div>
