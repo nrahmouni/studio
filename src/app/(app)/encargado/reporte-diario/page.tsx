@@ -44,12 +44,12 @@ export default function ReporteDiarioPage() {
 
   useEffect(() => {
     // Scroll to project selection when subcontrata is selected
-    if (selectedSubcontrata && proyectosCardRef.current) {
+    if (selectedSubcontrata && !selectedProyecto && proyectosCardRef.current) {
       setTimeout(() => {
         proyectosCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
       }, 150); // Small delay to allow for animation
     }
-  }, [selectedSubcontrata]);
+  }, [selectedSubcontrata, selectedProyecto]);
 
   useEffect(() => {
     // Scroll to worker validation when project is selected
@@ -92,6 +92,15 @@ export default function ReporteDiarioPage() {
     const trabajadoresConEstado = data.map(t => ({ ...t, asistencia: true, horas: 8 }));
     setTrabajadores(trabajadoresConEstado);
     setIsLoadingTrabajadores(false);
+  };
+
+  const handleClearProyectoSelection = () => {
+    setSelectedProyecto('');
+    setTrabajadores([]);
+  };
+
+  const getSelectedProyectoName = () => {
+    return proyectos.find(p => p.id === selectedProyecto)?.nombre || '';
   };
 
   const handleTrabajadorChange = (trabajadorId: string, field: 'asistencia' | 'horas', value: boolean | number) => {
@@ -165,12 +174,12 @@ export default function ReporteDiarioPage() {
           {isLoadingSubcontratas ? (
             <Loader2 className="animate-spin h-8 w-8 text-primary" />
           ) : selectedSubcontrata ? (
-             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
                 <div className="flex items-center gap-3">
-                    <Building className="h-6 w-6 text-primary" />
-                    <p className="text-lg font-semibold">{getSelectedSubcontrataName()}</p>
+                    <Building className="h-5 w-5 text-primary" />
+                    <p className="text-md font-semibold">{getSelectedSubcontrataName()}</p>
                 </div>
-                <Button variant="outline" onClick={handleClearSelection}>Cambiar</Button>
+                <Button variant="outline" size="sm" onClick={handleClearSelection}>Cambiar</Button>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -195,19 +204,30 @@ export default function ReporteDiarioPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-3">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">2</div>
-              <span>Selecciona el Proyecto</span>
+              <span>{selectedProyecto ? 'Proyecto Seleccionado' : 'Selecciona el Proyecto'}</span>
             </CardTitle>
+            {!selectedProyecto && (
+                <CardDescription>Elige el proyecto que vas a reportar hoy.</CardDescription>
+            )}
           </CardHeader>
           <CardContent>
             {isLoadingProyectos ? (
               <Loader2 className="animate-spin h-8 w-8 text-primary" />
+            ) : selectedProyecto ? (
+                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg border">
+                    <div className="flex items-center gap-3">
+                        <HardHat className="h-5 w-5 text-primary" />
+                        <p className="text-md font-semibold">{getSelectedProyectoName()}</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleClearProyectoSelection}>Cambiar</Button>
+                </div>
             ) : (
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {proyectos.length > 0 ? (
                   proyectos.map(p => (
                     <Button
                       key={p.id}
-                      variant={selectedProyecto === p.id ? 'default' : 'outline'}
+                      variant={'outline'}
                       className="h-20 text-lg justify-start p-4"
                       onClick={() => handleSelectProyecto(p.id)}
                     >
