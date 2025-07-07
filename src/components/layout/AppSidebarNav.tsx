@@ -89,23 +89,6 @@ export function AppSidebarNav() {
           </Button>
         );
       })}
-       <div className="pt-6 mt-6 border-t border-sidebar-border">
-          <Button
-            asChild
-            variant="ghost"
-            className={cn(
-              "w-full justify-start text-base h-12",
-              pathname === '/dashboard' ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent/20",
-              "transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
-            )}
-            title="Cambiar de Rol"
-          >
-             <Link href="/dashboard">
-                <Shield className="mr-3 h-5 w-5 shrink-0" />
-                <span className="truncate">Cambiar de Rol</span>
-              </Link>
-          </Button>
-       </div>
     </nav>
   );
 }
