@@ -1,69 +1,111 @@
 // src/lib/actions/app.actions.ts
 'use server';
 
+import { db } from '@/lib/firebase/firebase';
+import { collection, doc, getDoc, getDocs, query, where, addDoc, updateDoc, writeBatch, arrayUnion, arrayRemove, Timestamp, serverTimestamp, setDoc, orderBy } from 'firebase/firestore';
 import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador, ReporteDiario, Constructora } from '../types';
-import { mockProyectos, mockSubcontratas, mockTrabajadores, mockReportesDiarios, mockConstructoras } from '@/lib/mockData';
 import { v4 as uuidv4 } from 'uuid';
+
+async function getDocsWithParsedDates<T>(querySnapshot: any, dateFields: string[]): Promise<T[]> {
+    const results: T[] = [];
+    querySnapshot.forEach((docSnap: any) => {
+        const data = docSnap.data();
+        dateFields.forEach(field => {
+            if (data[field] instanceof Timestamp) {
+                data[field] = data[field].toDate();
+            }
+        });
+        results.push({ id: docSnap.id, ...data } as T);
+    });
+    return results;
+}
 
 // --- Data Fetching ---
 
 export async function getConstructoras(): Promise<Constructora[]> {
-  console.log("ACTION: getConstructoras (mocked)");
-  await new Promise(resolve => setTimeout(resolve, 200));
-  return mockConstructoras;
+  console.log("ACTION: getConstructoras (Firestore)");
+  const q = query(collection(db, "constructoras"), orderBy("nombre"));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Constructora));
 }
 
 export async function getSubcontratas(): Promise<Subcontrata[]> {
-  console.log("ACTION: getSubcontratas (mocked)");
-  await new Promise(resolve => setTimeout(resolve, 200));
-  return mockSubcontratas;
+  console.log("ACTION: getSubcontratas (Firestore)");
+  const q = query(collection(db, "subcontratas"), orderBy("nombre"));
+  const querySnapshot = await getDocs(q);
+  return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Subcontrata));
 }
 
 export async function getProyectosByConstructora(constructoraId: string): Promise<Proyecto[]> {
-    console.log(`ACTION: getProyectosByConstructora for ${constructoraId} (mocked)`);
-    await new Promise(resolve => setTimeout(resolve, 300));
-    // This logic assumes a subcontrata can only work for one constructora on a given project.
-    // We find the subcontratas that list this constructora as a client, then find their projects.
-    const subcontratasAsociadas = mockSubcontratas.filter(s => s.clientesConstructoraIds?.includes(constructoraId));
-    const subcontrataIds = subcontratasAsociadas.map(s => s.id);
-    return mockProyectos.filter(p => subcontrataIds.includes(p.subcontrataId) && p.constructoraId === constructoraId);
+    console.log(`ACTION: getProyectosByConstructora for ${constructoraId} (Firestore)`);
+    const q = query(collection(db, "proyectos"), where("constructoraId", "==", constructoraId), orderBy("nombre"));
+    const querySnapshot = await getDocs(q);
+    return await getDocsWithParsedDates<Proyecto>(querySnapshot, ['fechaInicio', 'fechaFin']);
 }
 
 export async function getProyectosBySubcontrata(subcontrataId: string): Promise<Proyecto[]> {
-  console.log(`ACTION: getProyectosBySubcontrata for ${subcontrataId} (mocked)`);
-  await new Promise(resolve => setTimeout(resolve, 300));
-  return mockProyectos.filter(p => p.subcontrataId === subcontrataId);
+  console.log(`ACTION: getProyectosBySubcontrata for ${subcontrataId} (Firestore)`);
+  const q = query(collection(db, "proyectos"), where("subcontrataId", "==", subcontrataId), orderBy("nombre"));
+  const querySnapshot = await getDocs(q);
+  return await getDocsWithParsedDates<Proyecto>(querySnapshot, ['fechaInicio', 'fechaFin']);
 }
 
 export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Trabajador[]> {
-    console.log(`ACTION: getTrabajadoresByProyecto for ${proyectoId} (mocked)`);
-    await new Promise(resolve => setTimeout(resolve, 300));
-    // The mock data has workers assigned directly to projects
-    return mockTrabajadores.filter(t => t.proyectosAsignados?.includes(proyectoId));
+    console.log(`ACTION: getTrabajadoresByProyecto for ${proyectoId} (Firestore)`);
+    const q = query(collection(db, "trabajadores"), where("proyectosAsignados", "array-contains", proyectoId), orderBy("nombre"));
+    const querySnapshot = await getDocs(q);
+    return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Trabajador));
 }
 
 export async function getReportesDiarios(proyectoId?: string, encargadoId?: string, subcontrataId?: string): Promise<ReporteDiario[]> {
-    console.log(`ACTION: getReportesDiarios (mocked) for proyectoId: ${proyectoId}, encargadoId: ${encargadoId}, subcontrataId: ${subcontrataId}`);
-    await new Promise(resolve => setTimeout(resolve, 400));
-    let reportes = mockReportesDiarios;
+    console.log(`ACTION: getReportesDiarios (Firestore) for proyectoId: ${proyectoId}, encargadoId: ${encargadoId}, subcontrataId: ${subcontrataId}`);
+    let reportesQuery = query(collection(db, "reportesDiarios"), orderBy("fecha", "desc"));
+
     if (proyectoId) {
-        reportes = reportes.filter(r => r.proyectoId === proyectoId);
+        reportesQuery = query(reportesQuery, where("proyectoId", "==", proyectoId));
     }
     if (encargadoId) {
-        reportes = reportes.filter(r => r.encargadoId === encargadoId);
+        reportesQuery = query(reportesQuery, where("encargadoId", "==", encargadoId));
     }
+    
+    const querySnapshot = await getDocs(reportesQuery);
+    let reportes = await getDocsWithParsedDates<ReporteDiario>(querySnapshot, ['fecha', 'timestamp', 'validacion.encargado.timestamp', 'validacion.subcontrata.timestamp', 'validacion.constructora.timestamp']);
+
     if (subcontrataId) {
-        const proyectosDeSub = mockProyectos.filter(p => p.subcontrataId === subcontrataId).map(p => p.id);
-        reportes = reportes.filter(r => proyectosDeSub.includes(r.proyectoId));
+        const proyectosDeSubQuery = query(collection(db, "proyectos"), where("subcontrataId", "==", subcontrataId));
+        const proyectosSnapshot = await getDocs(proyectosDeSubQuery);
+        const proyectosDeSubIds = proyectosSnapshot.docs.map(doc => doc.id);
+        reportes = reportes.filter(r => proyectosDeSubIds.includes(r.proyectoId));
     }
+
     return reportes;
 }
 
+
 export async function getReporteDiarioById(reporteId: string): Promise<ReporteDiario | null> {
-    console.log(`ACTION: getReporteDiarioById for ${reporteId} (mocked)`);
-    await new Promise(resolve => setTimeout(resolve, 200));
-    const reporte = mockReportesDiarios.find(r => r.id === reporteId);
-    return reporte || null;
+    console.log(`ACTION: getReporteDiarioById for ${reporteId} (Firestore)`);
+    const docRef = doc(db, "reportesDiarios", reporteId);
+    const docSnap = await getDoc(docRef);
+
+    if (docSnap.exists()) {
+        const data = docSnap.data();
+        const dateFields = ['fecha', 'timestamp', 'validacion.encargado.timestamp', 'validacion.subcontrata.timestamp', 'validacion.constructora.timestamp'];
+        dateFields.forEach(field => {
+            const keys = field.split('.');
+            let current: any = data;
+            for (let i = 0; i < keys.length - 1; i++) {
+                if (current[keys[i]]) current = current[keys[i]];
+                else return;
+            }
+            const finalKey = keys[keys.length - 1];
+            if (current && current[finalKey] instanceof Timestamp) {
+                current[finalKey] = current[finalKey].toDate();
+            }
+        });
+        return { id: docSnap.id, ...data } as ReporteDiario;
+    } else {
+        return null;
+    }
 }
 
 // --- Data Mutation ---
@@ -74,13 +116,11 @@ export async function saveDailyReport(
   trabajadoresReporte: ReporteTrabajador[]
 ): Promise<{ success: boolean; message: string }> {
   
-  console.log("ACTION: saveDailyReport (simulated)");
-  console.log("Proyecto ID:", proyectoId);
-  console.log("Encargado ID:", encargadoId);
-  console.log("Reporte Data:", trabajadoresReporte);
+  console.log("ACTION: saveDailyReport (Firestore)");
+  const newReportId = `rep-${uuidv4()}`;
+  const newReportRef = doc(db, "reportesDiarios", newReportId);
 
-  const newReport: ReporteDiario = {
-      id: `rep-${uuidv4()}`,
+  const newReport: Omit<ReporteDiario, 'id'> = {
       proyectoId,
       fecha: new Date(),
       trabajadores: trabajadoresReporte,
@@ -98,121 +138,118 @@ export async function saveDailyReport(
           reporteOriginal: null,
       }
   };
-  mockReportesDiarios.push(newReport);
-  
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return { success: true, message: 'Reporte diario guardado (simulación) con éxito.' };
+
+  await setDoc(newReportRef, newReport);
+  return { success: true, message: 'Reporte diario guardado en Firestore con éxito.' };
 }
 
 export async function updateDailyReport(
   reporteId: string,
   trabajadoresReporte: ReporteTrabajador[]
 ): Promise<{ success: boolean; message: string, reporte?: ReporteDiario }> {
-  console.log(`ACTION: updateDailyReport for ${reporteId} (mocked)`);
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const reporteIndex = mockReportesDiarios.findIndex(r => r.id === reporteId);
+  console.log(`ACTION: updateDailyReport for ${reporteId} (Firestore)`);
+  const reportRef = doc(db, "reportesDiarios", reporteId);
+  const reportSnap = await getDoc(reportRef);
 
-  if (reporteIndex === -1) {
+  if (!reportSnap.exists()) {
     return { success: false, message: 'Reporte no encontrado para actualizar.' };
   }
 
-  const originalReporte = mockReportesDiarios[reporteIndex];
-
-  // Prevent editing if already validated by others
+  const originalReporte = reportSnap.data() as ReporteDiario;
   if (originalReporte.validacion.subcontrata.validado || originalReporte.validacion.constructora.validado) {
     return { success: false, message: 'No se puede modificar un reporte que ya ha sido validado por la subcontrata o constructora.' };
   }
 
-  // Update the report
-  originalReporte.trabajadores = trabajadoresReporte;
-  originalReporte.timestamp = new Date(); // Update timestamp on modification
+  await updateDoc(reportRef, {
+      trabajadores: trabajadoresReporte,
+      timestamp: serverTimestamp()
+  });
 
-  mockReportesDiarios[reporteIndex] = originalReporte;
-  
-  return { success: true, message: 'Reporte actualizado con éxito.', reporte: originalReporte };
+  const updatedReporte = await getReporteDiarioById(reporteId);
+  return { success: true, message: 'Reporte actualizado con éxito.', reporte: updatedReporte || undefined };
 }
 
 
 export async function saveFichaje(data: { trabajadorId: string; tipo: 'inicio' | 'fin' }): Promise<{ success: boolean; message: string }> {
-  console.log("ACTION: saveFichaje (simulated)");
-  console.log("Data:", data);
-  await new Promise(resolve => setTimeout(resolve, 500));
-  return { success: true, message: `Fichaje de ${data.tipo} guardado (simulación) con éxito.` };
+  console.log("ACTION: saveFichaje (Firestore)");
+  const newFichajeId = `fich-${uuidv4()}`;
+  const newFichajeRef = doc(db, "fichajes", newFichajeId);
+
+  await setDoc(newFichajeRef, {
+    trabajadorId: data.trabajadorId,
+    tipo: data.tipo,
+    timestamp: serverTimestamp()
+  });
+  
+  return { success: true, message: `Fichaje de ${data.tipo} guardado en Firestore con éxito.` };
 }
 
 export async function addTrabajadorToProyecto(proyectoId: string, subcontrataId: string, nombre: string, codigoAcceso: string): Promise<{success: boolean, message: string, trabajador?: Trabajador}> {
-    console.log(`ACTION: addTrabajadorToProyecto (simulated)`);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    
-    // Check if worker with same code already exists for this subcontrata
-    const existing = mockTrabajadores.find(t => t.codigoAcceso === codigoAcceso && t.subcontrataId === subcontrataId);
-    if(existing) {
-        // If worker exists, just add them to the project if not already there
-        if (!existing.proyectosAsignados?.includes(proyectoId)) {
-            existing.proyectosAsignados?.push(proyectoId);
-            return { success: true, message: "Trabajador existente añadido al proyecto.", trabajador: existing };
-        } else {
-             return { success: false, message: "Este trabajador ya existe y está asignado a este proyecto."};
-        }
+    console.log(`ACTION: addTrabajadorToProyecto (Firestore)`);
+    const trabajadoresRef = collection(db, "trabajadores");
+    const q = query(trabajadoresRef, where("codigoAcceso", "==", codigoAcceso), where("subcontrataId", "==", subcontrataId));
+    const querySnapshot = await getDocs(q);
+
+    if(!querySnapshot.empty) {
+        const existingDoc = querySnapshot.docs[0];
+        await updateDoc(existingDoc.ref, {
+            proyectosAsignados: arrayUnion(proyectoId)
+        });
+        const updatedTrabajador = (await getDoc(existingDoc.ref)).data() as Trabajador;
+        return { success: true, message: "Trabajador existente añadido al proyecto.", trabajador: {id: existingDoc.id, ...updatedTrabajador} };
     }
 
-    // Create a new worker
-    const newTrabajador: Trabajador = {
-        id: `trab-${uuidv4()}`,
+    const newTrabajadorId = `trab-${uuidv4()}`;
+    const newTrabajadorRef = doc(db, "trabajadores", newTrabajadorId);
+    const newTrabajador: Omit<Trabajador, 'id'> = {
         nombre,
         subcontrataId,
         codigoAcceso,
         proyectosAsignados: [proyectoId]
     };
-    mockTrabajadores.push(newTrabajador);
-    return { success: true, message: "Nuevo trabajador creado y asignado.", trabajador: newTrabajador };
+    await setDoc(newTrabajadorRef, newTrabajador);
+
+    return { success: true, message: "Nuevo trabajador creado y asignado.", trabajador: {id: newTrabajadorId, ...newTrabajador} };
 }
 
 export async function removeTrabajadorFromProyecto(proyectoId: string, trabajadorId: string): Promise<{success: boolean, message: string}> {
-    console.log(`ACTION: removeTrabajadorFromProyecto (simulated)`);
-    await new Promise(resolve => setTimeout(resolve, 500));
-    const trabajador = mockTrabajadores.find(t => t.id === trabajadorId);
-    if (trabajador && trabajador.proyectosAsignados) {
-        const index = trabajador.proyectosAsignados.indexOf(proyectoId);
-        if (index > -1) {
-            trabajador.proyectosAsignados.splice(index, 1);
-            return { success: true, message: "Trabajador eliminado del proyecto." };
-        }
-    }
-    return { success: false, message: "No se pudo encontrar al trabajador o no estaba asignado a este proyecto."};
+    console.log(`ACTION: removeTrabajadorFromProyecto (Firestore)`);
+    const trabajadorRef = doc(db, "trabajadores", trabajadorId);
+    await updateDoc(trabajadorRef, {
+        proyectosAsignados: arrayRemove(proyectoId)
+    });
+    return { success: true, message: "Trabajador eliminado del proyecto." };
 }
 
 export async function validateDailyReport(
   reporteId: string,
   role: 'subcontrata' | 'constructora'
 ): Promise<{ success: boolean; message: string; reporte?: ReporteDiario }> {
-  console.log(`ACTION: validateDailyReport for ${reporteId} by ${role} (simulated)`);
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
-  const reporteIndex = mockReportesDiarios.findIndex(r => r.id === reporteId);
+  console.log(`ACTION: validateDailyReport for ${reporteId} by ${role} (Firestore)`);
+  const reporteRef = doc(db, "reportesDiarios", reporteId);
+  const reporteSnap = await getDoc(reporteRef);
 
-  if (reporteIndex === -1) {
+  if (!reporteSnap.exists()) {
     return { success: false, message: 'Reporte no encontrado.' };
   }
   
-  const reporte = mockReportesDiarios[reporteIndex];
+  const reporte = reporteSnap.data() as ReporteDiario;
+  const updateData: any = {};
 
   if (role === 'subcontrata') {
     if (!reporte.validacion.encargado.validado) {
         return { success: false, message: 'El reporte debe ser validado primero por el Encargado.' };
     }
-    reporte.validacion.subcontrata.validado = true;
-    reporte.validacion.subcontrata.timestamp = new Date();
+    updateData['validacion.subcontrata'] = { validado: true, timestamp: new Date() };
   } else if (role === 'constructora') {
      if (!reporte.validacion.subcontrata.validado) {
         return { success: false, message: 'El reporte debe ser validado primero por la Subcontrata.' };
     }
-    reporte.validacion.constructora.validado = true;
-    reporte.validacion.constructora.timestamp = new Date();
+    updateData['validacion.constructora'] = { validado: true, timestamp: new Date() };
   }
 
-  mockReportesDiarios[reporteIndex] = reporte;
+  await updateDoc(reporteRef, updateData);
+  const updatedReporte = await getReporteDiarioById(reporteId);
 
-  return { success: true, message: `Reporte validado por ${role} con éxito.`, reporte };
+  return { success: true, message: `Reporte validado por ${role} con éxito.`, reporte: updatedReporte || undefined };
 }
