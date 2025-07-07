@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -5,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ReporteDiario, Proyecto, Subcontrata } from '@/lib/types';
 import { getReportesDiarios, getSubcontratas, getProyectosBySubcontrata } from '@/lib/actions/app.actions';
-import { Loader2, FileCheck, Check, X, Clock, User, Download, Edit, MessageSquare, Building, HardHat } from 'lucide-react';
+import { Loader2, FileCheck, Check, X, Clock, User, Download, Edit, MessageSquare, Building, HardHat, MapPin, Hash } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -60,17 +61,29 @@ export default function PartesEnviadosPage() {
     const subcontrataNombre = subcontrata?.nombre || "N/A";
 
     const doc = new jsPDF();
+    let currentY = 22;
 
     doc.setFontSize(18);
-    doc.text(`Reporte Diario de Trabajo - ObraLink`, 14, 22);
+    doc.text(`Reporte Diario de Trabajo - ObraLink`, 14, currentY);
+    currentY += 8;
+
     doc.setFontSize(11);
-    doc.text(`Proyecto: ${proyectoNombre}`, 14, 30);
-    doc.text(`Subcontrata: ${subcontrataNombre}`, 14, 36);
-    doc.text(`Fecha: ${format(new Date(reporte.fecha), "PPPP", { locale: es })}`, 14, 42);
-    doc.text(`Enviado por (Encargado ID): ${reporte.encargadoId}`, 14, 48);
+    doc.text(`Proyecto: ${proyectoNombre}`, 14, currentY);
+    currentY += 6;
+    doc.text(`ID Obra: ${reporte.proyectoId}`, 14, currentY);
+    currentY += 6;
+    if (proyecto?.direccion) {
+        doc.text(`Dirección: ${proyecto.direccion}`, 14, currentY);
+        currentY += 6;
+    }
+    doc.text(`Subcontrata: ${subcontrataNombre}`, 14, currentY);
+    currentY += 6;
+    doc.text(`Fecha: ${format(new Date(reporte.fecha), "PPPP", { locale: es })}`, 14, currentY);
+    currentY += 6;
+    doc.text(`Enviado por (Encargado ID): ${reporte.encargadoId}`, 14, currentY);
 
     (doc as any).autoTable({
-        startY: 56,
+        startY: currentY + 8,
         head: [['Trabajador', 'Asistencia', 'Horas Reportadas']],
         body: reporte.trabajadores.map(t => [
             t.nombre,
@@ -147,6 +160,10 @@ export default function PartesEnviadosPage() {
                       <div>
                         <p className="font-bold text-lg flex items-center gap-2 capitalize"><HardHat className="h-5 w-5 text-accent"/>{proyecto?.nombre || 'Proyecto Desconocido'}</p>
                         <p className="text-sm text-muted-foreground flex items-center gap-2"><Building className="h-4 w-4"/>{subcontrata?.nombre || 'Subcontrata Desconocida'}</p>
+                        <p className="text-xs text-muted-foreground mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1">
+                            <span className="flex items-center gap-1.5"><MapPin className="h-3 w-3"/> {proyecto?.direccion || 'Dirección no especificada'}</span>
+                            <span className="flex items-center gap-1.5"><Hash className="h-3 w-3"/> ID: {proyecto?.id}</span>
+                        </p>
                       </div>
                     </div>
                     <div className="flex items-center gap-4 self-start sm:self-center">
