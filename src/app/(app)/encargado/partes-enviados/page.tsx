@@ -6,7 +6,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ReporteDiario, Proyecto, Subcontrata } from '@/lib/types';
 import { getReportesDiarios, getSubcontratas, getProyectosBySubcontrata } from '@/lib/actions/app.actions';
-import { Loader2, FileCheck, Check, X, Clock, User, Download, Edit, MessageSquare, Building, HardHat, MapPin, Hash } from 'lucide-react';
+import { Loader2, FileCheck, Check, Clock, User, Download, Edit, MessageSquare, Building, HardHat, MapPin, Hash } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -168,7 +168,10 @@ export default function PartesEnviadosPage() {
                     </div>
                     <div className="flex items-center gap-4 self-start sm:self-center">
                        <p className="text-sm text-muted-foreground w-28 text-right">{format(new Date(reporte.fecha), "PPP", { locale: es })}</p>
-                      <Badge style={{backgroundColor: status.color}} className="text-white min-w-[120px] justify-center text-center">{status.text}</Badge>
+                       <div className="flex flex-col items-end gap-1">
+                          <Badge style={{backgroundColor: status.color}} className="text-white min-w-[120px] justify-center text-center">{status.text}</Badge>
+                          {reporte.modificacionJefeObra?.modificado && <Badge variant="destructive" className="mt-1">Modificado</Badge>}
+                       </div>
                     </div>
                   </div>
                 </AccordionTrigger>
@@ -204,6 +207,15 @@ export default function PartesEnviadosPage() {
                         <div>
                             <h4 className="font-semibold text-md mb-2 flex items-center gap-2"><MessageSquare className="h-4 w-4"/>Comentarios Adicionales</h4>
                             <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 p-3 rounded-md border">{reporte.comentarios}</p>
+                        </div>
+                    )}
+                     
+                    {reporte.modificacionJefeObra?.modificado && (
+                        <div>
+                            <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-orange-600"><Edit className="h-4 w-4"/>Historial de Modificación</h4>
+                            <div className="text-sm text-muted-foreground bg-orange-500/10 p-3 rounded-md border border-orange-500/20">
+                                <p>Este reporte fue modificado por el jefe de obra (ID: {reporte.modificacionJefeObra.jefeObraId}) el {reporte.modificacionJefeObra.timestamp ? format(new Date(reporte.modificacionJefeObra.timestamp), 'Pp', {locale: es}) : 'fecha desconocida'}.</p>
+                            </div>
                         </div>
                     )}
                     

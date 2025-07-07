@@ -10,7 +10,6 @@ import { useToast } from '@/hooks/use-toast';
 import { getReporteDiarioById, getTrabajadoresByProyecto, updateDailyReport } from '@/lib/actions/app.actions';
 import type { ReporteTrabajador, Trabajador } from '@/lib/types';
 import { Loader2, Save, User, Plus, Minus, ArrowLeft, AlertTriangle } from 'lucide-react';
-import Link from 'next/link';
 
 interface TrabajadorConEstado extends Trabajador {
   asistencia: boolean;
