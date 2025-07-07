@@ -22,7 +22,7 @@ function ReporteItem({ reporte }: { reporte: ReporteDiario }) {
     const status = getValidationStatus(reporte.validacion);
     
     return (
-        <Card className="p-3">
+        <Card className="p-3 bg-card hover:bg-muted/50 transition-colors">
             <div className="flex justify-between items-center">
                 <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-primary"/>
@@ -32,10 +32,10 @@ function ReporteItem({ reporte }: { reporte: ReporteDiario }) {
                     <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
                     {reporte.modificacionJefeObra?.modificado && <Badge variant="destructive">Modificado</Badge>}
                 </div>
-                <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)}>Ver Detalles</Button>
+                <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)}>{isOpen ? 'Ocultar' : 'Ver Detalles'}</Button>
             </div>
             {isOpen && (
-                <div className="mt-4 p-4 bg-background rounded-md border space-y-3">
+                <div className="mt-4 p-4 bg-background rounded-md border space-y-3 animate-fade-in-up">
                    <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/>Fecha: <span className="font-normal">{format(new Date(reporte.fecha), 'PPPP', { locale: es })}</span></p>
                    <p className="font-semibold flex items-center gap-2"><UserCheck className="h-4 w-4"/>Reportado por: <span className="font-normal">{reporte.encargadoId} (ID)</span></p>
                    <div className="space-y-1">
@@ -99,12 +99,10 @@ export default function ConstructoraPartesPage() {
 
   return (
     <div className="space-y-6">
-      <Card className="animate-fade-in-down">
-        <CardHeader>
-          <CardTitle>Panel de la Constructora</CardTitle>
-          <CardDescription>Visualiza los reportes de las subcontratas por proyecto.</CardDescription>
-        </CardHeader>
-      </Card>
+      <div className="animate-fade-in-down">
+        <h1 className="text-3xl font-bold font-headline text-primary">Seguimiento de Subcontratas</h1>
+        <p className="text-muted-foreground mt-1">Visualiza los reportes de las subcontratas por proyecto.</p>
+      </div>
 
       <Accordion type="single" collapsible className="w-full space-y-4">
         {subcontratas.map(sub => (
@@ -122,9 +120,9 @@ export default function ConstructoraPartesPage() {
                   {(proyectosPorSub[sub.id] || []).length > 0 ? (
                     proyectosPorSub[sub.id].map(proy => (
                       <Card key={proy.id} className="p-4 bg-muted/50">
-                        <p className="font-bold flex items-center gap-2"><HardHat className="h-5 w-5 text-accent"/>{proy.nombre}</p>
-                        <div className="mt-2 space-y-2 pl-4 border-l-2 border-accent/50 ml-2">
-                          <h4 className="font-semibold mt-3">Reportes Diarios Recibidos</h4>
+                        <p className="font-bold flex items-center gap-2 text-base"><HardHat className="h-5 w-5 text-accent"/>{proy.nombre}</p>
+                        <div className="mt-2 space-y-3 pl-4 border-l-2 border-accent/50 ml-2">
+                          <h4 className="font-semibold mt-3 text-muted-foreground">Reportes Diarios Recibidos</h4>
                            {(reportesPorProyecto[proy.id] || []).length > 0 ? (
                              reportesPorProyecto[proy.id].map(rep => (
                                 <ReporteItem key={rep.id} reporte={rep} />

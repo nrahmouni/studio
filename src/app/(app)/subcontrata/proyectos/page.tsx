@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Building, Trash2, UserPlus, HardHat } from 'lucide-react';
+import { Loader2, Building, Trash2, UserPlus, HardHat, User, CheckCircle } from 'lucide-react';
 import { getConstructoras, getProyectosByConstructora, getTrabajadoresByProyecto, removeTrabajadorFromProyecto } from '@/lib/actions/app.actions';
 import type { Constructora, Proyecto, Trabajador } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -16,14 +16,17 @@ export default function GestionProyectosPage() {
   const [selectedConstructora, setSelectedConstructora] = useState<Constructora | null>(null);
   const [selectedProyecto, setSelectedProyecto] = useState<Proyecto | null>(null);
 
+  const [loadingConstructoras, setLoadingConstructoras] = useState(true);
   const [loadingProyectos, setLoadingProyectos] = useState(false);
   const [loadingTrabajadores, setLoadingTrabajadores] = useState(false);
   const { toast } = useToast();
 
   useEffect(() => {
     const fetchConstructoras = async () => {
+      setLoadingConstructoras(true);
       const data = await getConstructoras();
       setConstructoras(data);
+      setLoadingConstructoras(false);
     };
     fetchConstructoras();
   }, []);
@@ -32,6 +35,7 @@ export default function GestionProyectosPage() {
     setSelectedConstructora(constructora);
     setSelectedProyecto(null);
     setTrabajadores([]);
+    setProyectos([]);
     setLoadingProyectos(true);
     const proyData = await getProyectosByConstructora(constructora.id);
     setProyectos(proyData);
@@ -40,6 +44,7 @@ export default function GestionProyectosPage() {
 
   const handleSelectProyecto = async (proyecto: Proyecto) => {
     setSelectedProyecto(proyecto);
+    setTrabajadores([]);
     setLoadingTrabajadores(true);
     const trabData = await getTrabajadoresByProyecto(proyecto.id);
     setTrabajadores(trabData);
@@ -62,75 +67,113 @@ export default function GestionProyectosPage() {
   }, []);
 
   return (
-    <>
-      <h1 className="text-3xl font-bold font-headline text-primary mb-4">Gestión de Proyectos y Personal</h1>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        {/* Columna 1: Constructoras */}
-        <Card>
-          <CardHeader>
-            <CardTitle>1. Clientes (Constructoras)</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            {constructoras.map(c => (
-              <Button
-                key={c.id}
-                variant={selectedConstructora?.id === c.id ? "secondary" : "outline"}
-                className="w-full justify-start"
-                onClick={() => handleSelectConstructora(c)}
-              >
-                <Building className="mr-2 h-4 w-4"/> {c.nombre}
-              </Button>
-            ))}
-          </CardContent>
-        </Card>
-        
-        {/* Columna 2: Proyectos */}
-        <Card>
-          <CardHeader>
-            <CardTitle>2. Proyectos</CardTitle>
-            {!selectedConstructora && <CardDescription>Selecciona un cliente para ver sus proyectos.</CardDescription>}
-          </CardHeader>
-          <CardContent className="space-y-2">
-              {loadingProyectos && <div className="text-center p-4"><Loader2 className="animate-spin mx-auto"/></div>}
-              {!loadingProyectos && proyectos.map(p => (
-                  <Button
-                      key={p.id}
-                      variant={selectedProyecto?.id === p.id ? "secondary" : "outline"}
-                      className="w-full justify-start"
-                      onClick={() => handleSelectProyecto(p)}
-                  >
-                      <HardHat className="mr-2 h-4 w-4"/> {p.nombre}
-                  </Button>
-              ))}
-          </CardContent>
-        </Card>
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold font-headline text-primary">Gestión de Proyectos y Personal</h1>
+        <p className="text-muted-foreground mt-1">Asigna trabajadores a los proyectos de tus clientes.</p>
+      </div>
 
-        {/* Columna 3: Trabajadores */}
-        <Card>
+      {/* Step 1: Select Constructora */}
+      <Card className="animate-fade-in-up">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">1</div>
+            <span>Selecciona un Cliente (Constructora)</span>
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {loadingConstructoras ? (
+            <Loader2 className="animate-spin h-8 w-8 text-primary" />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {constructoras.map(c => (
+                <Button
+                  key={c.id}
+                  variant={selectedConstructora?.id === c.id ? 'default' : 'outline'}
+                  className="h-20 text-lg justify-start p-4"
+                  onClick={() => handleSelectConstructora(c)}
+                >
+                  <Building className="mr-4 h-6 w-6"/> {c.nombre}
+                </Button>
+              ))}
+            </div>
+          )}
+        </CardContent>
+      </Card>
+
+      {/* Step 2: Select Proyecto */}
+      {selectedConstructora && (
+        <Card className="animate-fade-in-up">
           <CardHeader>
-            <CardTitle>3. Trabajadores Asignados</CardTitle>
-            {!selectedProyecto && <CardDescription>Selecciona un proyecto para ver sus trabajadores.</CardDescription>}
+            <CardTitle className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">2</div>
+              <span>Selecciona el Proyecto</span>
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-2">
-              {loadingTrabajadores && <div className="text-center p-4"><Loader2 className="animate-spin mx-auto"/></div>}
-              {!loadingTrabajadores && trabajadores.map(t => (
-                  <div key={t.id} className="flex items-center justify-between p-2 rounded-md hover:bg-muted">
-                      <span>{t.nombre}</span>
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => handleRemoveTrabajador(t.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500"/>
+          <CardContent>
+            {loadingProyectos ? (
+              <Loader2 className="animate-spin h-8 w-8 text-primary" />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {proyectos.length > 0 ? (
+                  proyectos.map(p => (
+                    <Button
+                      key={p.id}
+                      variant={selectedProyecto?.id === p.id ? 'default' : 'outline'}
+                      className="h-20 text-lg justify-start p-4"
+                      onClick={() => handleSelectProyecto(p)}
+                    >
+                      <HardHat className="mr-4 h-6 w-6"/> {p.nombre}
+                    </Button>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground text-center py-4">No hay proyectos para este cliente.</p>
+                )}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* Step 3: Manage Trabajadores */}
+      {selectedProyecto && (
+         <Card className="animate-fade-in-up">
+           <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-accent-foreground font-bold text-lg">3</div>
+              <span>Gestiona los Trabajadores Asignados</span>
+            </CardTitle>
+            <CardDescription>Añade o elimina personal para el proyecto: {selectedProyecto.nombre}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {loadingTrabajadores ? (
+              <div className="text-center p-8"><Loader2 className="animate-spin h-8 w-8 mx-auto text-primary" /></div>
+            ) : (
+              <div className="space-y-3">
+                {trabajadores.map(t => (
+                  <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+                      <span className="flex items-center gap-3 text-lg"><User className="h-5 w-5 text-muted-foreground"/> {t.nombre}</span>
+                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleRemoveTrabajador(t.id)}>
+                          <Trash2 className="h-5 w-5 text-red-500 hover:text-red-700"/>
+                          <span className="sr-only">Eliminar</span>
                       </Button>
                   </div>
-              ))}
-              {selectedProyecto && !loadingTrabajadores && (
-                  <AddTrabajadorDialog proyecto={selectedProyecto} onTrabajadorAdded={onTrabajadorAdded}>
-                      <Button variant="default" className="w-full mt-4">
-                          <UserPlus className="mr-2 h-4 w-4"/> Añadir Trabajador
-                      </Button>
-                  </AddTrabajadorDialog>
-              )}
+                ))}
+                
+                {trabajadores.length === 0 && (
+                    <p className="text-muted-foreground text-center py-4">No hay trabajadores asignados a este proyecto todavía.</p>
+                )}
+
+                <AddTrabajadorDialog proyecto={selectedProyecto} onTrabajadorAdded={onTrabajadorAdded}>
+                    <Button variant="default" className="w-full mt-6 text-lg py-6 bg-accent text-accent-foreground hover:bg-accent/90">
+                        <UserPlus className="mr-2 h-5 w-5"/> Añadir Nuevo Trabajador
+                    </Button>
+                </AddTrabajadorDialog>
+              </div>
+            )}
           </CardContent>
-        </Card>
-      </div>
-    </>
+         </Card>
+      )}
+    </div>
   );
 }

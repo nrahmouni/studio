@@ -34,17 +34,21 @@ export default function FichajePage() {
     };
 
     return (
-        <>
-            <h1 className="text-3xl font-bold font-headline text-primary mb-4">Mi Fichaje</h1>
-            <div className="flex items-center justify-center">
-                <Card className="w-full max-w-sm text-center animate-fade-in-up">
+        <div className="space-y-6">
+             <div className="animate-fade-in-down">
+                <h1 className="text-3xl font-bold font-headline text-primary">Mi Fichaje</h1>
+                <p className="text-muted-foreground mt-1">Registra tu entrada y salida de la jornada.</p>
+             </div>
+            
+            <div className="flex items-center justify-center pt-8">
+                <Card className="w-full max-w-sm text-center animate-fade-in-up shadow-lg">
                     <CardHeader>
                         <CardTitle>Registro de Jornada</CardTitle>
-                        <CardDescription>Pulsa el botón para registrar tu hora de inicio o fin.</CardDescription>
+                        <CardDescription>Pulsa el botón correspondiente para registrar tu hora de inicio o fin.</CardDescription>
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4 p-6">
                         <Button 
-                            className="h-24 text-2xl bg-green-600 hover:bg-green-700 text-white" 
+                            className="h-28 text-2xl bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-lg transform hover:scale-105 transition-transform" 
                             onClick={() => handleFichaje('inicio')}
                             disabled={isSubmitting || status === 'in'}
                         >
@@ -52,7 +56,7 @@ export default function FichajePage() {
                             Registrar INICIO
                         </Button>
                         <Button 
-                            className="h-24 text-2xl bg-red-600 hover:bg-red-700 text-white" 
+                            className="h-28 text-2xl bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg transform hover:scale-105 transition-transform"
                             onClick={() => handleFichaje('fin')}
                             disabled={isSubmitting || status === 'out'}
                         >
@@ -62,6 +66,6 @@ export default function FichajePage() {
                     </CardContent>
                 </Card>
             </div>
-        </>
+        </div>
     );
 }
