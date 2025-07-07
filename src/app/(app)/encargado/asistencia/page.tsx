@@ -6,8 +6,8 @@ import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getProyectosBySubcontrata, getTrabajadoresByProyecto, getSubcontratas, saveAttendanceRecord } from '@/lib/actions/app.actions';
-import type { Proyecto, Trabajador } from '@/lib/types';
-import { Loader2, User, Save, ClipboardCheck, HardHat } from 'lucide-react';
+import type { Proyecto, Trabajador, Subcontrata } from '@/lib/types';
+import { Loader2, User, Save, ClipboardCheck, HardHat, Building } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
@@ -17,30 +17,38 @@ interface TrabajadorConAsistencia extends Trabajador {
 
 export default function AsistenciaPage() {
   const { toast } = useToast();
+  const [subcontratas, setSubcontratas] = useState<Subcontrata[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [trabajadores, setTrabajadores] = useState<TrabajadorConAsistencia[]>([]);
   
+  const [selectedSubcontrata, setSelectedSubcontrata] = useState<string>('');
   const [selectedProyecto, setSelectedProyecto] = useState<string>('');
   
-  const [isLoadingProyectos, setIsLoadingProyectos] = useState(true);
+  const [isLoadingSubcontratas, setIsLoadingSubcontratas] = useState(true);
+  const [isLoadingProyectos, setIsLoadingProyectos] = useState(false);
   const [isLoadingTrabajadores, setIsLoadingTrabajadores] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
+  const proyectosCardRef = useRef<HTMLDivElement>(null);
   const trabajadoresCardRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    const fetchProyectos = async () => {
-      setIsLoadingProyectos(true);
-      // For the mock, we'll fetch all projects from all subcontratas
-      const subs = await getSubcontratas();
-      const proyPromises = subs.map(s => getProyectosBySubcontrata(s.id));
-      const proyArrays = await Promise.all(proyPromises);
-      const allProyectos = proyArrays.flat();
-      setProyectos(allProyectos);
-      setIsLoadingProyectos(false);
+    const fetchSubcontratas = async () => {
+      setIsLoadingSubcontratas(true);
+      const data = await getSubcontratas();
+      setSubcontratas(data);
+      setIsLoadingSubcontratas(false);
     };
-    fetchProyectos();
+    fetchSubcontratas();
   }, []);
+
+  useEffect(() => {
+    if (selectedSubcontrata && !selectedProyecto && proyectosCardRef.current) {
+      setTimeout(() => {
+        proyectosCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }, 150);
+    }
+  }, [selectedSubcontrata, selectedProyecto]);
 
   useEffect(() => {
     if (selectedProyecto && trabajadoresCardRef.current) {
@@ -49,6 +57,29 @@ export default function AsistenciaPage() {
         }, 150);
     }
   }, [selectedProyecto]);
+
+  const handleSelectSubcontrata = async (subcontrataId: string) => {
+    setSelectedSubcontrata(subcontrataId);
+    setSelectedProyecto('');
+    setProyectos([]);
+    setTrabajadores([]);
+    setIsLoadingProyectos(true);
+    const data = await getProyectosBySubcontrata(subcontrataId);
+    setProyectos(data);
+    setIsLoadingProyectos(false);
+  };
+  
+  const handleClearSelection = () => {
+    setSelectedSubcontrata('');
+    setSelectedProyecto('');
+    setProyectos([]);
+    setTrabajadores([]);
+  };
+
+  const getSelectedSubcontrataName = () => {
+    return subcontratas.find(s => s.id === selectedSubcontrata)?.nombre || '';
+  };
+
 
   const handleSelectProyecto = async (proyectoId: string) => {
     setSelectedProyecto(proyectoId);
@@ -61,7 +92,7 @@ export default function AsistenciaPage() {
     setIsLoadingTrabajadores(false);
   };
 
-  const handleClearSelection = () => {
+  const handleClearProyectoSelection = () => {
     setSelectedProyecto('');
     setTrabajadores([]);
   };
@@ -107,14 +138,15 @@ export default function AsistenciaPage() {
           Registra la asistencia para hoy, {format(new Date(), 'PPPP', { locale: es })}.
         </p>
       </div>
-
+      
+      {/* Step 1: Select Subcontrata */}
       <Card className="animate-fade-in-up transition-all duration-300">
-        { selectedProyecto ? (
+        { selectedSubcontrata ? (
             <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">1</div>
-                    <HardHat className="h-5 w-5 text-primary" />
-                    <p className="text-md font-semibold">{getSelectedProyectoName()}</p>
+                    <Building className="h-5 w-5 text-primary" />
+                    <p className="text-md font-semibold">{getSelectedSubcontrataName()}</p>
                 </div>
                 <Button variant="outline" size="sm" onClick={handleClearSelection}>Cambiar</Button>
             </div>
@@ -123,24 +155,25 @@ export default function AsistenciaPage() {
                 <CardHeader>
                     <CardTitle className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">1</div>
-                        <span>Selecciona el Proyecto</span>
+                        <span>Selecciona Empresa Subcontratada</span>
                     </CardTitle>
+                    <CardDescription>Elige la empresa para la que vas a registrar la asistencia.</CardDescription>
                 </CardHeader>
                 <CardContent>
-                {isLoadingProyectos ? (
+                {isLoadingSubcontratas ? (
                     <Loader2 className="animate-spin h-8 w-8 text-primary" />
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                        {proyectos.map(p => (
+                    {subcontratas.map(s => (
                         <Button
-                            key={p.id}
-                            variant={'outline'}
-                            className="h-20 text-lg justify-start p-4"
-                            onClick={() => handleSelectProyecto(p.id)}
+                        key={s.id}
+                        variant={'outline'}
+                        className="h-20 text-lg justify-start p-4"
+                        onClick={() => handleSelectSubcontrata(s.id)}
                         >
-                            <HardHat className="mr-4 h-6 w-6"/> {p.nombre}
+                        <Building className="mr-4 h-6 w-6"/> {s.nombre}
                         </Button>
-                        ))}
+                    ))}
                     </div>
                 )}
                 </CardContent>
@@ -148,11 +181,59 @@ export default function AsistenciaPage() {
         )}
       </Card>
 
+      {/* Step 2: Select Proyecto */}
+      {selectedSubcontrata && (
+        <Card ref={proyectosCardRef} className="animate-fade-in-up">
+            { selectedProyecto ? (
+                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
+                    <div className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">2</div>
+                        <HardHat className="h-5 w-5 text-primary" />
+                        <p className="text-md font-semibold">{getSelectedProyectoName()}</p>
+                    </div>
+                    <Button variant="outline" size="sm" onClick={handleClearProyectoSelection}>Cambiar</Button>
+                </div>
+            ) : (
+                <>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-3">
+                        <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">2</div>
+                        <span>Selecciona el Proyecto</span>
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        {isLoadingProyectos ? (
+                        <Loader2 className="animate-spin h-8 w-8 text-primary" />
+                        ) : (
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            {proyectos.length > 0 ? (
+                            proyectos.map(p => (
+                                <Button
+                                key={p.id}
+                                variant={'outline'}
+                                className="h-20 text-lg justify-start p-4"
+                                onClick={() => handleSelectProyecto(p.id)}
+                                >
+                                <HardHat className="mr-4 h-6 w-6"/> {p.nombre}
+                                </Button>
+                            ))
+                            ) : (
+                            <p className="text-muted-foreground">No hay proyectos para esta subcontrata.</p>
+                            )}
+                        </div>
+                        )}
+                    </CardContent>
+                </>
+            )}
+        </Card>
+      )}
+
+      {/* Step 3: Register Attendance */}
       {selectedProyecto && (
          <Card ref={trabajadoresCardRef} className="animate-fade-in-up">
            <CardHeader>
             <CardTitle className="flex items-center gap-3">
-                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-accent-foreground font-bold text-lg">2</div>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-accent-foreground font-bold text-lg">3</div>
                 <span>Registrar Asistencia en "{getSelectedProyectoName()}"</span>
             </CardTitle>
             <CardDescription>Activa el interruptor para los trabajadores que han asistido hoy.</CardDescription>
