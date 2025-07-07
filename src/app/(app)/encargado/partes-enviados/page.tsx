@@ -1,14 +1,18 @@
 'use client';
 import { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ReporteDiario } from '@/lib/types';
 import { getReportesDiarios } from '@/lib/actions/app.actions';
-import { Loader2, FileCheck, Check, X, Clock, User } from 'lucide-react';
+import { Loader2, FileCheck, Check, X, Clock, User, Download, Edit } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import jsPDF from 'jspdf';
+import 'jspdf-autotable';
+
 
 export default function PartesEnviadosPage() {
   const [reportes, setReportes] = useState<ReporteDiario[]>([]);
@@ -34,6 +38,58 @@ export default function PartesEnviadosPage() {
     return {text: "Borrador", color: "bg-gray-400"};
   }
 
+  const generatePDF = (reporte: ReporteDiario) => {
+    const doc = new jsPDF();
+    const proyectoNombre = reporte.proyectoId.replace('proy-', '').replace(/-/g, ' ');
+
+    // Title
+    doc.setFontSize(18);
+    doc.text(`Reporte Diario de Trabajo - ObraLink`, 14, 22);
+    doc.setFontSize(11);
+    doc.text(`Proyecto: ${proyectoNombre}`, 14, 30);
+    doc.text(`Fecha: ${format(new Date(reporte.fecha), "PPPP", { locale: es })}`, 14, 36);
+    doc.text(`Enviado por (Encargado ID): ${reporte.encargadoId}`, 14, 42);
+
+    // Table
+    (doc as any).autoTable({
+        startY: 50,
+        head: [['Trabajador', 'Asistencia', 'Horas Reportadas']],
+        body: reporte.trabajadores.map(t => [
+            t.nombre,
+            t.asistencia ? 'Sí' : 'No',
+            t.asistencia ? `${t.horas}h` : 'N/A'
+        ]),
+        theme: 'grid',
+        headStyles: { fillColor: [41, 75, 109] }, // #294B6D
+    });
+
+    let finalY = (doc as any).lastAutoTable.finalY + 10;
+    doc.setFontSize(12);
+    doc.text("Estado de Validación", 14, finalY);
+    finalY += 6;
+    doc.setFontSize(10);
+    const { encargado, subcontrata, constructora } = reporte.validacion;
+    if(encargado.timestamp) {
+      doc.text(`- Encargado: Validado el ${format(new Date(encargado.timestamp), "Pp", {locale: es})}`, 16, finalY);
+      finalY += 6;
+    }
+    if(subcontrata.timestamp) {
+       doc.text(`- Subcontrata: Validado el ${format(new Date(subcontrata.timestamp), "Pp", {locale: es})}`, 16, finalY);
+       finalY += 6;
+    } else {
+       doc.text(`- Subcontrata: Pendiente`, 16, finalY);
+       finalY += 6;
+    }
+    if (constructora.timestamp) {
+        doc.text(`- Constructora: Validado el ${format(new Date(constructora.timestamp), "Pp", {locale: es})}`, 16, finalY);
+    } else {
+        doc.text(`- Constructora: Pendiente`, 16, finalY);
+    }
+    
+    // Save the PDF
+    doc.save(`Reporte-${proyectoNombre.replace(/ /g, '_')}-${format(new Date(reporte.fecha), 'yyyy-MM-dd')}.pdf`);
+  };
+
   if (loading) {
     return <div className="text-center p-8"><Loader2 className="animate-spin h-8 w-8 mx-auto text-primary" /></div>;
   }
@@ -42,7 +98,7 @@ export default function PartesEnviadosPage() {
     <div className="space-y-6">
       <div className="animate-fade-in-down">
         <h1 className="text-3xl font-bold font-headline text-primary">Historial de Partes Enviados</h1>
-        <p className="text-muted-foreground mt-1">Aquí puedes ver un registro detallado de los reportes diarios que has enviado.</p>
+        <p className="text-muted-foreground mt-1">Aquí puedes ver, modificar y descargar un registro detallado de los reportes diarios que has enviado.</p>
       </div>
       
       {reportes.length > 0 ? (
@@ -97,6 +153,16 @@ export default function PartesEnviadosPage() {
                           ))}
                         </TableBody>
                       </Table>
+                    </div>
+                    <div className="mt-4 flex justify-end gap-3">
+                        <Button variant="outline" disabled title="Modificar el reporte (Próximamente)">
+                            <Edit className="mr-2 h-4 w-4"/>
+                            Modificar Reporte
+                        </Button>
+                        <Button onClick={() => generatePDF(reporte)} className="bg-accent text-accent-foreground hover:bg-accent/90">
+                            <Download className="mr-2 h-4 w-4"/>
+                            Descargar PDF
+                        </Button>
                     </div>
                   </div>
                 </AccordionContent>
