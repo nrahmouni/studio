@@ -1,10 +1,7 @@
 'use client';
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { Loader2, Shield, User, Building, HardHat, Wrench } from 'lucide-react';
-import EncargadoDashboard from '@/components/dashboards/EncargadoDashboard';
-import SubcontrataDashboard from '@/components/dashboards/SubcontrataDashboard';
-import ConstructoraDashboard from '@/components/dashboards/ConstructoraDashboard';
-import TrabajadorDashboard from '@/components/dashboards/TrabajadorDashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
@@ -16,6 +13,12 @@ const availableRoles: { name: Role; label: string; icon: React.ElementType }[] =
     { name: 'trabajador', label: 'Trabajador', icon: User },
 ];
 
+const roleRedirects: Record<Role, string> = {
+    encargado: '/encargado/reporte-diario',
+    subcontrata_admin: '/subcontrata/proyectos',
+    constructora_admin: '/constructora/partes',
+    trabajador: '/trabajador/fichar',
+};
 
 function RoleSwitcher() {
   const setRole = (role: Role) => {
@@ -50,17 +53,18 @@ function RoleSwitcher() {
 }
 
 export default function DashboardPage() {
-  const [role, setRole] = useState<Role | null>(null);
   const [loading, setLoading] = useState(true);
+  const router = useRouter();
 
   useEffect(() => {
-    // This now runs only on the client
     const userRole = localStorage.getItem('userRole_obra_link') as Role | null;
-    if (userRole) {
-      setRole(userRole);
+    
+    if (userRole && roleRedirects[userRole]) {
+      router.replace(roleRedirects[userRole]);
+    } else {
+      setLoading(false);
     }
-    setLoading(false);
-  }, []);
+  }, [router]);
 
   if (loading) {
     return (
@@ -70,31 +74,10 @@ export default function DashboardPage() {
     );
   }
 
-  // If no role is set, show the role switcher
-  if (!role) {
-    return (
+  // If we are not loading and there's no role, show the switcher
+  return (
       <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
         <RoleSwitcher />
       </div>
-    );
-  }
-
-  // Render the dashboard based on the selected role
-  const renderDashboardByRole = () => {
-    switch (role) {
-      case 'encargado':
-        return <EncargadoDashboard />;
-      case 'subcontrata_admin':
-        return <SubcontrataDashboard />;
-      case 'constructora_admin':
-        return <ConstructoraDashboard />;
-      case 'trabajador':
-         return <TrabajadorDashboard />;
-      default:
-        // This case should ideally not be reached if a role is set
-        return <div className="text-center"><p>Rol no reconocido.</p></div>;
-    }
-  };
-
-  return <div className="container mx-auto py-8 px-4">{renderDashboardByRole()}</div>;
+  );
 }

@@ -1,29 +1,39 @@
-
-"use client";
+'use client';
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, HardHat, Construction, FileText, UserCheck, Fingerprint } from "lucide-react";
+import { Home, HardHat, Construction, FileText, UserCheck, Fingerprint, Send, ListChecks, Settings, Shield } from "lucide-react";
 import { useEffect, useState } from "react";
 
-type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'jefe_obra' | 'trabajador';
+type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'trabajador';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ElementType;
   roles: Role[];
+  exact?: boolean;
 }
 
 const allNavItems: NavItem[] = [
-  { href: "/dashboard", label: "Panel Principal", icon: Home, roles: ['encargado', 'subcontrata_admin', 'constructora_admin', 'jefe_obra', 'trabajador'] },
-  { href: "/encargado/reporte-diario", label: "Reporte Diario", icon: HardHat, roles: ['encargado'] },
-  { href: "/subcontrata/proyectos", label: "Proyectos y Trabajadores", icon: Construction, roles: ['subcontrata_admin'] },
-  { href: "/subcontrata/partes-validados", label: "Partes Validados", icon: FileText, roles: ['subcontrata_admin'] },
-  { href: "/constructora/partes", label: "Ver Partes de Obra", icon: UserCheck, roles: ['constructora_admin', 'jefe_obra'] },
+  // Encargado
+  { href: "/encargado/reporte-diario", label: "Reporte Diario", icon: Send, roles: ['encargado'] },
+  { href: "/encargado/partes-enviados", label: "Partes Enviados", icon: ListChecks, roles: ['encargado'] },
+
+  // Subcontrata
+  { href: "/subcontrata/proyectos", label: "Proyectos y Personal", icon: HardHat, roles: ['subcontrata_admin'] },
+  { href: "/subcontrata/partes-validados", label: "Partes a Validar", icon: FileText, roles: ['subcontrata_admin'] },
+
+  // Constructora
+  { href: "/constructora/partes", label: "Seguimiento de Partes", icon: UserCheck, roles: ['constructora_admin'] },
+  
+  // Trabajador
   { href: "/trabajador/fichar", label: "Mi Fichaje", icon: Fingerprint, roles: ['trabajador'] },
+
+  // Common (Settings is now common, dashboard is the role switcher)
+  { href: "/settings", label: "Configuración", icon: Settings, roles: ['encargado', 'subcontrata_admin', 'constructora_admin'] },
 ];
 
 export function AppSidebarNav() {
@@ -57,7 +67,7 @@ export function AppSidebarNav() {
   return (
     <nav className="flex flex-col gap-2 px-4 py-6">
       {visibleNavItems.map((item) => {
-        const isActive = pathname === item.href || (item.href !== "/dashboard" && pathname.startsWith(item.href));
+        const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
         return (
           <Button
             asChild
@@ -79,6 +89,23 @@ export function AppSidebarNav() {
           </Button>
         );
       })}
+       <div className="pt-6 mt-6 border-t border-sidebar-border">
+          <Button
+            asChild
+            variant="ghost"
+            className={cn(
+              "w-full justify-start text-base h-12",
+              pathname === '/dashboard' ? "bg-sidebar-accent text-sidebar-accent-foreground" : "text-sidebar-foreground hover:bg-sidebar-accent/20",
+              "transition-all duration-200 ease-in-out transform hover:scale-[1.02]"
+            )}
+            title="Cambiar de Rol"
+          >
+             <Link href="/dashboard">
+                <Shield className="mr-3 h-5 w-5 shrink-0" />
+                <span className="truncate">Cambiar de Rol</span>
+              </Link>
+          </Button>
+       </div>
     </nav>
   );
 }

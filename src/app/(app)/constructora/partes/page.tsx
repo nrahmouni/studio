@@ -10,7 +10,55 @@ import { getSubcontratas, getProyectosBySubcontrata, getReportesDiarios } from '
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 
-export default function ConstructoraDashboard() {
+function ReporteItem({ reporte }: { reporte: ReporteDiario }) {
+    const [isOpen, setIsOpen] = useState(false);
+    
+    const getValidationStatus = (validacion: ReporteDiario['validacion']) => {
+        if(validacion.constructora.validado) return {text: "Validado (Constructora)", color: "bg-green-500"};
+        if(validacion.subcontrata.validado) return {text: "Validado (Subcontrata)", color: "bg-blue-500"};
+        if(validacion.encargado.validado) return {text: "Enviado por Encargado", color: "bg-yellow-500"};
+        return {text: "Pendiente", color: "bg-gray-400"};
+    }
+    const status = getValidationStatus(reporte.validacion);
+    
+    return (
+        <Card className="p-3">
+            <div className="flex justify-between items-center">
+                <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-primary"/>
+                    <span className="font-semibold">
+                      Reporte del {format(new Date(reporte.fecha), 'PPP', { locale: es })}
+                    </span>
+                    <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
+                    {reporte.modificacionJefeObra?.modificado && <Badge variant="destructive">Modificado</Badge>}
+                </div>
+                <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)}>Ver Detalles</Button>
+            </div>
+            {isOpen && (
+                <div className="mt-4 p-4 bg-background rounded-md border space-y-3">
+                   <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/>Fecha: <span className="font-normal">{format(new Date(reporte.fecha), 'PPPP', { locale: es })}</span></p>
+                   <p className="font-semibold flex items-center gap-2"><UserCheck className="h-4 w-4"/>Reportado por: <span className="font-normal">{reporte.encargadoId} (ID)</span></p>
+                   <div className="space-y-1">
+                      <p className="font-semibold">Trabajadores Reportados:</p>
+                      <ul className="list-disc pl-5 text-sm space-y-1">
+                         {reporte.trabajadores.map(t => (
+                           <li key={t.trabajadorId}>
+                                <span className="font-medium">{t.nombre}</span> - 
+                                {t.asistencia ? ` ${t.horas} horas` : ' Ausente'}
+                           </li>
+                         ))}
+                      </ul>
+                   </div>
+                   <div className="pt-2 text-right">
+                       <Button variant="outline" disabled>Modificar Reporte (Próximamente)</Button>
+                   </div>
+                </div>
+            )}
+        </Card>
+    )
+}
+
+export default function ConstructoraPartesPage() {
   const [subcontratas, setSubcontratas] = useState<Subcontrata[]>([]);
   const [proyectosPorSub, setProyectosPorSub] = useState<Record<string, Proyecto[]>>({});
   const [reportesPorProyecto, setReportesPorProyecto] = useState<Record<string, ReporteDiario[]>>({});
@@ -96,52 +144,4 @@ export default function ConstructoraDashboard() {
       </Accordion>
     </div>
   );
-}
-
-function ReporteItem({ reporte }: { reporte: ReporteDiario }) {
-    const [isOpen, setIsOpen] = useState(false);
-    
-    const getValidationStatus = (validacion: ReporteDiario['validacion']) => {
-        if(validacion.constructora.validado) return {text: "Validado (Constructora)", color: "bg-green-500"};
-        if(validacion.subcontrata.validado) return {text: "Validado (Subcontrata)", color: "bg-blue-500"};
-        if(validacion.encargado.validado) return {text: "Enviado por Encargado", color: "bg-yellow-500"};
-        return {text: "Pendiente", color: "bg-gray-400"};
-    }
-    const status = getValidationStatus(reporte.validacion);
-    
-    return (
-        <Card className="p-3">
-            <div className="flex justify-between items-center">
-                <div className="flex items-center gap-3">
-                    <FileText className="h-5 w-5 text-primary"/>
-                    <span className="font-semibold">
-                      Reporte del {format(new Date(reporte.fecha), 'PPP', { locale: es })}
-                    </span>
-                    <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
-                    {reporte.modificacionJefeObra?.modificado && <Badge variant="destructive">Modificado</Badge>}
-                </div>
-                <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)}>Ver Detalles</Button>
-            </div>
-            {isOpen && (
-                <div className="mt-4 p-4 bg-background rounded-md border space-y-3">
-                   <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/>Fecha: <span className="font-normal">{format(new Date(reporte.fecha), 'PPPP', { locale: es })}</span></p>
-                   <p className="font-semibold flex items-center gap-2"><UserCheck className="h-4 w-4"/>Reportado por: <span className="font-normal">{reporte.encargadoId} (ID)</span></p>
-                   <div className="space-y-1">
-                      <p className="font-semibold">Trabajadores Reportados:</p>
-                      <ul className="list-disc pl-5 text-sm space-y-1">
-                         {reporte.trabajadores.map(t => (
-                           <li key={t.trabajadorId}>
-                                <span className="font-medium">{t.nombre}</span> - 
-                                {t.asistencia ? ` ${t.horas} horas` : ' Ausente'}
-                           </li>
-                         ))}
-                      </ul>
-                   </div>
-                   <div className="pt-2 text-right">
-                       <Button variant="outline" disabled>Modificar Reporte (Próximamente)</Button>
-                   </div>
-                </div>
-            )}
-        </Card>
-    )
 }

@@ -1,4 +1,3 @@
-// src/components/dashboards/EncargadoDashboard.tsx
 'use client';
 import { useState, useEffect } from 'react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
@@ -7,19 +6,16 @@ import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
-import { getSubcontratas, getProyectosBySubcontrata, getTrabajadoresByProyecto, saveDailyReport, getReportesDiarios } from '@/lib/actions/app.actions';
-import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador, ReporteDiario } from '@/lib/types';
-import { Loader2, Send, ListChecks } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { format } from 'date-fns';
-import { es } from 'date-fns/locale';
+import { getSubcontratas, getProyectosBySubcontrata, getTrabajadoresByProyecto, saveDailyReport } from '@/lib/actions/app.actions';
+import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador } from '@/lib/types';
+import { Loader2, Send } from 'lucide-react';
 
 interface TrabajadorConEstado extends Trabajador {
   asistencia: boolean;
   horas: number;
 }
 
-function ReporteDiarioTab() {
+export default function ReporteDiarioPage() {
   const { toast } = useToast();
   const [subcontratas, setSubcontratas] = useState<Subcontrata[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -102,10 +98,11 @@ function ReporteDiarioTab() {
 
   return (
     <div className="space-y-6">
+       <h1 className="text-3xl font-bold font-headline text-primary">Reporte Diario de Obra</h1>
       <Card>
         <CardHeader>
-          <CardTitle>Crear Reporte Diario</CardTitle>
-          <CardDescription>Selecciona la subcontrata y el proyecto para reportar la jornada de hoy.</CardDescription>
+          <CardTitle>Paso 1: Seleccionar Proyecto</CardTitle>
+          <CardDescription>Elige la subcontrata y el proyecto para reportar la jornada de hoy.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -136,8 +133,8 @@ function ReporteDiarioTab() {
       {trabajadores.length > 0 && (
         <Card className="animate-fade-in-up">
           <CardHeader>
-            <CardTitle>Lista de Trabajadores</CardTitle>
-            <CardDescription>Valida la asistencia y las horas para el día de hoy.</CardDescription>
+            <CardTitle>Paso 2: Lista de Trabajadores</CardTitle>
+            <CardDescription>Valida la asistencia y las horas para el día de hoy y envía el reporte.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-2 items-center font-semibold border-b pb-2">
@@ -176,77 +173,4 @@ function ReporteDiarioTab() {
       )}
     </div>
   );
-}
-
-
-function PartesValidadosTab() {
-  const [reportes, setReportes] = useState<ReporteDiario[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    const fetchReportes = async () => {
-      setLoading(true);
-      // In a real app, you'd filter by the current encargado's ID
-      const encargadoId = localStorage.getItem('encargadoId_obra_link');
-      // The mock function doesn't use the ID, it returns all reports
-      const data = await getReportesDiarios(undefined, encargadoId || undefined);
-      setReportes(data);
-      setLoading(false);
-    };
-    fetchReportes();
-  }, []);
-
-  if (loading) {
-    return <div className="text-center p-8"><Loader2 className="animate-spin h-8 w-8 mx-auto text-primary" /></div>;
-  }
-
-  return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Partes Enviados</CardTitle>
-        <CardDescription>Aquí puedes ver un historial de los reportes diarios que has enviado.</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        {reportes.length > 0 ? (
-          reportes.map(reporte => (
-            <Card key={reporte.id} className="p-4">
-              <div className="flex justify-between items-center">
-                <div>
-                  <p className="font-bold">Proyecto: {reporte.proyectoId.replace('proy-', '').replace('-', ' ')}</p>
-                  <p className="text-sm text-muted-foreground">Fecha: {format(reporte.fecha, "PPP", { locale: es })}</p>
-                </div>
-                <div className="text-right">
-                  <p>{reporte.trabajadores.length} trabajadores reportados</p>
-                  <p className="text-sm font-bold text-primary">{reporte.validacion.encargado.validado ? "Enviado" : "Borrador"}</p>
-                </div>
-              </div>
-            </Card>
-          ))
-        ) : (
-          <p className="text-muted-foreground text-center py-4">No has enviado ningún reporte todavía.</p>
-        )}
-      </CardContent>
-    </Card>
-  );
-}
-
-
-export default function EncargadoDashboard() {
-    return (
-        <>
-            <h1 className="text-3xl font-bold font-headline text-primary mb-4">Panel del Encargado</h1>
-            <Tabs defaultValue="reporte-diario" className="w-full">
-                <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="reporte-diario"><Send className="mr-2 h-4 w-4"/>Reporte Diario</TabsTrigger>
-                    <TabsTrigger value="partes-validados"><ListChecks className="mr-2 h-4 w-4"/>Partes Enviados</TabsTrigger>
-                </TabsList>
-                <TabsContent value="reporte-diario" className="mt-4">
-                    <ReporteDiarioTab />
-                </TabsContent>
-                <TabsContent value="partes-validados" className="mt-4">
-                    <PartesValidadosTab />
-                </TabsContent>
-            </Tabs>
-        </>
-    );
 }
