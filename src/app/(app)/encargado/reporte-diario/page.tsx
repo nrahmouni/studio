@@ -9,7 +9,7 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getSubcontratas, getProyectosBySubcontrata, getTrabajadoresByProyecto, saveDailyReport } from '@/lib/actions/app.actions';
 import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador } from '@/lib/types';
-import { Loader2, Send } from 'lucide-react';
+import { Loader2, Send, Building, HardHat, User } from 'lucide-react';
 
 interface TrabajadorConEstado extends Trabajador {
   asistencia: boolean;
@@ -40,7 +40,7 @@ export default function ReporteDiarioPage() {
     fetchSubcontratas();
   }, []);
 
-  const handleSubcontrataChange = async (subcontrataId: string) => {
+  const handleSelectSubcontrata = async (subcontrataId: string) => {
     setSelectedSubcontrata(subcontrataId);
     setSelectedProyecto('');
     setProyectos([]);
@@ -51,7 +51,7 @@ export default function ReporteDiarioPage() {
     setIsLoadingProyectos(false);
   };
 
-  const handleProyectoChange = async (proyectoId: string) => {
+  const handleSelectProyecto = async (proyectoId: string) => {
     setSelectedProyecto(proyectoId);
     setTrabajadores([]);
     if (!proyectoId) return;
@@ -88,8 +88,9 @@ export default function ReporteDiarioPage() {
     const result = await saveDailyReport(selectedProyecto, currentUserId, reporte);
     if(result.success) {
         toast({ title: "Éxito", description: result.message });
-        // Reset view
+        setSelectedSubcontrata('');
         setSelectedProyecto('');
+        setProyectos([]);
         setTrabajadores([]);
     } else {
         toast({ title: "Error", description: result.message, variant: "destructive" });
@@ -98,79 +99,131 @@ export default function ReporteDiarioPage() {
   };
 
   return (
-    <div className="space-y-6">
-       <h1 className="text-3xl font-bold font-headline text-primary">Reporte Diario de Obra</h1>
-      <Card>
+    <div className="space-y-8">
+       <div>
+        <h1 className="text-3xl font-bold font-headline text-primary">Reporte Diario de Obra</h1>
+        <p className="text-muted-foreground mt-1">Sigue los pasos para enviar el reporte de hoy.</p>
+      </div>
+
+      {/* Step 1: Select Subcontrata */}
+      <Card className="animate-fade-in-up">
         <CardHeader>
-          <CardTitle>Paso 1: Seleccionar Proyecto</CardTitle>
-          <CardDescription>Elige la subcontrata y el proyecto para reportar la jornada de hoy.</CardDescription>
+          <CardTitle className="flex items-center gap-3">
+            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">1</div>
+            <span>Selecciona Empresa Subcontratada</span>
+          </CardTitle>
+          <CardDescription>Elige la empresa para la que vas a reportar.</CardDescription>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div>
-              <Label>1. Selecciona Empresa Subcontratada</Label>
-              <Select onValueChange={handleSubcontrataChange} disabled={isLoadingSubcontratas} value={selectedSubcontrata}>
-                <SelectTrigger>{isLoadingSubcontratas ? <Loader2 className="animate-spin mr-2 h-4 w-4"/> : null} Selecciona subcontrata...</SelectTrigger>
-                <SelectContent>
-                  {subcontratas.map(s => <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>)}
-                </SelectContent>
-              </Select>
+        <CardContent>
+          {isLoadingSubcontratas ? (
+            <Loader2 className="animate-spin h-8 w-8 text-primary" />
+          ) : (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {subcontratas.map(s => (
+                <Button
+                  key={s.id}
+                  variant={selectedSubcontrata === s.id ? 'default' : 'outline'}
+                  className="h-20 text-lg justify-start p-4"
+                  onClick={() => handleSelectSubcontrata(s.id)}
+                >
+                  <Building className="mr-4 h-6 w-6"/> {s.nombre}
+                </Button>
+              ))}
             </div>
-            <div>
-              <Label>2. Selecciona Proyecto</Label>
-              <Select onValueChange={handleProyectoChange} disabled={!selectedSubcontrata || isLoadingProyectos} value={selectedProyecto}>
-                <SelectTrigger>{isLoadingProyectos ? <Loader2 className="animate-spin mr-2 h-4 w-4"/> : null} Selecciona proyecto...</SelectTrigger>
-                <SelectContent>
-                  {proyectos.map(p => <SelectItem key={p.id} value={p.id}>{p.nombre}</SelectItem>)}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
+          )}
         </CardContent>
       </Card>
-      
-      {isLoadingTrabajadores && <div className="text-center p-8"><Loader2 className="animate-spin h-8 w-8 mx-auto text-primary" /></div>}
 
-      {trabajadores.length > 0 && (
+      {/* Step 2: Select Proyecto */}
+      {selectedSubcontrata && (
         <Card className="animate-fade-in-up">
           <CardHeader>
-            <CardTitle>Paso 2: Lista de Trabajadores</CardTitle>
-            <CardDescription>Valida la asistencia y las horas para el día de hoy y envía el reporte.</CardDescription>
+            <CardTitle className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">2</div>
+              <span>Selecciona el Proyecto</span>
+            </CardTitle>
           </CardHeader>
-          <CardContent className="space-y-4">
-            <div className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-2 items-center font-semibold border-b pb-2">
-                <span>Trabajador</span>
-                <span className="text-center">Asistencia</span>
-                <span className="text-center">Horas</span>
-            </div>
-            {trabajadores.map(t => (
-              <div key={t.id} className="grid grid-cols-[1fr_auto_auto] gap-x-4 gap-y-2 items-center p-2 rounded-md hover:bg-muted/50">
-                <Label htmlFor={`asistencia-${t.id}`}>{t.nombre}</Label>
-                <div className="text-center">
-                    <Checkbox
-                        id={`asistencia-${t.id}`}
-                        checked={t.asistencia}
-                        onCheckedChange={(checked) => handleTrabajadorChange(t.id, 'asistencia', !!checked)}
-                    />
-                </div>
-                <Select
-                    value={t.horas.toString()}
-                    onValueChange={(value) => handleTrabajadorChange(t.id, 'horas', parseInt(value, 10))}
-                    disabled={!t.asistencia}
-                >
-                    <SelectTrigger className="w-24 h-9"/>
-                    <SelectContent>
-                        {[...Array(13).keys()].map(i => <SelectItem key={i} value={i.toString()}>{i}</SelectItem>)}
-                    </SelectContent>
-                </Select>
+          <CardContent>
+            {isLoadingProyectos ? (
+              <Loader2 className="animate-spin h-8 w-8 text-primary" />
+            ) : (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {proyectos.length > 0 ? (
+                  proyectos.map(p => (
+                    <Button
+                      key={p.id}
+                      variant={selectedProyecto === p.id ? 'default' : 'outline'}
+                      className="h-20 text-lg justify-start p-4"
+                      onClick={() => handleSelectProyecto(p.id)}
+                    >
+                      <HardHat className="mr-4 h-6 w-6"/> {p.nombre}
+                    </Button>
+                  ))
+                ) : (
+                  <p className="text-muted-foreground">No hay proyectos para esta subcontrata.</p>
+                )}
               </div>
-            ))}
-             <Button onClick={handleValidateDay} disabled={isSubmitting} className="w-full mt-6 bg-accent text-accent-foreground hover:bg-accent/90">
-                {isSubmitting ? <Loader2 className="animate-spin mr-2 h-4 w-4"/> : <Send className="mr-2 h-4 w-4"/>}
-                Validar y Enviar Reporte del Día
-            </Button>
+            )}
           </CardContent>
         </Card>
+      )}
+      
+      {selectedProyecto && (
+         <Card className="animate-fade-in-up">
+           <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-accent-foreground font-bold text-lg">3</div>
+              <span>Valida la Asistencia y Horas</span>
+            </CardTitle>
+            <CardDescription>Marca la asistencia y las horas de cada trabajador para hoy.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {isLoadingTrabajadores ? (
+              <div className="text-center p-8"><Loader2 className="animate-spin h-8 w-8 mx-auto text-primary" /></div>
+            ) : (
+              trabajadores.length > 0 ? (
+                <div className="space-y-4">
+                  {trabajadores.map(t => (
+                    <div key={t.id} className="grid grid-cols-[1fr_auto_auto] gap-x-4 items-center p-4 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+                      <Label htmlFor={`asistencia-${t.id}`} className="text-lg font-medium flex items-center gap-3">
+                        <User className="h-5 w-5 text-muted-foreground"/>
+                        {t.nombre}
+                      </Label>
+                      <div className="flex flex-col items-center gap-1">
+                        <Label htmlFor={`asistencia-${t.id}`} className="text-xs text-muted-foreground">Asiste</Label>
+                        <Checkbox
+                            id={`asistencia-${t.id}`}
+                            checked={t.asistencia}
+                            onCheckedChange={(checked) => handleTrabajadorChange(t.id, 'asistencia', !!checked)}
+                            className="w-6 h-6"
+                        />
+                      </div>
+                      <div className="flex flex-col items-center gap-1">
+                         <Label className="text-xs text-muted-foreground">Horas</Label>
+                          <Select
+                              value={t.horas.toString()}
+                              onValueChange={(value) => handleTrabajadorChange(t.id, 'horas', parseInt(value, 10))}
+                              disabled={!t.asistencia}
+                          >
+                              <SelectTrigger className="w-28 h-12 text-base"/>
+                              <SelectContent>
+                                  {[...Array(13).keys()].map(i => <SelectItem key={i} value={i.toString()}>{i} horas</SelectItem>)}
+                              </SelectContent>
+                          </Select>
+                      </div>
+                    </div>
+                  ))}
+                  <Button onClick={handleValidateDay} disabled={isSubmitting} className="w-full mt-6 text-lg py-6 bg-accent text-accent-foreground hover:bg-accent/90">
+                      {isSubmitting ? <Loader2 className="animate-spin mr-2 h-5 w-5"/> : <Send className="mr-2 h-5 w-5"/>}
+                      Validar y Enviar Reporte del Día
+                  </Button>
+                </div>
+              ) : (
+                 <p className="text-muted-foreground text-center py-4">No hay trabajadores asignados a este proyecto.</p>
+              )
+            )}
+          </CardContent>
+         </Card>
       )}
     </div>
   );
