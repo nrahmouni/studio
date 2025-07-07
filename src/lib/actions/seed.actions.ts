@@ -89,8 +89,10 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
     return { success: true, message: 'Datos de demostración creados/actualizados en Firestore con éxito.', summary };
 
   } catch (error: any) {
-    console.error('[SEED DATA] Error seeding data:', error);
-    summary.error = error.message;
+    console.error('--- [SEED DATA] ERROR ---');
+    console.error(`Error al crear datos de demostración: ${error.message}`);
+    console.error(`Stack: ${error.stack}`);
+    summary.error = `Error al crear datos de demostración: ${error.message}`;
     return { success: false, message: `Error al crear datos de demostración: ${error.message}`, summary };
   }
 }
