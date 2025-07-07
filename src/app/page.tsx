@@ -78,7 +78,7 @@ export default function HomePage() {
             />
           </Link>
           <nav>
-            <Link href="/auth/select-role" passHref>
+            <Link href="/dashboard" passHref>
               <Button variant="secondary" size="lg" className="text-primary hover:bg-secondary/80">Acceder</Button>
             </Link>
           </nav>
@@ -107,7 +107,7 @@ export default function HomePage() {
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-3xl mx-auto animate-fade-in-up animation-delay-200">
               ObraLink optimiza la gestión de tus proyectos de construcción y reformas. Digitaliza partes de trabajo, aprovecha la IA para la asignación de recursos y toma el control total de tu operación.
             </p>
-            <Link href="/auth/select-role" passHref>
+            <Link href="/dashboard" passHref>
               <Button size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-6 rounded-lg shadow-xl transform hover:scale-105 transition-transform duration-300 animate-fade-in-up animation-delay-400">
                 <Zap className="mr-3 h-6 w-6" /> ¡Empieza a Optimizar Ahora!
               </Button>
@@ -209,7 +209,7 @@ export default function HomePage() {
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
               Únete a las empresas que ya están construyendo el futuro con ObraLink. Optimiza, gestiona y crece con la plataforma líder del sector.
             </p>
-            <Link href="/auth/select-role" passHref>
+            <Link href="/dashboard" passHref>
               <Button size="lg" variant="secondary" className="text-primary hover:bg-background/90 text-lg px-10 py-6 rounded-lg shadow-xl transform hover:scale-105 transition-transform duration-300">
                 Accede o Regístrate
               </Button>

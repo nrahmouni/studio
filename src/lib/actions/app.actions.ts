@@ -1,31 +1,32 @@
 // src/lib/actions/app.actions.ts
 'use server';
 
-import { db } from '@/lib/firebase/firebase';
-import { collection, doc, getDoc, getDocs, query, where, Timestamp, setDoc, serverTimestamp } from 'firebase/firestore';
-import { Subcontrata, Proyecto, Trabajador, ReporteDiarioSchema, type ReporteDiario, type ReporteTrabajador } from '../types';
-import { revalidatePath } from 'next/cache';
+import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador } from '../types';
+import { mockProyectos, mockSubcontratas, mockTrabajadores } from '@/lib/mockData';
 
-// --- Data Fetching for Encargado ---
+// --- Data Fetching for Encargado (NOW MOCKED) ---
 
 export async function getSubcontratas(): Promise<Subcontrata[]> {
-  const snapshot = await getDocs(collection(db, 'subcontratas'));
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Subcontrata));
+  console.log("ACTION: getSubcontratas (mocked)");
+  // Simulate network delay
+  await new Promise(resolve => setTimeout(resolve, 300));
+  return mockSubcontratas;
 }
 
 export async function getProyectosBySubcontrata(subcontrataId: string): Promise<Proyecto[]> {
-  const q = query(collection(db, 'proyectos'), where('subcontrataId', '==', subcontrataId));
-  const snapshot = await getDocs(q);
-  return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Proyecto));
+  console.log(`ACTION: getProyectosBySubcontrata for ${subcontrataId} (mocked)`);
+  await new Promise(resolve => setTimeout(resolve, 300));
+  return mockProyectos.filter(p => p.subcontrataId === subcontrataId);
 }
 
 export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Trabajador[]> {
-    const q = query(collection(db, 'trabajadores'), where('proyectosAsignados', 'array-contains', proyectoId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Trabajador));
+    console.log(`ACTION: getTrabajadoresByProyecto for ${proyectoId} (mocked)`);
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const workers = mockTrabajadores.filter(t => t.proyectosAsignados?.includes(proyectoId));
+    return workers;
 }
 
-// --- Report Submission ---
+// --- Report Submission (SIMULATED) ---
 
 export async function saveDailyReport(
   proyectoId: string,
@@ -33,40 +34,23 @@ export async function saveDailyReport(
   trabajadoresReporte: ReporteTrabajador[]
 ): Promise<{ success: boolean; message: string }> {
   
-  const fecha = new Date();
-  const fechaString = fecha.toISOString().split('T')[0];
-  const reporteId = `${proyectoId}-${fechaString}`;
+  console.log("ACTION: saveDailyReport (simulated)");
+  console.log("Proyecto ID:", proyectoId);
+  console.log("Encargado ID:", encargadoId);
+  console.log("Reporte Data:", trabajadoresReporte);
+  
+  // Simulate network delay and success
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  // In a real scenario, you'd perform validation and Firestore operations here.
+  
+  return { success: true, message: 'Reporte diario guardado (simulación) con éxito.' };
+}
 
-  try {
-    const reporteRef = doc(db, 'reportesDiarios', reporteId);
-
-    const reporteData: Omit<ReporteDiario, 'id' | 'timestamp'> = {
-        proyectoId,
-        fecha,
-        trabajadores: trabajadoresReporte,
-        encargadoId,
-        validacion: {
-            encargado: { validado: true, timestamp: new Date() },
-            subcontrata: { validado: false, timestamp: null },
-            constructora: { validado: false, timestamp: null },
-        }
-    };
-
-    // Ensure it matches schema before sending to Firestore
-    const validatedData = ReporteDiarioSchema.omit({id: true, timestamp: true}).parse(reporteData);
-    
-    await setDoc(reporteRef, {
-        ...validatedData,
-        fecha: Timestamp.fromDate(validatedData.fecha),
-        timestamp: serverTimestamp(),
-        'validacion.encargado.timestamp': serverTimestamp()
-    });
-    
-    revalidatePath('/encargado');
-
-    return { success: true, message: 'Reporte diario guardado y validado con éxito.' };
-  } catch(error: any) {
-    console.error("Error saving daily report:", error);
-    return { success: false, message: `Error al guardar el reporte: ${error.message}` };
-  }
+// --- Fichaje Submission (SIMULATED) ---
+export async function saveFichaje(data: { trabajadorId: string; tipo: 'inicio' | 'fin' }): Promise<{ success: boolean; message: string }> {
+  console.log("ACTION: saveFichaje (simulated)");
+  console.log("Data:", data);
+  await new Promise(resolve => setTimeout(resolve, 500));
+  return { success: true, message: `Fichaje de ${data.tipo} guardado (simulación) con éxito.` };
 }

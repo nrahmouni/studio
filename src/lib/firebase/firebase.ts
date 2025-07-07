@@ -1,6 +1,6 @@
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-import { getAuth, type Auth } from 'firebase/auth';
+// import { getAuth, type Auth } from 'firebase/auth'; // Auth is no longer used
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
@@ -15,7 +15,7 @@ const firebaseConfig = {
 };
 
 let app: FirebaseApp;
-let auth: Auth;
+// let auth: Auth; // Auth is no longer used
 let db: Firestore;
 let storage: FirebaseStorage;
 
@@ -25,8 +25,8 @@ if (!getApps().length) {
   app = getApp();
 }
 
-auth = getAuth(app);
+// auth = getAuth(app); // Auth is no longer used
 db = getFirestore(app);
 storage = getStorage(app);
 
-export { app, auth, db, storage };
+export { app, db, storage };

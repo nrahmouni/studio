@@ -2,7 +2,7 @@
 "use client";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
-import { Menu, Settings, UserCircle, LogOut, Sun, Moon } from "lucide-react";
+import { Menu, Settings, UserCircle, LogOut, Sun, Moon, Shield } from "lucide-react";
 import Link from "next/link";
 import Image from "next/image"; 
 import {
@@ -25,7 +25,8 @@ interface AppHeaderProps {
 
 export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
   const [mounted, setMounted] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false); 
+  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [currentRole, setCurrentRole] = useState<string | null>(null);
   const router = useRouter();
 
   useEffect(() => {
@@ -38,6 +39,8 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
       document.documentElement.classList.remove('dark');
       setIsDarkMode(false);
     }
+    const role = localStorage.getItem('userRole_obra_link');
+    setCurrentRole(role);
   }, []);
 
   const toggleTheme = () => {
@@ -54,11 +57,14 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
-      localStorage.removeItem('empresaId_obra_link');
-      localStorage.removeItem('usuarioId_obra_link');
       localStorage.removeItem('userRole_obra_link');
+      localStorage.removeItem('userId_obra_link');
+      localStorage.removeItem('constructoraId_obra_link');
+      localStorage.removeItem('subcontrataId_obra_link');
+      localStorage.removeItem('trabajadorId_obra_link');
     }
-    router.push('/auth/select-role');
+    router.push('/dashboard'); // Go to dashboard to show role switcher
+    router.refresh(); // Force refresh to re-evaluate state
   };
 
 
@@ -120,6 +126,14 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
               />
           </Link>
         </div>
+        
+        {currentRole && 
+            <div className="hidden md:flex items-center gap-2 bg-muted text-muted-foreground px-3 py-1 rounded-full text-sm">
+                <Shield className="h-4 w-4 text-primary" />
+                <span className="font-medium">Rol Activo:</span>
+                <span className="capitalize font-semibold text-primary">{currentRole.replace(/_/g, ' ')}</span>
+            </div>
+        }
 
         <div className="flex items-center gap-2 sm:gap-4">
           <Button variant="ghost" size="icon" onClick={toggleTheme} aria-label="Toggle theme">
@@ -150,7 +164,7 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={handleLogout}>
                 <LogOut className="mr-2 h-4 w-4" />
-                <span>Cerrar Sesión</span>
+                <span>Cambiar de Rol</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

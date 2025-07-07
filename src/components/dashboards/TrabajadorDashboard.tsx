@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardHeader, CardTitle, CardContent, CardDescription } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { Loader2, LogIn, LogOut } from 'lucide-react';
-// import { saveFichaje } from '@/lib/actions/app.actions'; // This action needs to be created
+import { saveFichaje } from '@/lib/actions/app.actions';
 
 export default function TrabajadorDashboard() {
     const { toast } = useToast();
@@ -14,7 +14,8 @@ export default function TrabajadorDashboard() {
 
     const handleFichaje = async (tipo: 'inicio' | 'fin') => {
         setIsSubmitting(true);
-        const trabajadorId = localStorage.getItem('trabajadorId_obra_link');
+        // Use a mock ID for development since there's no real login
+        const trabajadorId = localStorage.getItem('trabajadorId_obra_link') || 'trab-01-mock';
 
         if (!trabajadorId) {
             toast({ title: 'Error', description: 'No se pudo identificar al trabajador.', variant: 'destructive' });
@@ -22,12 +23,7 @@ export default function TrabajadorDashboard() {
             return;
         }
 
-        // --- MOCK ACTION ---
-        // const result = await saveFichaje({ trabajadorId, tipo });
-        // For now, we simulate the action
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        const result = { success: true, message: `Fichaje de ${tipo} registrado.`};
-        // --- END MOCK ---
+        const result = await saveFichaje({ trabajadorId, tipo });
         
         if (result.success) {
             toast({ title: 'Éxito', description: result.message });

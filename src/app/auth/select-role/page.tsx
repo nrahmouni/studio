@@ -1,51 +1,13 @@
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, User, HardHat, UserPlus, Fingerprint } from "lucide-react";
-import Link from "next/link";
+// This file is now obsolete. The application is running on mocked data without real authentication.
+'use client';
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
 
-export default function SelectRolePage() {
-  return (
-    <div className="flex flex-col items-center justify-center min-h-screen p-4 bg-gradient-to-br from-background to-primary/10">
-      <div className="mb-8 text-center animate-fade-in-down">
-        <Link href="/" className="text-4xl font-bold font-headline text-primary hover:text-primary/80 transition-colors">
-          ObraLink
-        </Link>
-        <p className="text-muted-foreground mt-2">Planificación y gestión eficiente para tus obras.</p>
-      </div>
-      <Card className="w-full max-w-md shadow-xl animate-fade-in-up">
-        <CardHeader className="text-center">
-          <CardTitle className="text-2xl font-headline">¿Cómo quieres acceder?</CardTitle>
-          <CardDescription>Selecciona tu rol para continuar o registra tu empresa.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <Link href="/auth/login" passHref>
-            <Button variant="outline" className="w-full h-16 text-lg border-primary text-primary hover:bg-primary/5 hover:shadow-md transition-all">
-              <HardHat className="mr-3 h-6 w-6" />
-              Soy Encargado / Admin
-            </Button>
-          </Link>
-          <Link href="/auth/login/trabajador" passHref>
-            <Button variant="outline" className="w-full h-16 text-lg border-primary text-primary hover:bg-primary/5 hover:shadow-md transition-all">
-              <Fingerprint className="mr-3 h-6 w-6" />
-              Soy Trabajador (Acceso con código)
-            </Button>
-          </Link>
-          <div className="relative flex py-3 items-center">
-            <div className="flex-grow border-t border-border"></div>
-            <span className="flex-shrink mx-4 text-muted-foreground text-xs">¿ERES NUEVO?</span>
-            <div className="flex-grow border-t border-border"></div>
-          </div>
-          <Link href="/auth/register/empresa" passHref>
-            <Button variant="default" className="w-full h-16 text-lg bg-accent hover:bg-accent/90 text-accent-foreground shadow-md hover:shadow-lg transition-all">
-              <UserPlus className="mr-3 h-6 w-6" />
-              Registrar mi Empresa
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
-       <p className="mt-8 text-center text-sm text-muted-foreground animate-fade-in-up animation-delay-200">
-        Simplifica la gestión de tus proyectos con ObraLink.
-      </p>
-    </div>
-  );
+// Redirect to the main dashboard where the role switcher is now located.
+export default function ObsoleteSelectRolePage() {
+  const router = useRouter();
+  useEffect(() => {
+    router.replace('/dashboard');
+  }, [router]);
+  return null;
 }
