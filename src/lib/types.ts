@@ -1,6 +1,5 @@
 import { z } from 'zod';
 
-// Top-level client company
 export const ConstructoraSchema = z.object({
   id: z.string(),
   nombre: z.string().min(1, "El nombre es requerido"),
@@ -30,7 +29,7 @@ export const TrabajadorSchema = z.object({
   id: z.string(),
   nombre: z.string().min(1, "El nombre es requerido"),
   subcontrataId: z.string(),
-  codigoAcceso: z.string().min(6, "El código debe tener al menos 6 caracteres"),
+  codigoAcceso: z.string().min(1, "El código es requerido"),
   proyectosAsignados: z.array(z.string()).optional(),
 });
 export type Trabajador = z.infer<typeof TrabajadorSchema>;
@@ -38,10 +37,10 @@ export type Trabajador = z.infer<typeof TrabajadorSchema>;
 
 // User model for roles that log in with email/password
 export const UsuarioSchema = z.object({
-  id: z.string(), // Firebase Auth UID
+  id: z.string(), // Could be Firebase Auth UID in a real scenario
   email: z.string().email(),
   nombre: z.string().optional(),
-  rol: z.enum(["encargado", "subcontrata_admin", "constructora_admin", "jefe_obra"]),
+  rol: z.enum(["encargado", "subcontrata_admin", "constructora_admin"]),
   // Link to the company they belong to
   subcontrataId: z.string().optional().nullable(),
   constructoraId: z.string().optional().nullable(),

@@ -1,6 +1,6 @@
 'use client';
 import { useEffect, useState } from 'react';
-import { Loader2, Shield } from 'lucide-react';
+import { Loader2, Shield, User, Building, HardHat, Wrench } from 'lucide-react';
 import EncargadoDashboard from '@/components/dashboards/EncargadoDashboard';
 import SubcontrataDashboard from '@/components/dashboards/SubcontrataDashboard';
 import ConstructoraDashboard from '@/components/dashboards/ConstructoraDashboard';
@@ -8,29 +8,40 @@ import TrabajadorDashboard from '@/components/dashboards/TrabajadorDashboard';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 
-type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'jefe_obra' | 'trabajador';
-const availableRoles: Role[] = ['encargado', 'subcontrata_admin', 'constructora_admin', 'jefe_obra', 'trabajador'];
+type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'trabajador';
+const availableRoles: { name: Role; label: string; icon: React.ElementType }[] = [
+    { name: 'constructora_admin', label: 'Constructora (Admin)', icon: Building },
+    { name: 'subcontrata_admin', label: 'Subcontrata (Admin)', icon: Wrench },
+    { name: 'encargado', label: 'Encargado de Obra', icon: HardHat },
+    { name: 'trabajador', label: 'Trabajador', icon: User },
+];
+
 
 function RoleSwitcher() {
   const setRole = (role: Role) => {
     localStorage.setItem('userRole_obra_link', role);
     // Add mock user/company IDs for other parts of the app to use
-    localStorage.setItem('userId_obra_link', 'user-encargado-mock');
+    localStorage.setItem('userId_obra_link', 'user-mock-id');
     localStorage.setItem('constructoraId_obra_link', 'const-sorigui-mock');
     localStorage.setItem('subcontrataId_obra_link', 'sub-caram-mock');
     localStorage.setItem('trabajadorId_obra_link', 'trab-01-mock');
+    localStorage.setItem('encargadoId_obra_link', 'user-encargado-mock');
     window.location.reload();
   };
   return (
     <Card className="w-full max-w-md mx-auto animate-fade-in-up">
       <CardHeader>
         <CardTitle className="flex items-center"><Shield className="mr-2 h-6 w-6 text-primary"/> Simulador de Roles (Desarrollo)</CardTitle>
-        <CardDescription>Selecciona un rol para ver su panel de control. No hay un sistema de login real activo.</CardDescription>
+        <CardDescription>Selecciona un rol para ver su panel de control. La aplicación está usando datos de demostración sin autenticación real.</CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-3">
-        {availableRoles.map(role => (
-          <Button key={role} onClick={() => setRole(role)} variant="outline">
-            Acceder como: <span className="font-bold ml-1 capitalize">{role.replace(/_/g, ' ')}</span>
+        {availableRoles.map(roleInfo => (
+          <Button key={roleInfo.name} onClick={() => setRole(roleInfo.name)} variant="outline" className="justify-start h-12 text-left">
+             <roleInfo.icon className="mr-3 h-5 w-5 text-muted-foreground" />
+             <div>
+                <div>Acceder como:</div>
+                <div className="font-bold capitalize">{roleInfo.label}</div>
+            </div>
           </Button>
         ))}
       </CardContent>
@@ -76,7 +87,6 @@ export default function DashboardPage() {
       case 'subcontrata_admin':
         return <SubcontrataDashboard />;
       case 'constructora_admin':
-      case 'jefe_obra':
         return <ConstructoraDashboard />;
       case 'trabajador':
          return <TrabajadorDashboard />;
