@@ -2,7 +2,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Building, Trash2, UserPlus, HardHat, User, CheckCircle } from 'lucide-react';
+import { Loader2, Building, Trash2, UserPlus, HardHat, User, MapPin, Hash } from 'lucide-react';
 import { getConstructoras, getProyectosByConstructora, getTrabajadoresByProyecto, removeTrabajadorFromProyecto } from '@/lib/actions/app.actions';
 import type { Constructora, Proyecto, Trabajador } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
@@ -164,7 +164,14 @@ export default function GestionProyectosPage() {
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-accent-foreground font-bold text-lg">3</div>
               <span>Gestiona los Trabajadores Asignados</span>
             </CardTitle>
-            <CardDescription>Añade o elimina personal para el proyecto: {selectedProyecto.nombre}</CardDescription>
+            <div className="pt-2 pl-4 border-l-2 border-accent/50 space-y-1">
+                <p className="font-bold text-lg text-primary">{selectedProyecto.nombre}</p>
+                <p className="text-sm text-muted-foreground flex items-center gap-2"><MapPin className="h-4 w-4 shrink-0"/> {selectedProyecto.direccion}</p>
+                <p className="text-xs text-muted-foreground flex items-center gap-2"><Hash className="h-4 w-4 shrink-0"/> ID: {selectedProyecto.id}</p>
+            </div>
+            <CardDescription className="!mt-4">
+              Añade o elimina personal para el proyecto seleccionado.
+            </CardDescription>
           </CardHeader>
           <CardContent>
             {loadingTrabajadores ? (

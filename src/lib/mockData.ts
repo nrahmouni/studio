@@ -15,10 +15,10 @@ export const mockSubcontratas: Subcontrata[] = [
 ];
 
 export const mockProyectos: Proyecto[] = [
-  { id: 'proy-meridiana', nombre: 'Reforma Av. Meridiana', constructoraId: 'const-sorigui-mock', subcontrataId: 'sub-caram-mock', fechaInicio: sub(new Date(), {days: 30}), fechaFin: add(new Date(), {days: 90}) },
-  { id: 'proy-glorias', nombre: 'Oficinas Pl. Glorias', constructoraId: 'const-acciona-mock', subcontrataId: 'sub-caram-mock', fechaInicio: sub(new Date(), {days: 60}), fechaFin: add(new Date(), {days: 120}) },
-  { id: 'proy-marina', nombre: 'Edificio C/ Marina', constructoraId: 'const-sorigui-mock', subcontrataId: 'sub-perez-mock', fechaInicio: new Date(), fechaFin: add(new Date(), {months: 6}) },
-  { id: 'proy-oficina-axa', nombre: 'Sede Central AXA', constructoraId: 'const-axa-mock', subcontrataId: 'sub-volta-mock', fechaInicio: sub(new Date(), {days: 15}), fechaFin: add(new Date(), {months: 1}) },
+  { id: 'proy-meridiana', nombre: 'Reforma Av. Meridiana', constructoraId: 'const-sorigui-mock', subcontrataId: 'sub-caram-mock', direccion: 'Avinguda Meridiana, 350, Barcelona', fechaInicio: sub(new Date(), {days: 30}), fechaFin: add(new Date(), {days: 90}) },
+  { id: 'proy-glorias', nombre: 'Oficinas Pl. Glorias', constructoraId: 'const-acciona-mock', subcontrataId: 'sub-caram-mock', direccion: 'Plaça de les Glòries Catalanes, 37, Barcelona', fechaInicio: sub(new Date(), {days: 60}), fechaFin: add(new Date(), {days: 120}) },
+  { id: 'proy-marina', nombre: 'Edificio C/ Marina', constructoraId: 'const-sorigui-mock', subcontrataId: 'sub-perez-mock', direccion: 'Carrer de la Marina, 120, Barcelona', fechaInicio: new Date(), fechaFin: add(new Date(), {months: 6}) },
+  { id: 'proy-oficina-axa', nombre: 'Sede Central AXA', constructoraId: 'const-axa-mock', subcontrataId: 'sub-volta-mock', direccion: 'Avinguda Diagonal, 547, Barcelona', fechaInicio: sub(new Date(), {days: 15}), fechaFin: add(new Date(), {months: 1}) },
 ];
 
 export const mockTrabajadores: Trabajador[] = [
