@@ -1,9 +1,11 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Shield, User, Building, HardHat, Wrench } from 'lucide-react';
+import { Loader2, Shield, User, Building, HardHat, Wrench, Database } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { useToast } from '@/hooks/use-toast';
+import { seedDemoData } from '@/lib/actions/seed.actions';
 
 type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'trabajador';
 const availableRoles: { name: Role; label: string; icon: React.ElementType }[] = [
@@ -23,7 +25,6 @@ const roleRedirects: Record<Role, string> = {
 function RoleSwitcher() {
   const setRole = (role: Role) => {
     localStorage.setItem('userRole_obra_link', role);
-    // Add mock user/company IDs for other parts of the app to use
     localStorage.setItem('userId_obra_link', 'user-mock-id');
     localStorage.setItem('constructoraId_obra_link', 'const-sorigui-mock');
     localStorage.setItem('subcontrataId_obra_link', 'sub-caram-mock');
@@ -54,7 +55,9 @@ function RoleSwitcher() {
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
+  const [seeding, setSeeding] = useState(false);
   const router = useRouter();
+  const { toast } = useToast();
 
   useEffect(() => {
     const userRole = localStorage.getItem('userRole_obra_link') as Role | null;
@@ -66,6 +69,25 @@ export default function DashboardPage() {
     }
   }, [router]);
 
+  const handleSeedData = async () => {
+    setSeeding(true);
+    toast({ title: "Poblando base de datos...", description: "Por favor, espera un momento." });
+    try {
+      const result = await seedDemoData();
+      if (result.success) {
+        toast({ title: "Éxito", description: result.message });
+      } else {
+        toast({ title: "Error", description: result.message, variant: "destructive" });
+      }
+    } catch (e: any) {
+       toast({ title: "Error Crítico", description: e.message || "Ocurrió un error inesperado al poblar la base de datos.", variant: "destructive" });
+    } finally {
+      setSeeding(false);
+      // Optional: reload to ensure all components refetch
+      window.location.reload();
+    }
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -74,10 +96,25 @@ export default function DashboardPage() {
     );
   }
 
-  // If we are not loading and there's no role, show the switcher
   return (
       <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
-        <RoleSwitcher />
+        <div className="w-full max-w-md space-y-8">
+            <Card className="border-amber-500 bg-amber-500/10">
+                <CardHeader>
+                    <CardTitle className="text-amber-700 flex items-center"><Database className="mr-2"/>Herramienta de Datos</CardTitle>
+                    <CardDescription className="text-amber-600">
+                    Tu aplicación ahora usa una base de datos real. Si no ves datos, usa este botón para cargarlos.
+                    </CardDescription>
+                </CardHeader>
+                <CardContent>
+                    <Button onClick={handleSeedData} disabled={seeding} variant="outline" className="w-full border-amber-600 text-amber-700 hover:bg-amber-500/20">
+                    {seeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4"/>}
+                    Poblar Base de Datos de Demo
+                    </Button>
+                </CardContent>
+            </Card>
+            <RoleSwitcher />
+        </div>
       </div>
   );
 }
