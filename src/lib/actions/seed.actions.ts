@@ -10,7 +10,6 @@ import {
   mockTrabajadores,
   mockReportesDiarios,
 } from '@/lib/mockData';
-import { revalidatePath } from 'next/cache';
 
 export async function seedDemoData(): Promise<{ success: boolean; message: string; summary?: Record<string, string> }> {
   console.log('[SEED DATA] Seeding process started...');
@@ -86,8 +85,6 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
 
     await batch.commit();
     console.log('[SEED DATA] Batch commit successful.');
-
-    revalidatePath('/(app)', 'layout'); 
 
     return { success: true, message: 'Datos de demostración creados/actualizados en Firestore con éxito.', summary };
 

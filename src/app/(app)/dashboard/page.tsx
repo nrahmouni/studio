@@ -71,18 +71,23 @@ export default function DashboardPage() {
 
   const handleSeedData = async () => {
     setSeeding(true);
-    toast({ title: "Poblando base de datos...", description: "Por favor, espera un momento." });
+    toast({ title: "Poblando base de datos...", description: "Por favor, espera. Esto puede tardar unos segundos." });
     try {
       const result = await seedDemoData();
       if (result.success) {
-        toast({ title: "Éxito", description: result.message });
-        // Reload only on success to see the new data
-        window.location.reload();
+        toast({ title: "Éxito", description: `${result.message} La página se recargará para mostrar los datos.` });
+        setTimeout(() => window.location.reload(), 2000); // Reload after 2s to let user read the toast
       } else {
-        toast({ title: "Error", description: result.message, variant: "destructive", duration: 10000 });
+        toast({ title: "Error al Poblar Datos", description: result.message, variant: "destructive", duration: 20000 });
       }
     } catch (e: any) {
-       toast({ title: "Error Crítico", description: e.message || "Ocurrió un error inesperado al poblar la base de datos.", variant: "destructive", duration: 10000 });
+       let errorMessage = "Ocurrió un error inesperado al poblar la base de datos.";
+       if (e.message && e.message.includes('504')) {
+           errorMessage = "El servidor tardó demasiado en responder (Error 504). Esto puede ser un problema temporal. Por favor, inténtalo de nuevo en unos momentos.";
+       } else if (e.message) {
+           errorMessage = e.message;
+       }
+       toast({ title: "Error de Red o Servidor", description: errorMessage, variant: "destructive", duration: 20000 });
     } finally {
       setSeeding(false);
     }
