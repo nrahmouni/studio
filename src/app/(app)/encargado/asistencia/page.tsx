@@ -251,7 +251,7 @@ export default function AsistenciaDashboardPage() {
                                     </div>
 
                                     <div className="flex justify-end gap-3 self-end w-full sm:w-auto">
-                                        <Link href={isEditable ? `/encargado/partes-enviados/${reporte.id}/edit` : '#'} passHref>
+                                        <Link href={isEditable ? `/encargado/asistencia/${reporte.id}/edit` : '#'} passHref>
                                           <Button variant="outline" disabled={!isEditable} title={!isEditable ? "No se puede modificar un reporte ya validado" : "Modificar el reporte"}>
                                               <Edit className="mr-2 h-4 w-4"/> Modificar
                                           </Button>
