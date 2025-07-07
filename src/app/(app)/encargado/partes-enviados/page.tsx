@@ -12,6 +12,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import jsPDF from 'jspdf';
 import 'jspdf-autotable';
+import Link from 'next/link';
 
 
 export default function PartesEnviadosPage() {
@@ -105,6 +106,7 @@ export default function PartesEnviadosPage() {
         <Accordion type="single" collapsible className="w-full space-y-3">
           {reportes.map(reporte => {
             const status = getValidationStatus(reporte);
+            const isEditable = !reporte.validacion.subcontrata.validado && !reporte.validacion.constructora.validado;
             return (
             <Card key={reporte.id} className="animate-fade-in-up">
               <AccordionItem value={reporte.id} className="border-b-0">
@@ -155,10 +157,12 @@ export default function PartesEnviadosPage() {
                       </Table>
                     </div>
                     <div className="mt-4 flex justify-end gap-3">
-                        <Button variant="outline" disabled title="Modificar el reporte (Próximamente)">
-                            <Edit className="mr-2 h-4 w-4"/>
-                            Modificar Reporte
-                        </Button>
+                        <Link href={isEditable ? `/encargado/partes-enviados/${reporte.id}/edit` : '#'} passHref>
+                          <Button variant="outline" disabled={!isEditable} title={!isEditable ? "No se puede modificar un reporte ya validado" : "Modificar el reporte"}>
+                              <Edit className="mr-2 h-4 w-4"/>
+                              Modificar Reporte
+                          </Button>
+                        </Link>
                         <Button onClick={() => generatePDF(reporte)} className="bg-accent text-accent-foreground hover:bg-accent/90">
                             <Download className="mr-2 h-4 w-4"/>
                             Descargar PDF

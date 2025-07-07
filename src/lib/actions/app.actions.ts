@@ -59,6 +59,13 @@ export async function getReportesDiarios(proyectoId?: string, encargadoId?: stri
     return reportes;
 }
 
+export async function getReporteDiarioById(reporteId: string): Promise<ReporteDiario | null> {
+    console.log(`ACTION: getReporteDiarioById for ${reporteId} (mocked)`);
+    await new Promise(resolve => setTimeout(resolve, 200));
+    const reporte = mockReportesDiarios.find(r => r.id === reporteId);
+    return reporte || null;
+}
+
 // --- Data Mutation ---
 
 export async function saveDailyReport(
@@ -96,6 +103,36 @@ export async function saveDailyReport(
   await new Promise(resolve => setTimeout(resolve, 500));
   return { success: true, message: 'Reporte diario guardado (simulación) con éxito.' };
 }
+
+export async function updateDailyReport(
+  reporteId: string,
+  trabajadoresReporte: ReporteTrabajador[]
+): Promise<{ success: boolean; message: string, reporte?: ReporteDiario }> {
+  console.log(`ACTION: updateDailyReport for ${reporteId} (mocked)`);
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const reporteIndex = mockReportesDiarios.findIndex(r => r.id === reporteId);
+
+  if (reporteIndex === -1) {
+    return { success: false, message: 'Reporte no encontrado para actualizar.' };
+  }
+
+  const originalReporte = mockReportesDiarios[reporteIndex];
+
+  // Prevent editing if already validated by others
+  if (originalReporte.validacion.subcontrata.validado || originalReporte.validacion.constructora.validado) {
+    return { success: false, message: 'No se puede modificar un reporte que ya ha sido validado por la subcontrata o constructora.' };
+  }
+
+  // Update the report
+  originalReporte.trabajadores = trabajadoresReporte;
+  originalReporte.timestamp = new Date(); // Update timestamp on modification
+
+  mockReportesDiarios[reporteIndex] = originalReporte;
+  
+  return { success: true, message: 'Reporte actualizado con éxito.', reporte: originalReporte };
+}
+
 
 export async function saveFichaje(data: { trabajadorId: string; tipo: 'inicio' | 'fin' }): Promise<{ success: boolean; message: string }> {
   console.log("ACTION: saveFichaje (simulated)");
