@@ -4,10 +4,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { CheckCircle, Construction, FileText, Cpu, TrendingUp, ShieldCheck, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
-import obraLinkLogo from "@/app/(app)/assets/logo.png"; 
-import benefitImg1 from "@/app/(app)/assets/img1.jpg";
-import benefitImg2 from "@/app/(app)/assets/img2.jpg";
-import benefitImg3 from "@/app/(app)/assets/img3.jpg";
 
 export default function HomePage() {
   const features = [
@@ -41,7 +37,7 @@ export default function HomePage() {
     {
       title: "Digitaliza y Simplifica tus Partes",
       description: "Transforma tus partes de trabajo en papel a un formato digital, accesible y fácil de gestionar. Adjunta fotos, registra incidencias y obtén firmas digitales al instante.",
-      imageSrc: benefitImg1,
+      imageSrc: "https://placehold.co/600x450.png",
       imageAlt: "Trabajador utilizando una tablet en una obra para gestionar partes digitales.",
       dataAiHint: "worker tablet construction",
       align: "left"
@@ -49,7 +45,7 @@ export default function HomePage() {
     {
       title: "Control Total de tus Proyectos",
       description: "Desde el perfil de tu empresa hasta el detalle de cada obra y usuario. Asigna jefes de obra, gestiona accesos y mantén toda la información organizada y segura.",
-      imageSrc: benefitImg2,
+      imageSrc: "https://placehold.co/600x450.png",
       imageAlt: "Panel de control mostrando gráficos y datos de gestión de proyectos de construcción.",
       dataAiHint: "dashboard project management",
       align: "right"
@@ -57,7 +53,7 @@ export default function HomePage() {
     {
       title: "Decisiones Inteligentes con IA",
       description: "Nuestra IA analiza los datos de tus partes para ofrecerte sugerencias de asignación de recursos, ayudándote a prevenir cuellos de botella y optimizar la productividad de tu equipo.",
-      imageSrc: benefitImg3,
+      imageSrc: "https://placehold.co/600x450.png",
       imageAlt: "Gráfico ilustrando la optimización de recursos mediante inteligencia artificial.",
       dataAiHint: "ai resource optimization chart",
       align: "left"
@@ -70,11 +66,12 @@ export default function HomePage() {
         <div className="container mx-auto px-4 flex justify-between items-center">
           <Link href="/" className="hover:opacity-90 transition-opacity">
             <Image
-              src={obraLinkLogo} 
+              src="https://placehold.co/160x36.png" 
               alt="Logo de ObraLink"
               width={160}
               height={36} 
               priority 
+              data-ai-hint="logo"
             />
           </Link>
           <nav>
@@ -90,10 +87,10 @@ export default function HomePage() {
         <section className="relative py-20 md:py-32 text-white overflow-hidden">
           <div className="absolute inset-0">
             <Image
-              src="/hero-image.jpg" 
+              src="https://placehold.co/1200x800.png" 
               alt="Equipo de profesionales de la construcción colaborando y planificando un proyecto en una obra con planos y tabletas digitales."
               fill
-              objectFit="cover"
+              style={{objectFit:"cover"}}
               quality={80}
               className="opacity-30"
               data-ai-hint="construction planning team"
@@ -196,7 +193,7 @@ export default function HomePage() {
           <div className="container mx-auto px-4 text-center">
             <div className="mb-8 animate-fade-in-up">
                <Image
-                  src="/cta-image.jpg"
+                  src="https://placehold.co/500x350.png"
                   alt="Trabajador de construcción sonriente con casco y herramientas, indicando éxito y satisfacción con la eficiencia obtenida."
                   width={500} 
                   height={350} 
