@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, HardHat, Construction, FileText, UserCheck, Fingerprint, Send, ListChecks, Settings, Shield } from "lucide-react";
+import { Home, HardHat, Construction, FileText, UserCheck, Fingerprint, Send, ListChecks, Settings, Shield, ClipboardCheck } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'trabajador';
@@ -21,6 +21,7 @@ const allNavItems: NavItem[] = [
   // Encargado
   { href: "/encargado/reporte-diario", label: "Reporte Diario", icon: Send, roles: ['encargado'] },
   { href: "/encargado/partes-enviados", label: "Partes Enviados", icon: ListChecks, roles: ['encargado'] },
+  { href: "/encargado/asistencia", label: "Control de Asistencia", icon: ClipboardCheck, roles: ['encargado'] },
 
   // Subcontrata
   { href: "/subcontrata/proyectos", label: "Proyectos y Personal", icon: HardHat, roles: ['subcontrata_admin'] },
