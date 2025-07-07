@@ -28,8 +28,11 @@ export async function getConstructoras(): Promise<Constructora[]> {
     const q = query(collection(db, "constructoras"), orderBy("nombre"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Constructora));
-  } catch (error) {
-    console.error("Error in getConstructoras:", error);
+  } catch (error: any) {
+    console.error(`Error in getConstructoras: ${error.message}`);
+    if (error.code === 'permission-denied') {
+      console.error("Firestore Permission Denied: Check your security rules.");
+    }
     return [];
   }
 }
@@ -40,8 +43,11 @@ export async function getSubcontratas(): Promise<Subcontrata[]> {
     const q = query(collection(db, "subcontratas"), orderBy("nombre"));
     const querySnapshot = await getDocs(q);
     return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Subcontrata));
-  } catch (error) {
-    console.error("Error in getSubcontratas:", error);
+  } catch (error: any) {
+    console.error(`Error in getSubcontratas: ${error.message}`);
+    if (error.code === 'permission-denied') {
+      console.error("Firestore Permission Denied: Check your security rules.");
+    }
     return [];
   }
 }
@@ -52,8 +58,11 @@ export async function getProyectosByConstructora(constructoraId: string): Promis
         const q = query(collection(db, "proyectos"), where("constructoraId", "==", constructoraId), orderBy("nombre"));
         const querySnapshot = await getDocs(q);
         return await getDocsWithParsedDates<Proyecto>(querySnapshot, ['fechaInicio', 'fechaFin']);
-    } catch (error) {
-        console.error(`Error in getProyectosByConstructora for ${constructoraId}:`, error);
+    } catch (error: any) {
+        console.error(`Error in getProyectosByConstructora for ${constructoraId}: ${error.message}`);
+        if (error.code === 'permission-denied') {
+          console.error("Firestore Permission Denied: Check your security rules.");
+        }
         return [];
     }
 }
@@ -64,8 +73,11 @@ export async function getProyectosBySubcontrata(subcontrataId: string): Promise<
     const q = query(collection(db, "proyectos"), where("subcontrataId", "==", subcontrataId), orderBy("nombre"));
     const querySnapshot = await getDocs(q);
     return await getDocsWithParsedDates<Proyecto>(querySnapshot, ['fechaInicio', 'fechaFin']);
-  } catch (error) {
-    console.error(`Error in getProyectosBySubcontrata for ${subcontrataId}:`, error);
+  } catch (error: any) {
+    console.error(`Error in getProyectosBySubcontrata for ${subcontrataId}: ${error.message}`);
+    if (error.code === 'permission-denied') {
+      console.error("Firestore Permission Denied: Check your security rules.");
+    }
     return [];
   }
 }
@@ -76,8 +88,11 @@ export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Tra
         const q = query(collection(db, "trabajadores"), where("proyectosAsignados", "array-contains", proyectoId), orderBy("nombre"));
         const querySnapshot = await getDocs(q);
         return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Trabajador));
-    } catch (error) {
-        console.error(`Error in getTrabajadoresByProyecto for ${proyectoId}:`, error);
+    } catch (error: any) {
+        console.error(`Error in getTrabajadoresByProyecto for ${proyectoId}: ${error.message}`);
+        if (error.code === 'permission-denied') {
+          console.error("Firestore Permission Denied: Check your security rules.");
+        }
         return [];
     }
 }
@@ -105,8 +120,11 @@ export async function getReportesDiarios(proyectoId?: string, encargadoId?: stri
         }
 
         return reportes;
-    } catch (error) {
-        console.error("Error in getReportesDiarios:", error);
+    } catch (error: any) {
+        console.error(`Error in getReportesDiarios: ${error.message}`);
+        if (error.code === 'permission-denied') {
+          console.error("Firestore Permission Denied: Check your security rules.");
+        }
         return [];
     }
 }
@@ -137,8 +155,11 @@ export async function getReporteDiarioById(reporteId: string): Promise<ReporteDi
         } else {
             return null;
         }
-    } catch (error) {
-        console.error(`Error in getReporteDiarioById for ${reporteId}:`, error);
+    } catch (error: any) {
+        console.error(`Error in getReporteDiarioById for ${reporteId}: ${error.message}`);
+        if (error.code === 'permission-denied') {
+          console.error("Firestore Permission Denied: Check your security rules.");
+        }
         return null;
     }
 }
@@ -178,6 +199,9 @@ export async function saveDailyReport(
     return { success: true, message: 'Reporte diario guardado en Firestore con éxito.' };
   } catch(error: any) {
     console.error("Error in saveDailyReport:", error);
+    if (error.code === 'permission-denied') {
+      return { success: false, message: "Error de Permiso: No se pudo guardar el reporte. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
+    }
     return { success: false, message: `Error al guardar el reporte: ${error.message}` };
   }
 }
@@ -209,6 +233,9 @@ export async function updateDailyReport(
     return { success: true, message: 'Reporte actualizado con éxito.', reporte: updatedReporte || undefined };
   } catch(error: any) {
     console.error(`Error in updateDailyReport for ${reporteId}:`, error);
+    if (error.code === 'permission-denied') {
+      return { success: false, message: "Error de Permiso: No se pudo actualizar el reporte. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
+    }
     return { success: false, message: `Error al actualizar el reporte: ${error.message}` };
   }
 }
@@ -229,6 +256,9 @@ export async function saveFichaje(data: { trabajadorId: string; tipo: 'inicio' |
     return { success: true, message: `Fichaje de ${data.tipo} guardado en Firestore con éxito.` };
   } catch(error: any) {
     console.error("Error in saveFichaje:", error);
+    if (error.code === 'permission-denied') {
+      return { success: false, message: "Error de Permiso: No se pudo guardar el fichaje. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
+    }
     return { success: false, message: `Error al guardar el fichaje: ${error.message}` };
   }
 }
@@ -262,6 +292,9 @@ export async function addTrabajadorToProyecto(proyectoId: string, subcontrataId:
         return { success: true, message: "Nuevo trabajador creado y asignado.", trabajador: {id: newTrabajadorId, ...newTrabajador} };
     } catch(error: any) {
         console.error("Error in addTrabajadorToProyecto:", error);
+        if (error.code === 'permission-denied') {
+          return { success: false, message: "Error de Permiso: No se pudo añadir el trabajador. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
+        }
         return { success: false, message: `Error al añadir trabajador: ${error.message}` };
     }
 }
@@ -276,6 +309,9 @@ export async function removeTrabajadorFromProyecto(proyectoId: string, trabajado
         return { success: true, message: "Trabajador eliminado del proyecto." };
     } catch(error: any) {
         console.error("Error in removeTrabajadorFromProyecto:", error);
+        if (error.code === 'permission-denied') {
+          return { success: false, message: "Error de Permiso: No se pudo eliminar el trabajador del proyecto. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
+        }
         return { success: false, message: `Error al eliminar trabajador del proyecto: ${error.message}` };
     }
 }
@@ -314,6 +350,9 @@ export async function validateDailyReport(
     return { success: true, message: `Reporte validado por ${role} con éxito.`, reporte: updatedReporte || undefined };
   } catch(error: any) {
     console.error(`Error in validateDailyReport for ${reporteId}:`, error);
+    if (error.code === 'permission-denied') {
+      return { success: false, message: "Error de Permiso: No se pudo validar el reporte. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
+    }
     return { success: false, message: `Error al validar el reporte: ${error.message}` };
   }
 }

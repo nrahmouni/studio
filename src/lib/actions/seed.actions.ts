@@ -92,7 +92,13 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
     console.error('--- [SEED DATA] ERROR ---');
     console.error(`Error al crear datos de demostración: ${error.message}`);
     console.error(`Stack: ${error.stack}`);
-    summary.error = `Error al crear datos de demostración: ${error.message}`;
-    return { success: false, message: `Error al crear datos de demostración: ${error.message}`, summary };
+    
+    let userMessage = `Error al crear datos de demostración: ${error.message}`;
+    if (error.code === 'permission-denied') {
+      userMessage = "Error de Permiso en Firestore. La base de datos denegó el acceso. Por favor, asegúrate de que tus reglas de seguridad en la Consola de Firebase permiten la escritura (allow write: if true;).";
+    }
+    
+    summary.error = userMessage;
+    return { success: false, message: userMessage, summary };
   }
 }
