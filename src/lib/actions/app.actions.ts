@@ -143,17 +143,6 @@ export async function removeTrabajadorFromProyecto(proyectoId: string, trabajado
     return { success: true, message: "Trabajador eliminado del proyecto (simulado)." };
 }
 
-export async function saveAttendanceRecord(
-  proyectoId: string,
-  encargadoId: string,
-  trabajadorIdsAsistentes: string[]
-): Promise<{ success: boolean; message: string }> {
-  console.log("ACTION: saveAttendanceRecord (Mocked)", { proyectoId, encargadoId, trabajadorIdsAsistentes });
-  // In a mock environment, we just simulate a successful operation.
-  // In a real DB, you would save this attendance record.
-  return { success: true, message: `Asistencia para ${trabajadorIdsAsistentes.length} trabajador(es) guardada con éxito (simulado).` };
-}
-
 export async function validateDailyReport(
   reporteId: string,
   role: 'subcontrata' | 'constructora'
