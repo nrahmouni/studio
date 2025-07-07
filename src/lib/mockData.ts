@@ -38,7 +38,7 @@ export const mockTrabajadores: Trabajador[] = [
   { id: 'trab-07', nombre: 'Carlos Ruiz', subcontrataId: 'sub-volta-mock', codigoAcceso: '777777', proyectosAsignados: ['proy-oficina-axa'] },
 ];
 
-export const mockReportesDiarios: ReporteDiario[] = [
+export let mockReportesDiarios: ReporteDiario[] = [
     {
         id: 'rep-001',
         proyectoId: 'proy-meridiana',
@@ -47,11 +47,10 @@ export const mockReportesDiarios: ReporteDiario[] = [
         trabajadores: [
             { trabajadorId: 'trab-01', nombre: 'Mohamed Elhamri', asistencia: true, horas: 8 },
             { trabajadorId: 'trab-02', nombre: 'Juan García', asistencia: true, horas: 9 },
-            { trabajadorId: 'trab-03', nombre: 'Ana López', asistencia: false, horas: 0 },
         ],
         timestamp: sub(new Date(), { days: 1, hours: 2 }),
         validacion: {
-            encargado: { validado: true, timestamp: new Date() },
+            encargado: { validado: true, timestamp: sub(new Date(), { days: 1, hours: 2 }) },
             subcontrata: { validado: false, timestamp: null },
             constructora: { validado: false, timestamp: null },
         },
@@ -73,15 +72,79 @@ export const mockReportesDiarios: ReporteDiario[] = [
         ],
         timestamp: sub(new Date(), { days: 2, hours: 3 }),
         validacion: {
-            encargado: { validado: true, timestamp: new Date() },
-            subcontrata: { validado: true, timestamp: new Date() },
+            encargado: { validado: true, timestamp: sub(new Date(), { days: 2, hours: 3 }) },
+            subcontrata: { validado: true, timestamp: sub(new Date(), { days: 2, hours: 1 }) },
             constructora: { validado: false, timestamp: null },
         },
         modificacionJefeObra: {
             modificado: true,
             jefeObraId: 'jefe-obra-mock-id',
-            timestamp: new Date(),
+            timestamp: sub(new Date(), { days: 1 }),
             reporteOriginal: '[]'
+        }
+    },
+    {
+        id: 'rep-003',
+        proyectoId: 'proy-glorias',
+        fecha: sub(new Date(), { days: 3 }),
+        encargadoId: 'user-encargado-mock',
+        trabajadores: [
+            { trabajadorId: 'trab-04', nombre: 'Lucía Fernández', asistencia: true, horas: 8 },
+        ],
+        timestamp: sub(new Date(), { days: 3, hours: 5 }),
+        validacion: {
+            encargado: { validado: true, timestamp: sub(new Date(), { days: 3, hours: 5 }) },
+            subcontrata: { validado: true, timestamp: sub(new Date(), { days: 3, hours: 2 }) },
+            constructora: { validado: true, timestamp: sub(new Date(), { days: 2 }) },
+        },
+        modificacionJefeObra: {
+            modificado: false,
+            jefeObraId: null,
+            timestamp: null,
+            reporteOriginal: null,
+        }
+    },
+    {
+        id: 'rep-004',
+        proyectoId: 'proy-meridiana',
+        fecha: new Date(),
+        encargadoId: 'user-encargado-mock',
+        trabajadores: [
+            { trabajadorId: 'trab-01', nombre: 'Mohamed Elhamri', asistencia: true, horas: 8 },
+            { trabajadorId: 'trab-02', nombre: 'Juan García', asistencia: true, horas: 8 },
+        ],
+        timestamp: new Date(),
+        validacion: {
+            encargado: { validado: true, timestamp: new Date() },
+            subcontrata: { validado: false, timestamp: null },
+            constructora: { validado: false, timestamp: null },
+        },
+        modificacionJefeObra: {
+            modificado: false,
+            jefeObraId: null,
+            timestamp: null,
+            reporteOriginal: null,
+        }
+    },
+    {
+        id: 'rep-005',
+        proyectoId: 'proy-oficina-axa',
+        fecha: sub(new Date(), { days: 5 }),
+        encargadoId: 'user-encargado-mock-3',
+        trabajadores: [
+            { trabajadorId: 'trab-07', nombre: 'Carlos Ruiz', asistencia: true, horas: 10 },
+        ],
+        timestamp: sub(new Date(), { days: 5, hours: 1 }),
+        validacion: {
+            encargado: { validado: true, timestamp: sub(new Date(), { days: 5, hours: 1 }) },
+            subcontrata: { validado: true, timestamp: sub(new Date(), { days: 4 }) },
+            constructora: { validado: false, timestamp: null },
+        },
+        modificacionJefeObra: {
+            modificado: false,
+            jefeObraId: null,
+            timestamp: null,
+            reporteOriginal: null,
         }
     }
 ];
