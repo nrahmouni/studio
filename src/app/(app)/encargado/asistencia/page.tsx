@@ -62,7 +62,7 @@ export default function AsistenciaDashboardPage() {
     let currentY = 22;
 
     doc.setFontSize(18);
-    doc.text(`Reporte Diario de Trabajo - ObraLink`, 14, currentY);
+    doc.text(`Reporte de Asistencia - ObraLink`, 14, currentY);
     currentY += 8;
 
     doc.setFontSize(11);
@@ -126,7 +126,7 @@ export default function AsistenciaDashboardPage() {
         doc.text(`- Constructora: Pendiente`, 16, finalY);
     }
     
-    doc.save(`Reporte-${proyectoNombre.replace(/ /g, '_')}-${format(new Date(reporte.fecha), 'yyyy-MM-dd')}.pdf`);
+    doc.save(`Asistencia-${proyectoNombre.replace(/ /g, '_')}-${format(new Date(reporte.fecha), 'yyyy-MM-dd')}.pdf`);
   };
 
   return (
@@ -275,3 +275,5 @@ export default function AsistenciaDashboardPage() {
     </div>
   );
 }
+
+    
