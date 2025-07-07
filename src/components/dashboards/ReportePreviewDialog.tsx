@@ -14,7 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import type { ReporteDiario } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
-import { Calendar, User, Check, X, Clock } from "lucide-react";
+import { Calendar, User, Check, X, Clock, MessageSquare } from "lucide-react";
 
 interface ReportePreviewDialogProps {
   reporte: ReporteDiario | null;
@@ -73,6 +73,13 @@ export function ReportePreviewDialog({ reporte, isOpen, onOpenChange }: ReporteP
               </TableBody>
             </Table>
           </div>
+
+          {reporte.comentarios && (
+            <div className="pt-2">
+                <h3 className="font-semibold text-lg flex items-center gap-2"><MessageSquare className="h-5 w-5"/>Comentarios Adicionales</h3>
+                <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 p-3 rounded-md mt-2 border">{reporte.comentarios}</p>
+            </div>
+          )}
 
         </div>
         <DialogFooter>

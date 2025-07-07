@@ -8,7 +8,8 @@ import { Label } from '@/components/ui/label';
 import { useToast } from '@/hooks/use-toast';
 import { getSubcontratas, getProyectosBySubcontrata, getTrabajadoresByProyecto, saveDailyReport } from '@/lib/actions/app.actions';
 import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador } from '@/lib/types';
-import { Loader2, Send, Building, HardHat, User, Plus, Minus } from 'lucide-react';
+import { Loader2, Send, Building, HardHat, User, Plus, Minus, MessageSquare } from 'lucide-react';
+import { Textarea } from '@/components/ui/textarea';
 
 interface TrabajadorConEstado extends Trabajador {
   asistencia: boolean;
@@ -20,6 +21,7 @@ export default function ReporteDiarioPage() {
   const [subcontratas, setSubcontratas] = useState<Subcontrata[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
   const [trabajadores, setTrabajadores] = useState<TrabajadorConEstado[]>([]);
+  const [comentarios, setComentarios] = useState('');
   
   const [selectedSubcontrata, setSelectedSubcontrata] = useState<string>('');
   const [selectedProyecto, setSelectedProyecto] = useState<string>('');
@@ -65,6 +67,7 @@ export default function ReporteDiarioPage() {
     setSelectedProyecto('');
     setProyectos([]);
     setTrabajadores([]);
+    setComentarios('');
     setIsLoadingProyectos(true);
     const data = await getProyectosBySubcontrata(subcontrataId);
     setProyectos(data);
@@ -76,6 +79,7 @@ export default function ReporteDiarioPage() {
     setSelectedProyecto('');
     setProyectos([]);
     setTrabajadores([]);
+    setComentarios('');
   };
 
   const getSelectedSubcontrataName = () => {
@@ -86,6 +90,7 @@ export default function ReporteDiarioPage() {
   const handleSelectProyecto = async (proyectoId: string) => {
     setSelectedProyecto(proyectoId);
     setTrabajadores([]);
+    setComentarios('');
     if (!proyectoId) return;
     setIsLoadingTrabajadores(true);
     const data = await getTrabajadoresByProyecto(proyectoId);
@@ -97,6 +102,7 @@ export default function ReporteDiarioPage() {
   const handleClearProyectoSelection = () => {
     setSelectedProyecto('');
     setTrabajadores([]);
+    setComentarios('');
   };
 
   const getSelectedProyectoName = () => {
@@ -139,13 +145,14 @@ export default function ReporteDiarioPage() {
       return;
     }
 
-    const result = await saveDailyReport(selectedProyecto, currentUserId, reporte);
+    const result = await saveDailyReport(selectedProyecto, currentUserId, reporte, comentarios);
     if(result.success) {
         toast({ title: "Éxito", description: result.message });
         setSelectedSubcontrata('');
         setSelectedProyecto('');
         setProyectos([]);
         setTrabajadores([]);
+        setComentarios('');
     } else {
         toast({ title: "Error", description: result.message, variant: "destructive" });
     }
@@ -162,7 +169,7 @@ export default function ReporteDiarioPage() {
       {/* Step 1: Select Subcontrata */}
       <Card className="animate-fade-in-up transition-all duration-300">
         { selectedSubcontrata ? (
-            <div className="flex items-center justify-between p-3">
+            <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                 <div className="flex items-center gap-3">
                     <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">1</div>
                     <Building className="h-5 w-5 text-primary" />
@@ -205,7 +212,7 @@ export default function ReporteDiarioPage() {
       {selectedSubcontrata && (
         <Card ref={proyectosCardRef} className="animate-fade-in-up">
             { selectedProyecto ? (
-                 <div className="flex items-center justify-between p-3">
+                 <div className="flex items-center justify-between p-3 bg-muted/50 rounded-lg">
                     <div className="flex items-center gap-3">
                         <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg shrink-0">2</div>
                         <HardHat className="h-5 w-5 text-primary" />
@@ -249,6 +256,7 @@ export default function ReporteDiarioPage() {
         </Card>
       )}
       
+      {/* Step 3: Validate Workers */}
       {selectedProyecto && (
          <Card ref={trabajadoresCardRef} className="animate-fade-in-up">
            <CardHeader>
@@ -308,15 +316,39 @@ export default function ReporteDiarioPage() {
                       </div>
                     </div>
                   ))}
-                  <Button onClick={handleValidateDay} disabled={isSubmitting} className="w-full mt-6 text-lg py-6 bg-accent text-accent-foreground hover:bg-accent/90">
-                      {isSubmitting ? <Loader2 className="animate-spin mr-2 h-5 w-5"/> : <Send className="mr-2 h-5 w-5"/>}
-                      Validar y Enviar Reporte del Día
-                  </Button>
                 </div>
               ) : (
                  <p className="text-muted-foreground text-center py-4">No hay trabajadores asignados a este proyecto.</p>
               )
             )}
+          </CardContent>
+         </Card>
+      )}
+
+      {/* Step 4: Comments and Submit */}
+      {selectedProyecto && (
+         <Card className="animate-fade-in-up">
+           <CardHeader>
+            <CardTitle className="flex items-center gap-3">
+              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-green-600 text-white font-bold text-lg">4</div>
+              <span>Comentarios Adicionales (Opcional)</span>
+            </CardTitle>
+            <CardDescription>Añade cualquier nota, incidencia o comentario relevante sobre la jornada de hoy.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Label htmlFor="comentarios" className="sr-only">Comentarios</Label>
+            <Textarea 
+                id="comentarios"
+                placeholder="Ej: Se ha recibido el material de fontanería. Mañana se empezará con la instalación."
+                value={comentarios}
+                onChange={(e) => setComentarios(e.target.value)}
+                rows={4}
+                className="mb-6"
+            />
+            <Button onClick={handleValidateDay} disabled={isSubmitting} className="w-full text-lg py-6 bg-accent text-accent-foreground hover:bg-accent/90">
+                {isSubmitting ? <Loader2 className="animate-spin mr-2 h-5 w-5"/> : <Send className="mr-2 h-5 w-5"/>}
+                Validar y Enviar Reporte del Día
+            </Button>
           </CardContent>
          </Card>
       )}

@@ -65,6 +65,7 @@ export const ReporteDiarioSchema = z.object({
   trabajadores: z.array(ReporteTrabajadorSchema),
   encargadoId: z.string(), // User ID of the Encargado who submitted
   timestamp: z.date(),
+  comentarios: z.string().optional().nullable(),
   // Validation stages
   validacion: z.object({
     encargado: z.object({ validado: z.boolean(), timestamp: z.date().nullable() }).default({ validado: true, timestamp: new Date() }),

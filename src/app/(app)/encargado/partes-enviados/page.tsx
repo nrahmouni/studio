@@ -5,7 +5,7 @@ import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ReporteDiario } from '@/lib/types';
 import { getReportesDiarios } from '@/lib/actions/app.actions';
-import { Loader2, FileCheck, Check, X, Clock, User, Download, Edit } from 'lucide-react';
+import { Loader2, FileCheck, Check, X, Clock, User, Download, Edit, MessageSquare } from 'lucide-react';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
@@ -65,6 +65,18 @@ export default function PartesEnviadosPage() {
     });
 
     let finalY = (doc as any).lastAutoTable.finalY + 10;
+    
+    // Comentarios
+    if (reporte.comentarios) {
+        doc.setFontSize(12);
+        doc.text("Comentarios Adicionales:", 14, finalY);
+        finalY += 6;
+        doc.setFontSize(10);
+        const splitComments = doc.splitTextToSize(reporte.comentarios, 180);
+        doc.text(splitComments, 14, finalY);
+        finalY += (splitComments.length * 5) + 5;
+    }
+
     doc.setFontSize(12);
     doc.text("Estado de Validación", 14, finalY);
     finalY += 6;
@@ -156,6 +168,14 @@ export default function PartesEnviadosPage() {
                         </TableBody>
                       </Table>
                     </div>
+
+                    {reporte.comentarios && (
+                        <div className="mt-4">
+                            <h4 className="font-semibold text-md mb-2 flex items-center gap-2"><MessageSquare className="h-4 w-4"/>Comentarios Adicionales:</h4>
+                            <p className="text-sm text-muted-foreground whitespace-pre-wrap bg-muted/50 p-3 rounded-md border">{reporte.comentarios}</p>
+                        </div>
+                    )}
+
                     <div className="mt-4 flex justify-end gap-3">
                         <Link href={isEditable ? `/encargado/partes-enviados/${reporte.id}/edit` : '#'} passHref>
                           <Button variant="outline" disabled={!isEditable} title={!isEditable ? "No se puede modificar un reporte ya validado" : "Modificar el reporte"}>

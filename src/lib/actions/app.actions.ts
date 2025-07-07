@@ -93,9 +93,10 @@ export async function getReporteDiarioById(reporteId: string): Promise<ReporteDi
 export async function saveDailyReport(
   proyectoId: string,
   encargadoId: string,
-  trabajadoresReporte: ReporteTrabajador[]
+  trabajadoresReporte: ReporteTrabajador[],
+  comentarios: string
 ): Promise<{ success: boolean; message: string }> {
-  console.log("ACTION: saveDailyReport (Mocked)");
+  console.log("ACTION: saveDailyReport (Mocked)", { proyectoId, encargadoId, trabajadoresReporte, comentarios });
   // In a mock environment, we can't modify the source file.
   // We just simulate a successful operation.
   return { success: true, message: 'Reporte diario guardado con éxito (simulado).' };

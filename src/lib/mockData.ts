@@ -49,6 +49,7 @@ export const mockReportesDiarios: ReporteDiario[] = [
             { trabajadorId: 'trab-02', nombre: 'Juan García', asistencia: true, horas: 9 },
         ],
         timestamp: sub(new Date(), { days: 1, hours: 2 }),
+        comentarios: "Todo en orden, el material llegó a tiempo.",
         validacion: {
             encargado: { validado: true, timestamp: sub(new Date(), { days: 1, hours: 2 }) },
             subcontrata: { validado: false, timestamp: null },
@@ -71,6 +72,7 @@ export const mockReportesDiarios: ReporteDiario[] = [
             { trabajadorId: 'trab-06', nombre: 'Ana Martínez', asistencia: true, horas: 8 },
         ],
         timestamp: sub(new Date(), { days: 2, hours: 3 }),
+        comentarios: null,
         validacion: {
             encargado: { validado: true, timestamp: sub(new Date(), { days: 2, hours: 3 }) },
             subcontrata: { validado: true, timestamp: sub(new Date(), { days: 2, hours: 1 }) },
@@ -92,6 +94,7 @@ export const mockReportesDiarios: ReporteDiario[] = [
             { trabajadorId: 'trab-04', nombre: 'Lucía Fernández', asistencia: true, horas: 8 },
         ],
         timestamp: sub(new Date(), { days: 3, hours: 5 }),
+        comentarios: "Se ha solicitado una grúa para la próxima semana.",
         validacion: {
             encargado: { validado: true, timestamp: sub(new Date(), { days: 3, hours: 5 }) },
             subcontrata: { validado: true, timestamp: sub(new Date(), { days: 3, hours: 2 }) },
@@ -114,6 +117,7 @@ export const mockReportesDiarios: ReporteDiario[] = [
             { trabajadorId: 'trab-02', nombre: 'Juan García', asistencia: true, horas: 8 },
         ],
         timestamp: new Date(),
+        comentarios: null,
         validacion: {
             encargado: { validado: true, timestamp: new Date() },
             subcontrata: { validado: false, timestamp: null },
@@ -135,6 +139,7 @@ export const mockReportesDiarios: ReporteDiario[] = [
             { trabajadorId: 'trab-07', nombre: 'Carlos Ruiz', asistencia: true, horas: 10 },
         ],
         timestamp: sub(new Date(), { days: 5, hours: 1 }),
+        comentarios: "Trabajo extra realizado para cumplir con el plazo. Se necesita validar horas extra.",
         validacion: {
             encargado: { validado: true, timestamp: sub(new Date(), { days: 5, hours: 1 }) },
             subcontrata: { validado: true, timestamp: sub(new Date(), { days: 4 }) },
