@@ -70,6 +70,18 @@ export default function ReporteDiarioPage() {
     setProyectos(data);
     setIsLoadingProyectos(false);
   };
+  
+  const handleClearSelection = () => {
+    setSelectedSubcontrata('');
+    setSelectedProyecto('');
+    setProyectos([]);
+    setTrabajadores([]);
+  };
+
+  const getSelectedSubcontrataName = () => {
+    return subcontratas.find(s => s.id === selectedSubcontrata)?.nombre || '';
+  };
+
 
   const handleSelectProyecto = async (proyectoId: string) => {
     setSelectedProyecto(proyectoId);
@@ -139,23 +151,33 @@ export default function ReporteDiarioPage() {
       </div>
 
       {/* Step 1: Select Subcontrata */}
-      <Card className="animate-fade-in-up">
+      <Card className="animate-fade-in-up transition-all duration-300">
         <CardHeader>
           <CardTitle className="flex items-center gap-3">
             <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">1</div>
-            <span>Selecciona Empresa Subcontratada</span>
+            <span>{selectedSubcontrata ? 'Empresa Seleccionada' : 'Selecciona Empresa Subcontratada'}</span>
           </CardTitle>
-          <CardDescription>Elige la empresa para la que vas a reportar.</CardDescription>
+          {!selectedSubcontrata && (
+            <CardDescription>Elige la empresa para la que vas a reportar.</CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           {isLoadingSubcontratas ? (
             <Loader2 className="animate-spin h-8 w-8 text-primary" />
+          ) : selectedSubcontrata ? (
+             <div className="flex items-center justify-between p-4 bg-muted/50 rounded-lg border">
+                <div className="flex items-center gap-3">
+                    <Building className="h-6 w-6 text-primary" />
+                    <p className="text-lg font-semibold">{getSelectedSubcontrataName()}</p>
+                </div>
+                <Button variant="outline" onClick={handleClearSelection}>Cambiar</Button>
+            </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
               {subcontratas.map(s => (
                 <Button
                   key={s.id}
-                  variant={selectedSubcontrata === s.id ? 'default' : 'outline'}
+                  variant={'outline'}
                   className="h-20 text-lg justify-start p-4"
                   onClick={() => handleSelectSubcontrata(s.id)}
                 >
@@ -244,7 +266,7 @@ export default function ReporteDiarioPage() {
                                   <Minus className="h-5 w-5" />
                               </Button>
                               <span className="font-bold text-xl w-12 text-center tabular-nums">
-                                  {t.horas}h
+                                  {t.asistencia ? `${t.horas}h` : '--'}
                               </span>
                               <Button
                                   type="button"
