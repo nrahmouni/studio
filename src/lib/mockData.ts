@@ -38,7 +38,7 @@ export const mockTrabajadores: Trabajador[] = [
   { id: 'trab-07', nombre: 'Carlos Ruiz', subcontrataId: 'sub-volta-mock', codigoAcceso: '777777', proyectosAsignados: ['proy-oficina-axa'] },
 ];
 
-export let mockReportesDiarios: ReporteDiario[] = [
+export const mockReportesDiarios: ReporteDiario[] = [
     {
         id: 'rep-001',
         proyectoId: 'proy-meridiana',

@@ -2,7 +2,7 @@
 'use server';
 
 import { db } from '@/lib/firebase/firebase';
-import { collection, doc, writeBatch } from 'firebase/firestore';
+import { collection, doc, writeBatch, Timestamp } from 'firebase/firestore';
 import {
   mockConstructoras,
   mockSubcontratas,
@@ -50,7 +50,34 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
     // Seed ReportesDiarios
     mockReportesDiarios.forEach(r => {
       const ref = doc(db, "reportesDiarios", r.id);
-      batch.set(ref, r);
+      
+      // Create a new object for Firestore with Date objects converted to Timestamps.
+      // This is crucial for Firestore to store dates correctly.
+      const reportDataForFirestore = {
+        ...r,
+        fecha: Timestamp.fromDate(new Date(r.fecha)),
+        timestamp: Timestamp.fromDate(new Date(r.timestamp)),
+        validacion: {
+          encargado: {
+            validado: r.validacion.encargado.validado,
+            timestamp: r.validacion.encargado.timestamp ? Timestamp.fromDate(new Date(r.validacion.encargado.timestamp)) : null,
+          },
+          subcontrata: {
+            validado: r.validacion.subcontrata.validado,
+            timestamp: r.validacion.subcontrata.timestamp ? Timestamp.fromDate(new Date(r.validacion.subcontrata.timestamp)) : null,
+          },
+          constructora: {
+            validado: r.validacion.constructora.validado,
+            timestamp: r.validacion.constructora.timestamp ? Timestamp.fromDate(new Date(r.validacion.constructora.timestamp)) : null,
+          },
+        },
+        modificacionJefeObra: r.modificacionJefeObra ? {
+          ...r.modificacionJefeObra,
+          timestamp: r.modificacionJefeObra.timestamp ? Timestamp.fromDate(new Date(r.modificacionJefeObra.timestamp)) : null,
+        } : r.modificacionJefeObra,
+      };
+      
+      batch.set(ref, reportDataForFirestore);
     });
     summary.reportes = `${mockReportesDiarios.length} reportes diarios prepared.`;
 
