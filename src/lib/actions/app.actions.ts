@@ -145,3 +145,37 @@ export async function removeTrabajadorFromProyecto(proyectoId: string, trabajado
     }
     return { success: false, message: "No se pudo encontrar al trabajador o no estaba asignado a este proyecto."};
 }
+
+export async function validateDailyReport(
+  reporteId: string,
+  role: 'subcontrata' | 'constructora'
+): Promise<{ success: boolean; message: string; reporte?: ReporteDiario }> {
+  console.log(`ACTION: validateDailyReport for ${reporteId} by ${role} (simulated)`);
+  await new Promise(resolve => setTimeout(resolve, 500));
+  
+  const reporteIndex = mockReportesDiarios.findIndex(r => r.id === reporteId);
+
+  if (reporteIndex === -1) {
+    return { success: false, message: 'Reporte no encontrado.' };
+  }
+  
+  const reporte = mockReportesDiarios[reporteIndex];
+
+  if (role === 'subcontrata') {
+    if (!reporte.validacion.encargado.validado) {
+        return { success: false, message: 'El reporte debe ser validado primero por el Encargado.' };
+    }
+    reporte.validacion.subcontrata.validado = true;
+    reporte.validacion.subcontrata.timestamp = new Date();
+  } else if (role === 'constructora') {
+     if (!reporte.validacion.subcontrata.validado) {
+        return { success: false, message: 'El reporte debe ser validado primero por la Subcontrata.' };
+    }
+    reporte.validacion.constructora.validado = true;
+    reporte.validacion.constructora.timestamp = new Date();
+  }
+
+  mockReportesDiarios[reporteIndex] = reporte;
+
+  return { success: true, message: `Reporte validado por ${role} con éxito.`, reporte };
+}
