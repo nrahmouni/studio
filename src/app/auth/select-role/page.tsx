@@ -1,7 +1,6 @@
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building, User, HardHat, UserPlus } from "lucide-react";
+import { Building, User, HardHat, UserPlus, Fingerprint } from "lucide-react";
 import Link from "next/link";
 
 export default function SelectRolePage() {
@@ -19,27 +18,21 @@ export default function SelectRolePage() {
           <CardDescription>Selecciona tu rol para continuar o registra tu empresa.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <Link href="/auth/login/empresa" passHref>
-            <Button variant="outline" className="w-full h-16 text-lg border-primary text-primary hover:bg-primary/5 hover:shadow-md transition-all">
-              <Building className="mr-3 h-6 w-6" />
-              Soy Admin de Empresa
-            </Button>
-          </Link>
-           <Link href="/auth/login/empresa" passHref>
+          <Link href="/auth/login" passHref>
             <Button variant="outline" className="w-full h-16 text-lg border-primary text-primary hover:bg-primary/5 hover:shadow-md transition-all">
               <HardHat className="mr-3 h-6 w-6" />
-              Soy Encargado/Jefe de Obra
+              Soy Encargado / Admin
             </Button>
           </Link>
           <Link href="/auth/login/trabajador" passHref>
             <Button variant="outline" className="w-full h-16 text-lg border-primary text-primary hover:bg-primary/5 hover:shadow-md transition-all">
-              <User className="mr-3 h-6 w-6" />
-              Soy Trabajador
+              <Fingerprint className="mr-3 h-6 w-6" />
+              Soy Trabajador (Acceso con código)
             </Button>
           </Link>
           <div className="relative flex py-3 items-center">
             <div className="flex-grow border-t border-border"></div>
-            <span className="flex-shrink mx-4 text-muted-foreground text-xs">¿NUEVA EMPRESA?</span>
+            <span className="flex-shrink mx-4 text-muted-foreground text-xs">¿ERES NUEVO?</span>
             <div className="flex-grow border-t border-border"></div>
           </div>
           <Link href="/auth/register/empresa" passHref>

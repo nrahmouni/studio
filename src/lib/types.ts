@@ -1,129 +1,93 @@
-
 import { z } from 'zod';
 
-export const EmpresaSchema = z.object({
+// Top-level client company
+export const ConstructoraSchema = z.object({
   id: z.string(),
   nombre: z.string().min(1, "El nombre es requerido"),
-  CIF: z.string().min(1, "El CIF es requerido"),
-  emailContacto: z.string().email("Email de contacto inválido"),
-  telefono: z.string().min(1, "El teléfono es requerido"),
-  logoURL: z.string().url("URL de logo inválida").optional().nullable(),
-  dataAIHint: z.string().optional(), // For placeholder images
 });
-export type Empresa = z.infer<typeof EmpresaSchema>;
+export type Constructora = z.infer<typeof ConstructoraSchema>;
 
-
-export const CostoCategoriaSchema = z.object({
-  id: z.string(), // For UI key management and easier updates
-  categoria: z.string().min(1, "La categoría es requerida"),
-  costo: z.number().min(0, "El costo no puede ser negativo"),
-  notas: z.string().optional(),
-});
-export type CostoCategoria = z.infer<typeof CostoCategoriaSchema>;
-
-export const ObraSchema = z.object({
-  id: z.string(),
-  empresaId: z.string(),
-  nombre: z.string().min(1, "El nombre de la obra es requerido"),
-  direccion: z.string().min(1, "La dirección es requerida"),
-  fechaInicio: z.date({ required_error: "La fecha de inicio es requerida."}),
-  fechaFin: z.date().optional().nullable(),
-  clienteNombre: z.string().min(1, "El nombre del cliente es requerido"),
-  jefeObraId: z.string().optional(), // Referencia a UsuarioFirebase.id
-  descripcion: z.string().optional(),
-  costosPorCategoria: z.array(CostoCategoriaSchema).optional(),
-  dataAIHint: z.string().optional(),
-});
-export type Obra = z.infer<typeof ObraSchema>;
-
-
-export const UsuarioFirebaseSchema = z.object({
+// Subcontracted company (like Caram)
+export const SubcontrataSchema = z.object({
   id: z.string(),
   nombre: z.string().min(1, "El nombre es requerido"),
-  email: z.string().email("Email inválido"),
-  dni: z.string().min(1, "El DNI es requerido").regex(/^[0-9XYZxyz][0-9]{7}[A-HJ-NP-TV-Z]$/i, "Formato de DNI/NIE inválido (e.g., 12345678A o X1234567B)"),
-  password: z.string().min(1, "Contraseña requerida para simulación"),
-  rol: z.enum(["admin", "trabajador", "jefeObra"]),
+  clientesConstructoraIds: z.array(z.string()).optional(), // IDs of Constructoras they work for
+});
+export type Subcontrata = z.infer<typeof SubcontrataSchema>;
+
+// A project, now linked to a Constructora (client) and a Subcontrata
+export const ProyectoSchema = z.object({
+  id: z.string(),
+  nombre: z.string().min(1, "El nombre es requerido"),
+  constructoraId: z.string(),
+  subcontrataId: z.string(),
+  // ... other project details like address, etc. can be added later
+});
+export type Proyecto = z.infer<typeof ProyectoSchema>;
+
+// Worker model, separate from password-based users
+export const TrabajadorSchema = z.object({
+  id: z.string(),
+  nombre: z.string().min(1, "El nombre es requerido"),
+  subcontrataId: z.string(),
+  codigoAcceso: z.string().min(6, "El código debe tener al menos 6 caracteres"),
+  proyectosAsignados: z.array(z.string()).optional(),
+});
+export type Trabajador = z.infer<typeof TrabajadorSchema>;
+
+
+// User model for roles that log in with email/password
+export const UsuarioSchema = z.object({
+  id: z.string(), // Firebase Auth UID
+  email: z.string().email(),
+  nombre: z.string().optional(),
+  rol: z.enum(["encargado", "subcontrata_admin", "constructora_admin", "jefe_obra"]),
+  // Link to the company they belong to
+  subcontrataId: z.string().optional().nullable(),
+  constructoraId: z.string().optional().nullable(),
   activo: z.boolean().default(true),
-  obrasAsignadas: z.array(z.string()).optional(),
-  empresaId: z.string(),
-  dniAnversoURL: z.string().url("URL de foto de anverso de DNI inválida").optional().nullable(),
-  dniReversoURL: z.string().url("URL de foto de reverso de DNI inválida").optional().nullable(),
 });
-export type UsuarioFirebase = z.infer<typeof UsuarioFirebaseSchema>;
+export type Usuario = z.infer<typeof UsuarioSchema>;
 
-
-export const ParteSchema = z.object({
-  id: z.string(),
-  usuarioId: z.string().min(1, "El ID de usuario es requerido"),
-  obraId: z.string().min(1, "El ID de obra es requerido"),
-  fecha: z.date({ required_error: "La fecha es requerida."}),
-  tareasRealizadas: z.string().min(1, "Las tareas realizadas son requeridas"),
-  horasTrabajadas: z.number().positive("Las horas deben ser positivas y mayores que cero.").optional().nullable(),
-  tareasSeleccionadas: z.array(z.string()).optional(),
-  fotosURLs: z.array(z.string().url()).optional(),
-  firmaURL: z.string().url("URL de firma inválida").optional().nullable(),
-  incidencias: z.string().optional(),
-  validado: z.boolean().default(false),
-  validadoPor: z.string().optional(),
-  timestamp: z.date(),
-  dataAIHint: z.string().optional(),
+export const ReporteTrabajadorSchema = z.object({
+    trabajadorId: z.string(),
+    nombre: z.string(),
+    asistencia: z.boolean(),
+    horas: z.number().min(0),
 });
-export type Parte = z.infer<typeof ParteSchema>;
+export type ReporteTrabajador = z.infer<typeof ReporteTrabajadorSchema>;
 
-export const FichajeSchema = z.object({
-  id: z.string(),
-  usuarioId: z.string(),
-  obraId: z.string(),
-  tipo: z.enum(["entrada", "salida", "inicioDescanso", "finDescanso"]),
-  timestamp: z.date(),
-  validado: z.boolean().default(false).optional(),
-  validadoPor: z.string().optional().nullable(),
-});
-export type Fichaje = z.infer<typeof FichajeSchema>;
-export type FichajeTipo = z.infer<typeof FichajeSchema.shape.tipo>;
-
-export const GetFichajesCriteriaSchema = z.object({
-  empresaId: z.string(),
-  obraId: z.string().optional(),
-  usuarioId: z.string().optional(),
-  fechaInicio: z.date().optional(),
-  fechaFin: z.date().optional(),
-  estadoValidacion: z.enum(['todos', 'validados', 'pendientes']).default('todos').optional(),
-});
-export type GetFichajesCriteria = z.infer<typeof GetFichajesCriteriaSchema>;
-
-
-// --- Tipos para Control Diario ---
-const timeRegex = /^(?:[01]\d|2[0-3]):[0-5]\d$/; // HH:mm format
-
-export const ControlDiarioRegistroTrabajadorSchema = z.object({
-  usuarioId: z.string(),
-  nombreTrabajador: z.string().optional(), // For display purposes on the form
-  asistencia: z.boolean().default(false),
-  horaInicio: z.string().regex(timeRegex, "Formato HH:mm").optional().nullable(),
-  horaFin: z.string().regex(timeRegex, "Formato HH:mm").optional().nullable(),
-  horasReportadas: z.number().min(0, "Horas deben ser >= 0").max(24, "Horas no pueden exceder 24").optional().nullable(),
-  validadoPorJefeObra: z.boolean().default(false),
-});
-export type ControlDiarioRegistroTrabajador = z.infer<typeof ControlDiarioRegistroTrabajadorSchema>;
-
-export const ControlDiarioObraSchema = z.object({
-  id: z.string(), // obraId-YYYY-MM-DD
-  obraId: z.string(),
+// Report for a specific day on a project
+export const ReporteDiarioSchema = z.object({
+  id: z.string(), // e.g., {proyectoId}-{YYYY-MM-DD}
+  proyectoId: z.string(),
   fecha: z.date(),
-  registrosTrabajadores: z.array(ControlDiarioRegistroTrabajadorSchema),
-  firmaJefeObraURL: z.string().url().optional().nullable(),
-  jefeObraId: z.string(), // ID del Jefe de Obra que crea/modifica el registro
-  lastModified: z.date(),
+  trabajadores: z.array(ReporteTrabajadorSchema),
+  encargadoId: z.string(), // User ID of the Encargado who submitted
+  timestamp: z.date(),
+  // Validation stages
+  validacion: z.object({
+    encargado: z.object({ validado: z.boolean(), timestamp: z.date().nullable() }).default({ validado: true, timestamp: new Date() }),
+    subcontrata: z.object({ validado: z.boolean(), timestamp: z.date().nullable() }).default({ validado: false, timestamp: null }),
+    constructora: z.object({ validado: z.boolean(), timestamp: z.date().nullable() }).default({ validado: false, timestamp: null }),
+  }),
+  // For modifications by Jefe de Obra
+  modificacionJefeObra: z.object({
+    modificado: z.boolean().default(false),
+    jefeObraId: z.string().nullable(),
+    timestamp: z.date().nullable(),
+    reporteOriginal: z.string().nullable(), // JSON string of the original 'trabajadores' array
+  }).optional(),
 });
-export type ControlDiarioObra = z.infer<typeof ControlDiarioObraSchema>;
+export type ReporteDiario = z.infer<typeof ReporteDiarioSchema>;
 
-// Schema for the form data which might be slightly different before saving
-export const ControlDiarioObraFormSchema = ControlDiarioObraSchema.omit({ 
-  id: true, // id will be constructed
-  lastModified: true, // will be set on save
-  jefeObraId: true, // will be set from current user
+
+// Simplified time tracking for workers
+export const FichajeTrabajadorSchema = z.object({
+  id: z.string(),
+  trabajadorId: z.string(),
+  tipo: z.enum(["inicio", "fin"]),
+  timestamp: z.date(),
+  ubicacion: z.string().optional(), // e.g., "lat,long"
 });
-export type ControlDiarioObraFormData = z.infer<typeof ControlDiarioObraFormSchema>;
-
+export type FichajeTrabajador = z.infer<typeof FichajeTrabajadorSchema>;

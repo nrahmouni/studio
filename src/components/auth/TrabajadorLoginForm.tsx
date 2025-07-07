@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,20 +14,15 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { authenticateUser } from '@/lib/actions/user.actions'; // Changed to a generic auth function
+import { authenticateTrabajadorByCode } from '@/lib/actions/auth.actions';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { UsuarioFirebase } from '@/lib/types';
-
 
 const formSchema = z.object({
-  email: z.string().email({
-    message: 'Por favor, introduce un email válido.',
-  }),
-  password: z.string().min(1, {
-    message: 'La contraseña no puede estar vacía.',
+  accessCode: z.string().min(6, {
+    message: 'El código de acceso debe tener al menos 6 caracteres.',
   }),
 });
 
@@ -40,31 +34,29 @@ export function TrabajadorLoginForm() {
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
-      email: '',
-      password: '',
+      accessCode: '',
     },
   });
 
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      // Authenticate as a trabajador
-      const result = await authenticateUser(values, ['trabajador']);
-      if (result.success && result.userId && result.empresaId && result.role) {
+      const result = await authenticateTrabajadorByCode(values.accessCode);
+      if (result.success && result.trabajadorId && result.subcontrataId) {
         toast({
-          title: 'Inicio de Sesión Exitoso',
-          description: 'Bienvenido.',
+          title: 'Acceso Correcto',
+          description: `Bienvenido, ${result.nombre}.`,
         });
         if (typeof window !== 'undefined') {
-          localStorage.setItem('usuarioId_obra_link', result.userId);
-          localStorage.setItem('empresaId_obra_link', result.empresaId);
-          localStorage.setItem('userRole_obra_link', result.role as UsuarioFirebase['rol']);
+          localStorage.setItem('trabajadorId_obra_link', result.trabajadorId);
+          localStorage.setItem('subcontrataId_obra_link', result.subcontrataId);
+          localStorage.setItem('userRole_obra_link', 'trabajador');
         }
         router.push('/dashboard'); 
       } else {
         toast({
-          title: 'Error de Inicio de Sesión',
-          description: result.message || 'Credenciales incorrectas. Por favor, inténtalo de nuevo.',
+          title: 'Error de Acceso',
+          description: result.message || 'Código de acceso incorrecto.',
           variant: 'destructive',
         });
       }
@@ -74,7 +66,6 @@ export function TrabajadorLoginForm() {
         description: error.message || 'Ha ocurrido un error. Por favor, inténtalo más tarde.',
         variant: 'destructive',
       });
-       console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -85,7 +76,7 @@ export function TrabajadorLoginForm() {
       <CardHeader>
         <CardTitle className="text-2xl font-headline">Acceso Trabajador</CardTitle>
         <CardDescription>
-          Introduce tu email y contraseña para acceder a tus tareas.
+          Introduce tu código de acceso único para registrar tus horas.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -93,25 +84,12 @@ export function TrabajadorLoginForm() {
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <FormField
               control={form.control}
-              name="email"
+              name="accessCode"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>Email</FormLabel>
+                  <FormLabel>Código de Acceso</FormLabel>
                   <FormControl>
-                    <Input placeholder="tu.email@trabajo.com" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="password"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Contraseña</FormLabel>
-                  <FormControl>
-                    <Input type="password" placeholder="•••••••• (tu DNI si es el primer acceso)" {...field} />
+                    <Input placeholder="Tu código personal" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>

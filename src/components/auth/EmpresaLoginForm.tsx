@@ -1,4 +1,3 @@
-
 'use client';
 
 import { zodResolver } from '@hookform/resolvers/zod';
@@ -15,12 +14,12 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { authenticateUser } from '@/lib/actions/user.actions'; // Changed to a generic auth function
+import { authenticateUserByPassword } from '@/lib/actions/auth.actions';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import type { UsuarioFirebase } from '@/lib/types';
+import type { Usuario } from '@/lib/types';
 
 const formSchema = z.object({
   email: z.string().email({
@@ -31,7 +30,7 @@ const formSchema = z.object({
   }),
 });
 
-export function EmpresaLoginForm() {
+export function PasswordLoginForm() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
@@ -47,28 +46,23 @@ export function EmpresaLoginForm() {
   async function onSubmit(values: z.infer<typeof formSchema>) {
     setIsLoading(true);
     try {
-      // Authenticate as an admin or jefeObra
-      const result = await authenticateUser(values, ['admin', 'jefeObra']);
-      if (result.success && result.empresaId && result.userId && result.role) {
+      const result = await authenticateUserByPassword(values);
+      if (result.success && result.userId && result.role) {
         toast({
           title: 'Inicio de Sesión Exitoso',
-          description: `Bienvenido de nuevo. Rol: ${result.role}`,
+          description: `Bienvenido de nuevo.`,
         });
         if (typeof window !== 'undefined') {
-          localStorage.setItem('empresaId_obra_link', result.empresaId);
-          localStorage.setItem('usuarioId_obra_link', result.userId); 
-          localStorage.setItem('userRole_obra_link', result.role as UsuarioFirebase['rol']);
+          localStorage.setItem('userId_obra_link', result.userId);
+          localStorage.setItem('userRole_obra_link', result.role);
+          if (result.constructoraId) localStorage.setItem('constructoraId_obra_link', result.constructoraId);
+          if (result.subcontrataId) localStorage.setItem('subcontrataId_obra_link', result.subcontrataId);
         }
-        // Redirect based on role if needed, e.g., jefeObra to control-diario
-        if (result.role === 'jefeObra') {
-           router.push('/control-diario');
-        } else {
-           router.push('/dashboard');
-        }
+        router.push('/dashboard');
       } else {
         toast({
           title: 'Error de Inicio de Sesión',
-          description: result.message || 'Credenciales incorrectas o rol no autorizado para este acceso.',
+          description: result.message || 'Credenciales incorrectas o rol no autorizado.',
           variant: 'destructive',
         });
       }
@@ -78,7 +72,6 @@ export function EmpresaLoginForm() {
         description: error.message || 'Ha ocurrido un error. Por favor, inténtalo más tarde.',
         variant: 'destructive',
       });
-      console.error("Login error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -87,9 +80,9 @@ export function EmpresaLoginForm() {
   return (
     <Card className="w-full max-w-md shadow-xl">
       <CardHeader>
-        <CardTitle className="text-2xl font-headline">Acceso Empresa / Jefe de Obra</CardTitle>
+        <CardTitle className="text-2xl font-headline">Acceso para Empresas</CardTitle>
         <CardDescription>
-          Introduce tus credenciales para gestionar tu empresa u obras.
+          Introduce tus credenciales de Encargado, Subcontrata o Constructora.
         </CardDescription>
       </CardHeader>
       <CardContent>

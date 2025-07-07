@@ -1,4 +1,3 @@
-
 // src/app/auth/register/empresa/page.tsx
 'use client';
 
@@ -9,7 +8,6 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
@@ -17,55 +15,47 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { createEmpresaWithAdmin } from '@/lib/actions/company.actions';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
-import { Loader2, ArrowLeft, Building } from 'lucide-react';
+import { Loader2, ArrowLeft, Building, UserPlus } from 'lucide-react';
 import Link from 'next/link';
+import { registerNewCompany } from '@/lib/actions/auth.actions';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
-const RegisterEmpresaFormSchema = z.object({
-  empresaNombre: z.string().min(2, { message: "El nombre de la empresa debe tener al menos 2 caracteres." }),
-  empresaCIF: z.string().min(9, { message: "El CIF debe tener al menos 9 caracteres." }).regex(/^[A-HJ-NP-SUVW]{1}[0-9]{7}[0-9A-J]{1}$/i, "Formato de CIF inválido."),
-  empresaEmailContacto: z.string().email({ message: "Email de contacto de la empresa inválido." }),
-  empresaTelefono: z.string().min(9, { message: "El teléfono de la empresa debe tener al menos 9 dígitos." }),
-  adminNombre: z.string().min(2, { message: "Tu nombre debe tener al menos 2 caracteres." }),
+const RegisterFormSchema = z.object({
+  companyName: z.string().min(2, { message: "El nombre de la empresa debe tener al menos 2 caracteres." }),
+  companyType: z.enum(['constructora', 'subcontrata'], { required_error: "Debes seleccionar un tipo de empresa."}),
   adminEmail: z.string().email({ message: "Tu email de administrador es inválido." }),
   adminPassword: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
-  adminDNI: z.string().min(9, "El DNI es requerido").regex(/^[0-9XYZxyz][0-9]{7}[A-HJ-NP-TV-Z]$/i, "Formato de DNI/NIE inválido"),
 });
 
-type RegisterEmpresaFormData = z.infer<typeof RegisterEmpresaFormSchema>;
+type RegisterFormData = z.infer<typeof RegisterFormSchema>;
 
 export default function EmpresaRegisterPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(false);
 
-  const form = useForm<RegisterEmpresaFormData>({
-    resolver: zodResolver(RegisterEmpresaFormSchema),
+  const form = useForm<RegisterFormData>({
+    resolver: zodResolver(RegisterFormSchema),
     defaultValues: {
-      empresaNombre: '',
-      empresaCIF: '',
-      empresaEmailContacto: '',
-      empresaTelefono: '',
-      adminNombre: '',
+      companyName: '',
       adminEmail: '',
       adminPassword: '',
-      adminDNI: '',
     },
   });
 
-  async function onSubmit(values: RegisterEmpresaFormData) {
+  async function onSubmit(values: RegisterFormData) {
     setIsLoading(true);
     try {
-      const result = await createEmpresaWithAdmin(values);
-      if (result.success && result.empresa && result.adminUser) {
+      const result = await registerNewCompany(values);
+      if (result.success) {
         toast({
           title: 'Empresa Registrada con Éxito',
-          description: `La empresa ${result.empresa.nombre} ha sido creada. Ya puedes iniciar sesión como administrador.`,
+          description: `La empresa ${values.companyName} ha sido creada. Ya puedes iniciar sesión como administrador.`,
         });
-        router.push('/auth/login/empresa');
+        router.push('/auth/login');
       } else {
         toast({
           title: 'Error en el Registro',
@@ -74,19 +64,11 @@ export default function EmpresaRegisterPage() {
         });
       }
     } catch (error: any) {
-      let displayMessage = 'Ha ocurrido un error durante el registro. Inténtalo más tarde.';
-      // Check if it's the generic "unexpected response" which might follow a 504
-      if (error.message === "An unexpected response was received from the server.") {
-        displayMessage = "El servidor no respondió a tiempo. Verifica tu conexión o inténtalo más tarde. Esto podría ser un problema temporal del servidor (Error 504).";
-      } else if (error.message) {
-        displayMessage = error.message;
-      }
       toast({
         title: 'Error Inesperado',
-        description: displayMessage,
+        description: error.message || 'Ha ocurrido un error durante el registro. Inténtalo más tarde.',
         variant: 'destructive',
       });
-      console.error("Registration error:", error);
     } finally {
       setIsLoading(false);
     }
@@ -107,113 +89,71 @@ export default function EmpresaRegisterPage() {
         </Link>
         <p className="text-muted-foreground mt-1">Registro para Nuevas Empresas</p>
       </div>
-      <Card className="w-full max-w-lg shadow-xl animate-fade-in-up">
+      <Card className="w-full max-w-md shadow-xl animate-fade-in-up">
         <CardHeader>
-          <CardTitle className="text-2xl font-headline flex items-center"><Building className="mr-3 text-primary"/>Datos de la Empresa y Administrador</CardTitle>
+          <CardTitle className="text-2xl font-headline flex items-center"><UserPlus className="mr-3 text-primary"/>Alta en ObraLink</CardTitle>
           <CardDescription>
-            Completa la información para dar de alta tu empresa en ObraLink.
+            Registra tu Constructora o Subcontrata para empezar.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-              <fieldset className="border p-4 rounded-md">
-                <legend className="text-lg font-semibold px-1 text-primary">Información de la Empresa</legend>
-                <FormField
-                  control={form.control}
-                  name="empresaNombre"
-                  render={({ field }) => (
-                    <FormItem className="mt-2">
-                      <FormLabel>Nombre de la Empresa</FormLabel>
-                      <FormControl><Input placeholder="Ej: Construcciones Innovadoras S.L." {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="empresaCIF"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>CIF</FormLabel>
-                      <FormControl><Input placeholder="Ej: B12345678" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="empresaEmailContacto"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Email de Contacto (Empresa)</FormLabel>
-                      <FormControl><Input placeholder="contacto@empresa.com" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="empresaTelefono"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Teléfono (Empresa)</FormLabel>
-                      <FormControl><Input placeholder="Ej: 912345678" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </fieldset>
-
-              <fieldset className="border p-4 rounded-md">
-                <legend className="text-lg font-semibold px-1 text-primary">Datos del Administrador Principal</legend>
-                <FormField
-                  control={form.control}
-                  name="adminNombre"
-                  render={({ field }) => (
-                    <FormItem className="mt-2">
-                      <FormLabel>Tu Nombre Completo</FormLabel>
-                      <FormControl><Input placeholder="Ej: Ana García Pérez" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                 <FormField
-                  control={form.control}
-                  name="adminDNI"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Tu DNI/NIE</FormLabel>
-                      <FormControl><Input placeholder="Ej: 12345678X" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="adminEmail"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Tu Email (para acceder como admin)</FormLabel>
-                      <FormControl><Input placeholder="tu.email@dominio.com" {...field} /></FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="adminPassword"
-                  render={({ field }) => (
-                    <FormItem className="mt-4">
-                      <FormLabel>Tu Contraseña (para acceder como admin)</FormLabel>
-                      <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
-                      <FormDescription>Mínimo 6 caracteres.</FormDescription>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </fieldset>
-              
+              <FormField
+                control={form.control}
+                name="companyType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tipo de Empresa</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecciona si eres Constructora o Subcontrata" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="constructora">Constructora (Cliente Principal)</SelectItem>
+                        <SelectItem value="subcontrata">Subcontrata (Proveedor de servicios)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="companyName"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Nombre de tu Empresa</FormLabel>
+                    <FormControl><Input placeholder="Ej: Construcciones Innovadoras S.L." {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="adminEmail"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Tu Email (será tu usuario administrador)</FormLabel>
+                    <FormControl><Input type="email" placeholder="tu.email@dominio.com" {...field} /></FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="adminPassword"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Contraseña para el Administrador</FormLabel>
+                    <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
+                    <FormDescription>Mínimo 6 caracteres.</FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
               <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-3" disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Registrar Empresa'}
               </Button>
@@ -222,7 +162,7 @@ export default function EmpresaRegisterPage() {
         </CardContent>
       </Card>
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        ¿Ya tienes una cuenta de empresa? <Link href="/auth/login/empresa" className="font-medium text-primary hover:underline">Inicia sesión aquí</Link>.
+        ¿Ya tienes una cuenta? <Link href="/auth/login" className="font-medium text-primary hover:underline">Inicia sesión aquí</Link>.
       </p>
     </div>
   );

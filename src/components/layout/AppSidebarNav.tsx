@@ -5,37 +5,35 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, Briefcase, FileText, Users, Settings, Cpu, Building, BarChart3, Clock, UserCheck } from "lucide-react";
+import { Home, HardHat, Construction, FileText, UserCheck, Fingerprint } from "lucide-react";
 import { useEffect, useState } from "react";
+
+type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'jefe_obra' | 'trabajador';
 
 interface NavItem {
   href: string;
   label: string;
   icon: React.ElementType;
-  roles: Array<'admin' | 'jefeObra' | 'trabajador'>;
+  roles: Role[];
 }
 
 const allNavItems: NavItem[] = [
-  { href: "/dashboard", label: "Panel Principal", icon: Home, roles: ['admin', 'jefeObra', 'trabajador'] },
-  { href: "/company-profile", label: "Perfil Empresa", icon: Building, roles: ['admin', 'jefeObra'] },
-  { href: "/obras", label: "Obras", icon: Briefcase, roles: ['admin', 'jefeObra', 'trabajador'] },
-  { href: "/partes", label: "Partes de Trabajo", icon: FileText, roles: ['admin', 'jefeObra', 'trabajador'] },
-  { href: "/usuarios", label: "Gestión Usuarios", icon: Users, roles: ['admin', 'jefeObra'] },
-  { href: "/fichajes", label: "Control Horario (Fichajes)", icon: Clock, roles: ['admin', 'jefeObra', 'trabajador'] },
-  { href: "/control-diario", label: "Control Diario de Obra", icon: UserCheck, roles: ['admin', 'jefeObra'] }, 
-  { href: "/resource-allocation", label: "Optimización Recursos (IA)", icon: Cpu, roles: ['admin', 'jefeObra'] },
-  { href: "/reports", label: "Informes y Estadísticas", icon: BarChart3, roles: ['admin', 'jefeObra'] },
-  { href: "/settings", label: "Configuración General", icon: Settings, roles: ['admin', 'jefeObra', 'trabajador'] },
+  { href: "/dashboard", label: "Panel Principal", icon: Home, roles: ['encargado', 'subcontrata_admin', 'constructora_admin', 'jefe_obra', 'trabajador'] },
+  { href: "/encargado/reporte-diario", label: "Reporte Diario", icon: HardHat, roles: ['encargado'] },
+  { href: "/subcontrata/proyectos", label: "Proyectos y Trabajadores", icon: Construction, roles: ['subcontrata_admin'] },
+  { href: "/subcontrata/partes-validados", label: "Partes Validados", icon: FileText, roles: ['subcontrata_admin'] },
+  { href: "/constructora/partes", label: "Ver Partes de Obra", icon: UserCheck, roles: ['constructora_admin', 'jefe_obra'] },
+  { href: "/trabajador/fichar", label: "Mi Fichaje", icon: Fingerprint, roles: ['trabajador'] },
 ];
 
 export function AppSidebarNav() {
   const pathname = usePathname();
-  const [userRole, setUserRole] = useState<string | null>(null);
+  const [userRole, setUserRole] = useState<Role | null>(null);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
-      const role = localStorage.getItem('userRole_obra_link');
+      const role = localStorage.getItem('userRole_obra_link') as Role | null;
       setUserRole(role);
       setIsLoadingRole(false);
     }
@@ -44,7 +42,7 @@ export function AppSidebarNav() {
   if (isLoadingRole) {
     return (
         <nav className="flex flex-col gap-2 px-4 py-6">
-            {[...Array(7)].map((_, i) => ( 
+            {[...Array(5)].map((_, i) => ( 
                  <div key={i} className={`h-12 w-full bg-sidebar-accent/10 rounded-md animate-pulse mb-2 animation-delay-${i * 100}`}></div>
             ))}
         </nav>
@@ -53,7 +51,7 @@ export function AppSidebarNav() {
 
   const visibleNavItems = allNavItems.filter(item => {
     if (!userRole) return false; 
-    return item.roles.includes(userRole as 'admin' | 'jefeObra' | 'trabajador');
+    return item.roles.includes(userRole);
   });
 
   return (
