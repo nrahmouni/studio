@@ -20,7 +20,8 @@ export const ProyectoSchema = z.object({
   nombre: z.string().min(1, "El nombre es requerido"),
   constructoraId: z.string(),
   subcontrataId: z.string(),
-  // ... other project details like address, etc. can be added later
+  fechaInicio: z.date().optional().nullable(),
+  fechaFin: z.date().optional().nullable(),
 });
 export type Proyecto = z.infer<typeof ProyectoSchema>;
 

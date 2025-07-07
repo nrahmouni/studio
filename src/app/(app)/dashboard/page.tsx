@@ -76,15 +76,15 @@ export default function DashboardPage() {
       const result = await seedDemoData();
       if (result.success) {
         toast({ title: "Éxito", description: result.message });
+        // Reload only on success to see the new data
+        window.location.reload();
       } else {
-        toast({ title: "Error", description: result.message, variant: "destructive" });
+        toast({ title: "Error", description: result.message, variant: "destructive", duration: 10000 });
       }
     } catch (e: any) {
-       toast({ title: "Error Crítico", description: e.message || "Ocurrió un error inesperado al poblar la base de datos.", variant: "destructive" });
+       toast({ title: "Error Crítico", description: e.message || "Ocurrió un error inesperado al poblar la base de datos.", variant: "destructive", duration: 10000 });
     } finally {
       setSeeding(false);
-      // Optional: reload to ensure all components refetch
-      window.location.reload();
     }
   };
 

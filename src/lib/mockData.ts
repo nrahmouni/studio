@@ -1,6 +1,6 @@
 // src/lib/mockData.ts
 import type { Constructora, Subcontrata, Proyecto, Trabajador, ReporteDiario } from '@/lib/types';
-import { sub } from 'date-fns';
+import { sub, add } from 'date-fns';
 
 export const mockConstructoras: Constructora[] = [
     { id: 'const-sorigui-mock', nombre: 'Constructora Sorigui' },
@@ -15,10 +15,10 @@ export const mockSubcontratas: Subcontrata[] = [
 ];
 
 export const mockProyectos: Proyecto[] = [
-  { id: 'proy-meridiana', nombre: 'Reforma Av. Meridiana', constructoraId: 'const-sorigui-mock', subcontrataId: 'sub-caram-mock' },
-  { id: 'proy-glorias', nombre: 'Oficinas Pl. Glorias', constructoraId: 'const-acciona-mock', subcontrataId: 'sub-caram-mock' },
-  { id: 'proy-marina', nombre: 'Edificio C/ Marina', constructoraId: 'const-sorigui-mock', subcontrataId: 'sub-perez-mock' },
-  { id: 'proy-oficina-axa', nombre: 'Sede Central AXA', constructoraId: 'const-axa-mock', subcontrataId: 'sub-volta-mock' },
+  { id: 'proy-meridiana', nombre: 'Reforma Av. Meridiana', constructoraId: 'const-sorigui-mock', subcontrataId: 'sub-caram-mock', fechaInicio: sub(new Date(), {days: 30}), fechaFin: add(new Date(), {days: 90}) },
+  { id: 'proy-glorias', nombre: 'Oficinas Pl. Glorias', constructoraId: 'const-acciona-mock', subcontrataId: 'sub-caram-mock', fechaInicio: sub(new Date(), {days: 60}), fechaFin: add(new Date(), {days: 120}) },
+  { id: 'proy-marina', nombre: 'Edificio C/ Marina', constructoraId: 'const-sorigui-mock', subcontrataId: 'sub-perez-mock', fechaInicio: new Date(), fechaFin: add(new Date(), {months: 6}) },
+  { id: 'proy-oficina-axa', nombre: 'Sede Central AXA', constructoraId: 'const-axa-mock', subcontrataId: 'sub-volta-mock', fechaInicio: sub(new Date(), {days: 15}), fechaFin: add(new Date(), {months: 1}) },
 ];
 
 export const mockTrabajadores: Trabajador[] = [

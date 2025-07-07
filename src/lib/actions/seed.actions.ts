@@ -36,7 +36,12 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
     // Seed Proyectos
     mockProyectos.forEach(p => {
       const ref = doc(db, "proyectos", p.id);
-      batch.set(ref, p);
+      const projectDataForFirestore = {
+        ...p,
+        fechaInicio: p.fechaInicio ? Timestamp.fromDate(new Date(p.fechaInicio)) : null,
+        fechaFin: p.fechaFin ? Timestamp.fromDate(new Date(p.fechaFin)) : null,
+      };
+      batch.set(ref, projectDataForFirestore);
     });
     summary.proyectos = `${mockProyectos.length} proyectos prepared.`;
 
@@ -51,8 +56,6 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
     mockReportesDiarios.forEach(r => {
       const ref = doc(db, "reportesDiarios", r.id);
       
-      // Create a new object for Firestore with Date objects converted to Timestamps.
-      // This is crucial for Firestore to store dates correctly.
       const reportDataForFirestore = {
         ...r,
         fecha: Timestamp.fromDate(new Date(r.fecha)),
