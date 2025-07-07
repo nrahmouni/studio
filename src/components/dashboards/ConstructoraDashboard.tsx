@@ -1,9 +1,8 @@
-// src/components/dashboards/ConstructoraDashboard.tsx
 'use client';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Badge } from "@/components/ui/badge';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Building, HardHat, FileText, Calendar, UserCheck } from 'lucide-react';
 import type { Subcontrata, Proyecto, ReporteDiario } from '@/lib/types';
@@ -116,7 +115,7 @@ function ReporteItem({ reporte }: { reporte: ReporteDiario }) {
                 <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-primary"/>
                     <span className="font-semibold">
-                      Reporte del {format(reporte.fecha, 'PPP', { locale: es })}
+                      Reporte del {format(new Date(reporte.fecha), 'PPP', { locale: es })}
                     </span>
                     <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
                     {reporte.modificacionJefeObra?.modificado && <Badge variant="destructive">Modificado</Badge>}
@@ -125,7 +124,7 @@ function ReporteItem({ reporte }: { reporte: ReporteDiario }) {
             </div>
             {isOpen && (
                 <div className="mt-4 p-4 bg-background rounded-md border space-y-3">
-                   <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/>Fecha: <span className="font-normal">{format(reporte.fecha, 'PPPP', { locale: es })}</span></p>
+                   <p className="font-semibold flex items-center gap-2"><Calendar className="h-4 w-4"/>Fecha: <span className="font-normal">{format(new Date(reporte.fecha), 'PPPP', { locale: es })}</span></p>
                    <p className="font-semibold flex items-center gap-2"><UserCheck className="h-4 w-4"/>Reportado por: <span className="font-normal">{reporte.encargadoId} (ID)</span></p>
                    <div className="space-y-1">
                       <p className="font-semibold">Trabajadores Reportados:</p>
