@@ -1,358 +1,169 @@
 // src/lib/actions/app.actions.ts
 'use server';
 
-import { db } from '@/lib/firebase/firebase';
-import { collection, doc, getDoc, getDocs, query, where, addDoc, updateDoc, writeBatch, arrayUnion, arrayRemove, Timestamp, serverTimestamp, setDoc, orderBy } from 'firebase/firestore';
+import {
+  mockConstructoras,
+  mockSubcontratas,
+  mockProyectos,
+  mockTrabajadores,
+  mockReportesDiarios,
+} from '@/lib/mockData';
 import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador, ReporteDiario, Constructora } from '../types';
-import { v4 as uuidv4 } from 'uuid';
 
-async function getDocsWithParsedDates<T>(querySnapshot: any, dateFields: string[]): Promise<T[]> {
-    const results: T[] = [];
-    querySnapshot.forEach((docSnap: any) => {
-        const data = docSnap.data();
-        dateFields.forEach(field => {
-            if (data[field] instanceof Timestamp) {
-                data[field] = data[field].toDate();
-            }
-        });
-        results.push({ id: docSnap.id, ...data } as T);
-    });
-    return results;
-}
+// NOTE: Since we are using mock data, mutations (save, update, add, remove) will not persist after a page reload.
+// They will return a success message to simulate the action for UI feedback.
 
 // --- Data Fetching ---
 
 export async function getConstructoras(): Promise<Constructora[]> {
-  try {
-    console.log("ACTION: getConstructoras (Firestore)");
-    const q = query(collection(db, "constructoras"), orderBy("nombre"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Constructora));
-  } catch (error: any) {
-    console.error(`Error in getConstructoras: ${error.message}`);
-    if (error.code === 'permission-denied') {
-      console.error("Firestore Permission Denied: Check your security rules.");
-    }
-    return [];
-  }
+  console.log("ACTION: getConstructoras (Mock)");
+  return JSON.parse(JSON.stringify(mockConstructoras));
 }
 
 export async function getSubcontratas(): Promise<Subcontrata[]> {
-  try {
-    console.log("ACTION: getSubcontratas (Firestore)");
-    const q = query(collection(db, "subcontratas"), orderBy("nombre"));
-    const querySnapshot = await getDocs(q);
-    return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Subcontrata));
-  } catch (error: any) {
-    console.error(`Error in getSubcontratas: ${error.message}`);
-    if (error.code === 'permission-denied') {
-      console.error("Firestore Permission Denied: Check your security rules.");
-    }
-    return [];
-  }
+  console.log("ACTION: getSubcontratas (Mock)");
+  return JSON.parse(JSON.stringify(mockSubcontratas));
 }
 
 export async function getProyectosByConstructora(constructoraId: string): Promise<Proyecto[]> {
-    try {
-        console.log(`ACTION: getProyectosByConstructora for ${constructoraId} (Firestore)`);
-        const q = query(collection(db, "proyectos"), where("constructoraId", "==", constructoraId), orderBy("nombre"));
-        const querySnapshot = await getDocs(q);
-        return await getDocsWithParsedDates<Proyecto>(querySnapshot, ['fechaInicio', 'fechaFin']);
-    } catch (error: any) {
-        console.error(`Error in getProyectosByConstructora for ${constructoraId}: ${error.message}`);
-        if (error.code === 'permission-denied') {
-          console.error("Firestore Permission Denied: Check your security rules.");
-        }
-        return [];
-    }
+  console.log(`ACTION: getProyectosByConstructora for ${constructoraId} (Mock)`);
+  return JSON.parse(JSON.stringify(mockProyectos.filter(p => p.constructoraId === constructoraId)));
 }
 
 export async function getProyectosBySubcontrata(subcontrataId: string): Promise<Proyecto[]> {
-  try {
-    console.log(`ACTION: getProyectosBySubcontrata for ${subcontrataId} (Firestore)`);
-    const q = query(collection(db, "proyectos"), where("subcontrataId", "==", subcontrataId), orderBy("nombre"));
-    const querySnapshot = await getDocs(q);
-    return await getDocsWithParsedDates<Proyecto>(querySnapshot, ['fechaInicio', 'fechaFin']);
-  } catch (error: any) {
-    console.error(`Error in getProyectosBySubcontrata for ${subcontrataId}: ${error.message}`);
-    if (error.code === 'permission-denied') {
-      console.error("Firestore Permission Denied: Check your security rules.");
-    }
-    return [];
-  }
+    console.log(`ACTION: getProyectosBySubcontrata for ${subcontrataId} (Mock)`);
+    return JSON.parse(JSON.stringify(mockProyectos.filter(p => p.subcontrataId === subcontrataId)));
 }
 
+
 export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Trabajador[]> {
-    try {
-        console.log(`ACTION: getTrabajadoresByProyecto for ${proyectoId} (Firestore)`);
-        const q = query(collection(db, "trabajadores"), where("proyectosAsignados", "array-contains", proyectoId), orderBy("nombre"));
-        const querySnapshot = await getDocs(q);
-        return querySnapshot.docs.map(d => ({ id: d.id, ...d.data() } as Trabajador));
-    } catch (error: any) {
-        console.error(`Error in getTrabajadoresByProyecto for ${proyectoId}: ${error.message}`);
-        if (error.code === 'permission-denied') {
-          console.error("Firestore Permission Denied: Check your security rules.");
-        }
-        return [];
-    }
+  console.log(`ACTION: getTrabajadoresByProyecto for ${proyectoId} (Mock)`);
+  return JSON.parse(JSON.stringify(mockTrabajadores.filter(t => t.proyectosAsignados.includes(proyectoId))));
 }
 
 export async function getReportesDiarios(proyectoId?: string, encargadoId?: string, subcontrataId?: string): Promise<ReporteDiario[]> {
-    try {
-        console.log(`ACTION: getReportesDiarios (Firestore) for proyectoId: ${proyectoId}, encargadoId: ${encargadoId}, subcontrataId: ${subcontrataId}`);
-        let reportesQuery = query(collection(db, "reportesDiarios"), orderBy("fecha", "desc"));
+    console.log(`ACTION: getReportesDiarios (Mock) for proyectoId: ${proyectoId}, encargadoId: ${encargadoId}, subcontrataId: ${subcontrataId}`);
+    let reportes = JSON.parse(JSON.stringify(mockReportesDiarios));
 
-        if (proyectoId) {
-            reportesQuery = query(reportesQuery, where("proyectoId", "==", proyectoId));
-        }
-        if (encargadoId) {
-            reportesQuery = query(reportesQuery, where("encargadoId", "==", encargadoId));
-        }
-        
-        const querySnapshot = await getDocs(reportesQuery);
-        let reportes = await getDocsWithParsedDates<ReporteDiario>(querySnapshot, ['fecha', 'timestamp', 'validacion.encargado.timestamp', 'validacion.subcontrata.timestamp', 'validacion.constructora.timestamp']);
-
-        if (subcontrataId) {
-            const proyectosDeSubQuery = query(collection(db, "proyectos"), where("subcontrataId", "==", subcontrataId));
-            const proyectosSnapshot = await getDocs(proyectosDeSubQuery);
-            const proyectosDeSubIds = proyectosSnapshot.docs.map(doc => doc.id);
-            reportes = reportes.filter(r => proyectosDeSubIds.includes(r.proyectoId));
-        }
-
-        return reportes;
-    } catch (error: any) {
-        console.error(`Error in getReportesDiarios: ${error.message}`);
-        if (error.code === 'permission-denied') {
-          console.error("Firestore Permission Denied: Check your security rules.");
-        }
-        return [];
+    if (proyectoId) {
+        reportes = reportes.filter((r: ReporteDiario) => r.proyectoId === proyectoId);
     }
-}
+    if (encargadoId) {
+        reportes = reportes.filter((r: ReporteDiario) => r.encargadoId === encargadoId);
+    }
+    
+    if (subcontrataId) {
+        const proyectosDeSubIds = mockProyectos
+            .filter(p => p.subcontrataId === subcontrataId)
+            .map(p => p.id);
+        reportes = reportes.filter((r: ReporteDiario) => proyectosDeSubIds.includes(r.proyectoId));
+    }
+    
+    // Convert string dates to Date objects
+    reportes.forEach((r: any) => { // Use any to bypass strict typing for date conversion
+        r.fecha = new Date(r.fecha);
+        r.timestamp = new Date(r.timestamp);
+        if(r.validacion.encargado.timestamp) r.validacion.encargado.timestamp = new Date(r.validacion.encargado.timestamp);
+        if(r.validacion.subcontrata.timestamp) r.validacion.subcontrata.timestamp = new Date(r.validacion.subcontrata.timestamp);
+        if(r.validacion.constructora.timestamp) r.validacion.constructora.timestamp = new Date(r.validacion.constructora.timestamp);
+        if(r.modificacionJefeObra?.timestamp) r.modificacionJefeObra.timestamp = new Date(r.modificacionJefeObra.timestamp);
+    });
 
+    return reportes;
+}
 
 export async function getReporteDiarioById(reporteId: string): Promise<ReporteDiario | null> {
-    try {
-        console.log(`ACTION: getReporteDiarioById for ${reporteId} (Firestore)`);
-        const docRef = doc(db, "reportesDiarios", reporteId);
-        const docSnap = await getDoc(docRef);
+    console.log(`ACTION: getReporteDiarioById for ${reporteId} (Mock)`);
+    const reporte = mockReportesDiarios.find(r => r.id === reporteId);
+    if (!reporte) return null;
 
-        if (docSnap.exists()) {
-            const data = docSnap.data();
-            const dateFields = ['fecha', 'timestamp', 'validacion.encargado.timestamp', 'validacion.subcontrata.timestamp', 'validacion.constructora.timestamp'];
-            dateFields.forEach(field => {
-                const keys = field.split('.');
-                let current: any = data;
-                for (let i = 0; i < keys.length - 1; i++) {
-                    if (current[keys[i]]) current = current[keys[i]];
-                    else return;
-                }
-                const finalKey = keys[keys.length - 1];
-                if (current && current[finalKey] instanceof Timestamp) {
-                    current[finalKey] = current[finalKey].toDate();
-                }
-            });
-            return { id: docSnap.id, ...data } as ReporteDiario;
-        } else {
-            return null;
-        }
-    } catch (error: any) {
-        console.error(`Error in getReporteDiarioById for ${reporteId}: ${error.message}`);
-        if (error.code === 'permission-denied') {
-          console.error("Firestore Permission Denied: Check your security rules.");
-        }
-        return null;
-    }
+    const reporteCopy: any = JSON.parse(JSON.stringify(reporte));
+    reporteCopy.fecha = new Date(reporteCopy.fecha);
+    reporteCopy.timestamp = new Date(reporteCopy.timestamp);
+    if(reporteCopy.validacion.encargado.timestamp) reporteCopy.validacion.encargado.timestamp = new Date(reporteCopy.validacion.encargado.timestamp);
+    if(reporteCopy.validacion.subcontrata.timestamp) reporteCopy.validacion.subcontrata.timestamp = new Date(reporteCopy.validacion.subcontrata.timestamp);
+    if(reporteCopy.validacion.constructora.timestamp) reporteCopy.validacion.constructora.timestamp = new Date(reporteCopy.validacion.constructora.timestamp);
+    if(reporteCopy.modificacionJefeObra?.timestamp) reporteCopy.modificacionJefeObra.timestamp = new Date(reporteCopy.modificacionJefeObra.timestamp);
+    
+    return reporteCopy;
 }
 
-// --- Data Mutation ---
+// --- Data Mutation (Simulated) ---
 
 export async function saveDailyReport(
   proyectoId: string,
   encargadoId: string,
   trabajadoresReporte: ReporteTrabajador[]
 ): Promise<{ success: boolean; message: string }> {
-  try {
-    console.log("ACTION: saveDailyReport (Firestore)");
-    const newReportId = `rep-${uuidv4()}`;
-    const newReportRef = doc(db, "reportesDiarios", newReportId);
-
-    const newReport: Omit<ReporteDiario, 'id'> = {
-        proyectoId,
-        fecha: new Date(),
-        trabajadores: trabajadoresReporte,
-        encargadoId,
-        timestamp: new Date(),
-        validacion: {
-            encargado: { validado: true, timestamp: new Date() },
-            subcontrata: { validado: false, timestamp: null },
-            constructora: { validado: false, timestamp: null },
-        },
-        modificacionJefeObra: {
-            modificado: false,
-            jefeObraId: null,
-            timestamp: null,
-            reporteOriginal: null,
-        }
-    };
-
-    await setDoc(newReportRef, newReport);
-    return { success: true, message: 'Reporte diario guardado en Firestore con éxito.' };
-  } catch(error: any) {
-    console.error("Error in saveDailyReport:", error);
-    if (error.code === 'permission-denied') {
-      return { success: false, message: "Error de Permiso: No se pudo guardar el reporte. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
-    }
-    return { success: false, message: `Error al guardar el reporte: ${error.message}` };
-  }
+  console.log("ACTION: saveDailyReport (Mocked)");
+  // In a mock environment, we can't modify the source file.
+  // We just simulate a successful operation.
+  return { success: true, message: 'Reporte diario guardado con éxito (simulado).' };
 }
 
 export async function updateDailyReport(
   reporteId: string,
   trabajadoresReporte: ReporteTrabajador[]
 ): Promise<{ success: boolean; message: string, reporte?: ReporteDiario }> {
-  try {
-    console.log(`ACTION: updateDailyReport for ${reporteId} (Firestore)`);
-    const reportRef = doc(db, "reportesDiarios", reporteId);
-    const reportSnap = await getDoc(reportRef);
-
-    if (!reportSnap.exists()) {
+    console.log(`ACTION: updateDailyReport for ${reporteId} (Mocked)`);
+    const originalReporte = await getReporteDiarioById(reporteId);
+    if (!originalReporte) {
       return { success: false, message: 'Reporte no encontrado para actualizar.' };
     }
-
-    const originalReporte = reportSnap.data() as ReporteDiario;
-    if (originalReporte.validacion.subcontrata.validado || originalReporte.validacion.constructora.validado) {
-      return { success: false, message: 'No se puede modificar un reporte que ya ha sido validado por la subcontrata o constructora.' };
-    }
-
-    await updateDoc(reportRef, {
+    
+    const updatedReporte: ReporteDiario = {
+        ...originalReporte,
         trabajadores: trabajadoresReporte,
-        timestamp: serverTimestamp()
-    });
+        timestamp: new Date()
+    };
 
-    const updatedReporte = await getReporteDiarioById(reporteId);
-    return { success: true, message: 'Reporte actualizado con éxito.', reporte: updatedReporte || undefined };
-  } catch(error: any) {
-    console.error(`Error in updateDailyReport for ${reporteId}:`, error);
-    if (error.code === 'permission-denied') {
-      return { success: false, message: "Error de Permiso: No se pudo actualizar el reporte. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
-    }
-    return { success: false, message: `Error al actualizar el reporte: ${error.message}` };
-  }
+    return { success: true, message: 'Reporte actualizado con éxito (simulado).', reporte: updatedReporte };
 }
 
-
 export async function saveFichaje(data: { trabajadorId: string; tipo: 'inicio' | 'fin' }): Promise<{ success: boolean; message: string }> {
-  try {
-    console.log("ACTION: saveFichaje (Firestore)");
-    const newFichajeId = `fich-${uuidv4()}`;
-    const newFichajeRef = doc(db, "fichajes", newFichajeId);
-
-    await setDoc(newFichajeRef, {
-      trabajadorId: data.trabajadorId,
-      tipo: data.tipo,
-      timestamp: serverTimestamp()
-    });
-    
-    return { success: true, message: `Fichaje de ${data.tipo} guardado en Firestore con éxito.` };
-  } catch(error: any) {
-    console.error("Error in saveFichaje:", error);
-    if (error.code === 'permission-denied') {
-      return { success: false, message: "Error de Permiso: No se pudo guardar el fichaje. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
-    }
-    return { success: false, message: `Error al guardar el fichaje: ${error.message}` };
-  }
+  console.log("ACTION: saveFichaje (Mocked)");
+  return { success: true, message: `Fichaje de ${data.tipo} guardado con éxito (simulado).` };
 }
 
 export async function addTrabajadorToProyecto(proyectoId: string, subcontrataId: string, nombre: string, codigoAcceso: string): Promise<{success: boolean, message: string, trabajador?: Trabajador}> {
-    try {
-        console.log(`ACTION: addTrabajadorToProyecto (Firestore)`);
-        const trabajadoresRef = collection(db, "trabajadores");
-        const q = query(trabajadoresRef, where("codigoAcceso", "==", codigoAcceso), where("subcontrataId", "==", subcontrataId));
-        const querySnapshot = await getDocs(q);
-
-        if(!querySnapshot.empty) {
-            const existingDoc = querySnapshot.docs[0];
-            await updateDoc(existingDoc.ref, {
-                proyectosAsignados: arrayUnion(proyectoId)
-            });
-            const updatedTrabajador = (await getDoc(existingDoc.ref)).data() as Trabajador;
-            return { success: true, message: "Trabajador existente añadido al proyecto.", trabajador: {id: existingDoc.id, ...updatedTrabajador} };
-        }
-
-        const newTrabajadorId = `trab-${uuidv4()}`;
-        const newTrabajadorRef = doc(db, "trabajadores", newTrabajadorId);
-        const newTrabajador: Omit<Trabajador, 'id'> = {
-            nombre,
-            subcontrataId,
-            codigoAcceso,
-            proyectosAsignados: [proyectoId]
-        };
-        await setDoc(newTrabajadorRef, newTrabajador);
-
-        return { success: true, message: "Nuevo trabajador creado y asignado.", trabajador: {id: newTrabajadorId, ...newTrabajador} };
-    } catch(error: any) {
-        console.error("Error in addTrabajadorToProyecto:", error);
-        if (error.code === 'permission-denied') {
-          return { success: false, message: "Error de Permiso: No se pudo añadir el trabajador. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
-        }
-        return { success: false, message: `Error al añadir trabajador: ${error.message}` };
-    }
+    console.log(`ACTION: addTrabajadorToProyecto (Mocked)`);
+    const newTrabajador: Trabajador = {
+        id: `trab-mock-${Math.random()}`,
+        nombre,
+        subcontrataId,
+        codigoAcceso,
+        proyectosAsignados: [proyectoId]
+    };
+    return { success: true, message: "Nuevo trabajador creado y asignado (simulado).", trabajador: newTrabajador };
 }
 
 export async function removeTrabajadorFromProyecto(proyectoId: string, trabajadorId: string): Promise<{success: boolean, message: string}> {
-    try {
-        console.log(`ACTION: removeTrabajadorFromProyecto (Firestore)`);
-        const trabajadorRef = doc(db, "trabajadores", trabajadorId);
-        await updateDoc(trabajadorRef, {
-            proyectosAsignados: arrayRemove(proyectoId)
-        });
-        return { success: true, message: "Trabajador eliminado del proyecto." };
-    } catch(error: any) {
-        console.error("Error in removeTrabajadorFromProyecto:", error);
-        if (error.code === 'permission-denied') {
-          return { success: false, message: "Error de Permiso: No se pudo eliminar el trabajador del proyecto. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
-        }
-        return { success: false, message: `Error al eliminar trabajador del proyecto: ${error.message}` };
-    }
+    console.log(`ACTION: removeTrabajadorFromProyecto (Mocked)`);
+    return { success: true, message: "Trabajador eliminado del proyecto (simulado)." };
 }
 
 export async function validateDailyReport(
   reporteId: string,
   role: 'subcontrata' | 'constructora'
 ): Promise<{ success: boolean; message: string; reporte?: ReporteDiario }> {
-  try {
-    console.log(`ACTION: validateDailyReport for ${reporteId} by ${role} (Firestore)`);
-    const reporteRef = doc(db, "reportesDiarios", reporteId);
-    const reporteSnap = await getDoc(reporteRef);
+    console.log(`ACTION: validateDailyReport for ${reporteId} by ${role} (Mocked)`);
+    const originalReporte = await getReporteDiarioById(reporteId);
 
-    if (!reporteSnap.exists()) {
-      return { success: false, message: 'Reporte no encontrado.' };
+    if (!originalReporte) {
+        return { success: false, message: 'Reporte no encontrado.' };
     }
     
-    const reporte = reporteSnap.data() as ReporteDiario;
-    const updateData: any = {};
-
     if (role === 'subcontrata') {
-      if (!reporte.validacion.encargado.validado) {
+      if (!originalReporte.validacion.encargado.validado) {
           return { success: false, message: 'El reporte debe ser validado primero por el Encargado.' };
       }
-      updateData['validacion.subcontrata'] = { validado: true, timestamp: new Date() };
+      originalReporte.validacion.subcontrata = { validado: true, timestamp: new Date() };
     } else if (role === 'constructora') {
-       if (!reporte.validacion.subcontrata.validado) {
+       if (!originalReporte.validacion.subcontrata.validado) {
           return { success: false, message: 'El reporte debe ser validado primero por la Subcontrata.' };
       }
-      updateData['validacion.constructora'] = { validado: true, timestamp: new Date() };
+      originalReporte.validacion.constructora = { validado: true, timestamp: new Date() };
     }
 
-    await updateDoc(reporteRef, updateData);
-    const updatedReporte = await getReporteDiarioById(reporteId);
-
-    return { success: true, message: `Reporte validado por ${role} con éxito.`, reporte: updatedReporte || undefined };
-  } catch(error: any) {
-    console.error(`Error in validateDailyReport for ${reporteId}:`, error);
-    if (error.code === 'permission-denied') {
-      return { success: false, message: "Error de Permiso: No se pudo validar el reporte. Por favor, revisa las reglas de seguridad de tu base de datos Firestore." };
-    }
-    return { success: false, message: `Error al validar el reporte: ${error.message}` };
-  }
+    return { success: true, message: `Reporte validado por ${role} con éxito (simulado).`, reporte: originalReporte };
 }

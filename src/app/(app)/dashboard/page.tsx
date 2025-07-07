@@ -4,8 +4,6 @@ import { useRouter } from 'next/navigation';
 import { Loader2, Shield, User, Building, HardHat, Wrench, Database } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { useToast } from '@/hooks/use-toast';
-import { seedDemoData } from '@/lib/actions/seed.actions';
 
 type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'trabajador';
 const availableRoles: { name: Role; label: string; icon: React.ElementType }[] = [
@@ -55,9 +53,7 @@ function RoleSwitcher() {
 
 export default function DashboardPage() {
   const [loading, setLoading] = useState(true);
-  const [seeding, setSeeding] = useState(false);
   const router = useRouter();
-  const { toast } = useToast();
 
   useEffect(() => {
     const userRole = localStorage.getItem('userRole_obra_link') as Role | null;
@@ -68,30 +64,6 @@ export default function DashboardPage() {
       setLoading(false);
     }
   }, [router]);
-
-  const handleSeedData = async () => {
-    setSeeding(true);
-    toast({ title: "Poblando base de datos...", description: "Por favor, espera. Esto puede tardar unos segundos." });
-    try {
-      const result = await seedDemoData();
-      if (result.success) {
-        toast({ title: "Éxito", description: `${result.message} La página se recargará para mostrar los datos.` });
-        setTimeout(() => window.location.reload(), 2000); // Reload after 2s to let user read the toast
-      } else {
-        toast({ title: "Error al Poblar Datos", description: result.message, variant: "destructive", duration: 20000 });
-      }
-    } catch (e: any) {
-       let errorMessage = "Ocurrió un error inesperado al poblar la base de datos.";
-       if (e.message && e.message.includes('504')) {
-           errorMessage = "El servidor tardó demasiado en responder (Error 504). Esto puede ser un problema temporal. Por favor, inténtalo de nuevo en unos momentos.";
-       } else if (e.message) {
-           errorMessage = e.message;
-       }
-       toast({ title: "Error de Red o Servidor", description: errorMessage, variant: "destructive", duration: 20000 });
-    } finally {
-      setSeeding(false);
-    }
-  };
 
   if (loading) {
     return (
@@ -104,18 +76,15 @@ export default function DashboardPage() {
   return (
       <div className="flex items-center justify-center h-[calc(100vh-10rem)]">
         <div className="w-full max-w-md space-y-8">
-            <Card className="border-amber-500 bg-amber-500/10">
+            <Card className="border-blue-500 bg-blue-500/10">
                 <CardHeader>
-                    <CardTitle className="text-amber-700 flex items-center"><Database className="mr-2"/>Herramienta de Datos</CardTitle>
-                    <CardDescription className="text-amber-600">
-                    Tu aplicación ahora usa una base de datos real. Si no ves datos, usa este botón para cargarlos.
+                    <CardTitle className="text-blue-700 flex items-center"><Database className="mr-2"/>Modo de Datos Simulado</CardTitle>
+                    <CardDescription className="text-blue-600">
+                    La aplicación está funcionando con datos de demostración. Los cambios no se guardarán permanentemente.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                    <Button onClick={handleSeedData} disabled={seeding} variant="outline" className="w-full border-amber-600 text-amber-700 hover:bg-amber-500/20">
-                    {seeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4"/>}
-                    Poblar Base de Datos de Demo
-                    </Button>
+                   <p className="text-sm text-center text-muted-foreground">Selecciona un rol a continuación para empezar a probar la aplicación.</p>
                 </CardContent>
             </Card>
             <RoleSwitcher />
