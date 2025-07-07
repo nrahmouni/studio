@@ -57,14 +57,17 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
 
   const handleLogout = () => {
     if (typeof window !== 'undefined') {
+      // Clear all mock session keys
       localStorage.removeItem('userRole_obra_link');
       localStorage.removeItem('userId_obra_link');
       localStorage.removeItem('constructoraId_obra_link');
       localStorage.removeItem('subcontrataId_obra_link');
       localStorage.removeItem('trabajadorId_obra_link');
+      localStorage.removeItem('encargadoId_obra_link'); // Added missing key
+
+      // Force a full page navigation and reload to ensure state is reset
+      window.location.href = '/dashboard';
     }
-    router.push('/dashboard'); // Go to dashboard to show role switcher
-    router.refresh(); // Force refresh to re-evaluate state
   };
 
 
