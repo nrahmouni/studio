@@ -98,12 +98,25 @@ export default function ReporteDiarioPage() {
     }
     
     setIsSubmitting(true);
-    const reporte: ReporteTrabajador[] = trabajadores.map(t => ({
+    
+    const reporte: ReporteTrabajador[] = trabajadores
+      .filter(t => t.asistencia) // Only include workers who attended
+      .map(t => ({
         trabajadorId: t.id,
         nombre: t.nombre,
-        asistencia: t.asistencia,
-        horas: t.asistencia ? t.horas : 0,
-    }));
+        asistencia: true,
+        horas: t.horas,
+      }));
+
+    if (reporte.length === 0) {
+      toast({
+        title: "Atención",
+        description: "No se puede enviar un reporte si no ha asistido ningún trabajador.",
+        variant: "destructive"
+      });
+      setIsSubmitting(false);
+      return;
+    }
 
     const result = await saveDailyReport(selectedProyecto, currentUserId, reporte);
     if(result.success) {
