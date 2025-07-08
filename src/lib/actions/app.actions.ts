@@ -7,8 +7,9 @@ import {
   mockProyectos,
   mockTrabajadores,
   mockReportesDiarios,
+  mockMaquinaria,
 } from '@/lib/mockData';
-import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador, ReporteDiario, Constructora } from '../types';
+import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador, ReporteDiario, Constructora, Maquinaria } from '../types';
 
 // NOTE: Since we are using mock data, mutations (save, update, add, remove) will not persist after a page reload.
 // They will return a success message to simulate the action for UI feedback.
@@ -38,7 +39,7 @@ export async function getProyectosBySubcontrata(subcontrataId: string): Promise<
 
 export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Trabajador[]> {
   console.log(`ACTION: getTrabajadoresByProyecto for ${proyectoId} (Mock)`);
-  return JSON.parse(JSON.stringify(mockTrabajadores.filter(t => t.proyectosAsignados.includes(proyectoId))));
+  return JSON.parse(JSON.stringify(mockTrabajadores.filter(t => t.proyectosAsignados?.includes(proyectoId))));
 }
 
 export async function getReportesDiarios(proyectoId?: string, encargadoId?: string, subcontrataId?: string): Promise<ReporteDiario[]> {
@@ -88,6 +89,16 @@ export async function getReporteDiarioById(reporteId: string): Promise<ReporteDi
     return reporteCopy;
 }
 
+export async function getTrabajadoresBySubcontrata(subcontrataId: string): Promise<Trabajador[]> {
+    console.log(`ACTION: getTrabajadoresBySubcontrata for ${subcontrataId} (Mock)`);
+    return JSON.parse(JSON.stringify(mockTrabajadores.filter(t => t.subcontrataId === subcontrataId)));
+}
+
+export async function getMaquinariaBySubcontrata(subcontrataId: string): Promise<Maquinaria[]> {
+    console.log(`ACTION: getMaquinariaBySubcontrata for ${subcontrataId} (Mock)`);
+    return JSON.parse(JSON.stringify(mockMaquinaria.filter(m => m.subcontrataId === subcontrataId)));
+}
+
 // --- Data Mutation (Simulated) ---
 
 export async function saveDailyReport(
@@ -115,7 +126,13 @@ export async function updateDailyReport(
     const updatedReporte: ReporteDiario = {
         ...originalReporte,
         trabajadores: trabajadoresReporte,
-        timestamp: new Date()
+        timestamp: new Date(),
+        modificacionJefeObra: {
+            modificado: true,
+            jefeObraId: 'jefe-obra-mock-id', // Simulated editor
+            timestamp: new Date(),
+            reporteOriginal: JSON.stringify(originalReporte.trabajadores),
+        }
     };
 
     return { success: true, message: 'Reporte actualizado con éxito (simulado).', reporte: updatedReporte };
@@ -126,14 +143,15 @@ export async function saveFichaje(data: { trabajadorId: string; tipo: 'inicio' |
   return { success: true, message: `Fichaje de ${data.tipo} guardado con éxito (simulado).` };
 }
 
-export async function addTrabajadorToProyecto(proyectoId: string, subcontrataId: string, nombre: string, codigoAcceso: string): Promise<{success: boolean, message: string, trabajador?: Trabajador}> {
+export async function addTrabajadorToProyecto(proyectoId: string, subcontrataId: string, nombre: string, codigoAcceso: string, categoriaProfesional: Trabajador['categoriaProfesional']): Promise<{success: boolean, message: string, trabajador?: Trabajador}> {
     console.log(`ACTION: addTrabajadorToProyecto (Mocked)`);
     const newTrabajador: Trabajador = {
         id: `trab-mock-${Math.random()}`,
         nombre,
         subcontrataId,
         codigoAcceso,
-        proyectosAsignados: [proyectoId]
+        proyectosAsignados: [proyectoId],
+        categoriaProfesional,
     };
     return { success: true, message: "Nuevo trabajador creado y asignado (simulado).", trabajador: newTrabajador };
 }
@@ -167,4 +185,41 @@ export async function validateDailyReport(
     }
 
     return { success: true, message: `Reporte validado por ${role} con éxito (simulado).`, reporte: originalReporte };
+}
+
+export async function addTrabajador(data: { subcontrataId: string, nombre: string, categoriaProfesional: Trabajador['categoriaProfesional'], codigoAcceso: string }): Promise<{success: boolean, message: string, trabajador?: Trabajador}> {
+    console.log(`ACTION: addTrabajador (Mocked)`);
+    const newTrabajador: Trabajador = {
+        id: `trab-mock-${Math.random()}`,
+        subcontrataId: data.subcontrataId,
+        nombre: data.nombre,
+        categoriaProfesional: data.categoriaProfesional,
+        codigoAcceso: data.codigoAcceso,
+        proyectosAsignados: []
+    };
+    // In real app, you would add this to mockTrabajadores or DB
+    return { success: true, message: "Nuevo trabajador añadido (simulado).", trabajador: newTrabajador };
+}
+
+export async function removeTrabajador(trabajadorId: string): Promise<{success: boolean, message: string}> {
+    console.log(`ACTION: removeTrabajador (Mocked) for ${trabajadorId}`);
+    // In a real app, you might also want to remove them from any proyectosAsignados
+    return { success: true, message: "Trabajador eliminado (simulado)." };
+}
+
+export async function addMaquinaria(data: { subcontrataId: string, nombre: string, matriculaORef: string }): Promise<{success: boolean, message: string, maquinaria?: Maquinaria}> {
+    console.log(`ACTION: addMaquinaria (Mocked)`);
+    const newMaquinaria: Maquinaria = {
+        id: `maq-mock-${Math.random()}`,
+        subcontrataId: data.subcontrataId,
+        nombre: data.nombre,
+        matriculaORef: data.matriculaORef
+    };
+    // In real app, you would add this to mockMaquinaria or DB
+    return { success: true, message: "Nueva maquinaria añadida (simulada).", maquinaria: newMaquinaria };
+}
+
+export async function removeMaquinaria(maquinariaId: string): Promise<{success: boolean, message: string}> {
+    console.log(`ACTION: removeMaquinaria (Mocked) for ${maquinariaId}`);
+    return { success: true, message: "Maquinaria eliminada (simulada)." };
 }

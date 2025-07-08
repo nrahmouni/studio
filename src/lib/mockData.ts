@@ -1,5 +1,5 @@
 // src/lib/mockData.ts
-import type { Constructora, Subcontrata, Proyecto, Trabajador, ReporteDiario } from '@/lib/types';
+import type { Constructora, Subcontrata, Proyecto, Trabajador, ReporteDiario, Maquinaria } from '@/lib/types';
 import { sub, add } from 'date-fns';
 
 export const mockConstructoras: Constructora[] = [
@@ -23,19 +23,25 @@ export const mockProyectos: Proyecto[] = [
 
 export const mockTrabajadores: Trabajador[] = [
   // Caram - Meridiana
-  { id: 'trab-01', nombre: 'Mohamed Elhamri', subcontrataId: 'sub-caram-mock', codigoAcceso: '111111', proyectosAsignados: ['proy-meridiana'] },
-  { id: 'trab-02', nombre: 'Juan García', subcontrataId: 'sub-caram-mock', codigoAcceso: '222222', proyectosAsignados: ['proy-meridiana'] },
-  { id: 'trab-03', nombre: 'Ana López', subcontrataId: 'sub-caram-mock', codigoAcceso: '333333', proyectosAsignados: ['proy-meridiana'] },
+  { id: 'trab-01', nombre: 'Mohamed Elhamri', subcontrataId: 'sub-caram-mock', codigoAcceso: '111111', proyectosAsignados: ['proy-meridiana'], categoriaProfesional: 'maquinista' },
+  { id: 'trab-02', nombre: 'Juan García', subcontrataId: 'sub-caram-mock', codigoAcceso: '222222', proyectosAsignados: ['proy-meridiana'], categoriaProfesional: 'oficial' },
+  { id: 'trab-03', nombre: 'Ana López', subcontrataId: 'sub-caram-mock', codigoAcceso: '333333', proyectosAsignados: ['proy-meridiana'], categoriaProfesional: 'peon' },
   
   // Caram - Glorias
-  { id: 'trab-04', nombre: 'Lucía Fernández', subcontrataId: 'sub-caram-mock', codigoAcceso: '444444', proyectosAsignados: ['proy-glorias'] },
+  { id: 'trab-04', nombre: 'Lucía Fernández', subcontrataId: 'sub-caram-mock', codigoAcceso: '444444', proyectosAsignados: ['proy-glorias'], categoriaProfesional: 'oficial' },
   
   // Pérez - Marina
-  { id: 'trab-05', nombre: 'Pedro Sánchez', subcontrataId: 'sub-perez-mock', codigoAcceso: '555555', proyectosAsignados: ['proy-marina'] },
-  { id: 'trab-06', nombre: 'Ana Martínez', subcontrataId: 'sub-perez-mock', codigoAcceso: '666666', proyectosAsignados: ['proy-marina'] },
+  { id: 'trab-05', nombre: 'Pedro Sánchez', subcontrataId: 'sub-perez-mock', codigoAcceso: '555555', proyectosAsignados: ['proy-marina'], categoriaProfesional: 'encofrador' },
+  { id: 'trab-06', nombre: 'Ana Martínez', subcontrataId: 'sub-perez-mock', codigoAcceso: '666666', proyectosAsignados: ['proy-marina'], categoriaProfesional: 'oficial' },
 
   // Volta - AXA
-  { id: 'trab-07', nombre: 'Carlos Ruiz', subcontrataId: 'sub-volta-mock', codigoAcceso: '777777', proyectosAsignados: ['proy-oficina-axa'] },
+  { id: 'trab-07', nombre: 'Carlos Ruiz', subcontrataId: 'sub-volta-mock', codigoAcceso: '777777', proyectosAsignados: ['proy-oficina-axa'], categoriaProfesional: 'oficial' },
+];
+
+export const mockMaquinaria: Maquinaria[] = [
+    { id: 'maq-01', subcontrataId: 'sub-caram-mock', nombre: 'Retroexcavadora CAT 320', matriculaORef: 'E-1234-BCD' },
+    { id: 'maq-02', subcontrataId: 'sub-caram-mock', nombre: 'Minicargadora Bobcat S70', matriculaORef: 'REF-MC-001' },
+    { id: 'maq-03', subcontrataId: 'sub-perez-mock', nombre: 'Grúa Torre Liebherr', matriculaORef: 'GR-LB-550' },
 ];
 
 export const mockReportesDiarios: ReporteDiario[] = [

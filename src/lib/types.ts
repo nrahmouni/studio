@@ -33,8 +33,18 @@ export const TrabajadorSchema = z.object({
   subcontrataId: z.string(),
   codigoAcceso: z.string().min(1, "El código es requerido"),
   proyectosAsignados: z.array(z.string()).optional(),
+  categoriaProfesional: z.enum(["oficial", "peon", "maquinista", "encofrador"]).optional(),
 });
 export type Trabajador = z.infer<typeof TrabajadorSchema>;
+
+// Maquinaria model
+export const MaquinariaSchema = z.object({
+    id: z.string(),
+    subcontrataId: z.string(),
+    nombre: z.string().min(1, "El nombre es requerido"),
+    matriculaORef: z.string().min(1, "La matrícula o referencia es requerida"),
+});
+export type Maquinaria = z.infer<typeof MaquinariaSchema>;
 
 
 // User model for roles that log in with email/password
