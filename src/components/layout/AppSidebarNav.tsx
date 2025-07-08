@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-import { Home, HardHat, Construction, FileText, UserCheck, Fingerprint, Send, ListChecks, Settings, Shield, ClipboardCheck, Wrench } from "lucide-react";
+import { Home, HardHat, Construction, FileText, UserCheck, Fingerprint, Send, ListChecks, Settings, Shield, ClipboardCheck, Wrench, Briefcase } from "lucide-react";
 import { useEffect, useState } from "react";
 
 type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'trabajador';
@@ -29,6 +29,7 @@ const allNavItems: NavItem[] = [
   { href: "/subcontrata/partes-validados", label: "Partes a Validar", icon: FileText, roles: ['subcontrata_admin'] },
 
   // Constructora
+  { href: "/constructora/proyectos", label: "Gestión de Proyectos", icon: Briefcase, roles: ['constructora_admin'] },
   { href: "/constructora/partes", label: "Seguimiento de Partes", icon: UserCheck, roles: ['constructora_admin'] },
   
   // Trabajador

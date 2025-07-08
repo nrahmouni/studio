@@ -101,6 +101,22 @@ export async function getMaquinariaBySubcontrata(subcontrataId: string): Promise
 
 // --- Data Mutation (Simulated) ---
 
+export async function addProyecto(
+  data: Omit<Proyecto, 'id' | 'fechaInicio' | 'fechaFin'> & { fechaInicio: Date | null, fechaFin: Date | null }
+): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
+  console.log(`ACTION: addProyecto (Mocked)`, data);
+  const newProyecto: Proyecto = {
+    ...data,
+    id: `proy-mock-${Math.random()}`,
+    fechaInicio: data.fechaInicio,
+    fechaFin: data.fechaFin,
+  };
+  // In real app, you would add this to mockProyectos or DB
+  // mockProyectos.push(newProyecto);
+  return { success: true, message: "Nuevo proyecto añadido (simulado).", proyecto: newProyecto };
+}
+
+
 export async function saveDailyReport(
   proyectoId: string,
   encargadoId: string,
