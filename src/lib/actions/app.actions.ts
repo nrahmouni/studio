@@ -51,6 +51,11 @@ export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Tra
   return JSON.parse(JSON.stringify(mockTrabajadores.filter(t => t.proyectosAsignados?.includes(proyectoId))));
 }
 
+export async function getMaquinariaByProyecto(proyectoId: string): Promise<Maquinaria[]> {
+  console.log(`ACTION: getMaquinariaByProyecto for ${proyectoId} (Mock)`);
+  return JSON.parse(JSON.stringify(mockMaquinaria.filter(m => m.proyectosAsignados?.includes(proyectoId))));
+}
+
 export async function getReportesDiarios(proyectoId?: string, encargadoId?: string, subcontrataId?: string): Promise<ReporteDiario[]> {
     console.log(`ACTION: getReportesDiarios (Mock) for proyectoId: ${proyectoId}, encargadoId: ${encargadoId}, subcontrataId: ${subcontrataId}`);
     let reportes = JSON.parse(JSON.stringify(mockReportesDiarios));
@@ -195,10 +200,28 @@ export async function addTrabajadorToProyecto(proyectoId: string, subcontrataId:
     return { success: true, message: "Nuevo trabajador creado y asignado (simulado).", trabajador: newTrabajador };
 }
 
+export async function assignTrabajadoresToProyecto(proyectoId: string, trabajadorIds: string[]): Promise<{success: boolean, message: string}> {
+    console.log(`ACTION: assignTrabajadoresToProyecto (Mocked) for project ${proyectoId} with workers ${trabajadorIds.join(', ')}`);
+    // In real app, find workers, add proyectoId to their proyectosAsignados array, save.
+    return { success: true, message: "Trabajadores asignados al proyecto (simulado)." };
+}
+
 export async function removeTrabajadorFromProyecto(proyectoId: string, trabajadorId: string): Promise<{success: boolean, message: string}> {
     console.log(`ACTION: removeTrabajadorFromProyecto (Mocked)`);
-    return { success: true, message: "Trabajador eliminado del proyecto (simulado)." };
+    return { success: true, message: "Trabajador desvinculado del proyecto (simulado)." };
 }
+
+export async function assignMaquinariaToProyecto(proyectoId: string, maquinariaIds: string[]): Promise<{success: boolean, message: string}> {
+    console.log(`ACTION: assignMaquinariaToProyecto (Mocked) for project ${proyectoId} with machines ${maquinariaIds.join(', ')}`);
+    // In real app, find machines, add proyectoId to their proyectosAsignados array, save.
+    return { success: true, message: "Maquinaria asignada al proyecto (simulado)." };
+}
+
+export async function removeMaquinariaFromProyecto(proyectoId: string, maquinariaId: string): Promise<{success: boolean, message: string}> {
+    console.log(`ACTION: removeMaquinariaFromProyecto (Mocked)`);
+    return { success: true, message: "Maquinaria desvinculada del proyecto (simulado)." };
+}
+
 
 export async function validateDailyReport(
   reporteId: string,
@@ -262,3 +285,5 @@ export async function removeMaquinaria(maquinariaId: string): Promise<{success: 
     console.log(`ACTION: removeMaquinaria (Mocked) for ${maquinariaId}`);
     return { success: true, message: "Maquinaria eliminada (simulada)." };
 }
+
+    

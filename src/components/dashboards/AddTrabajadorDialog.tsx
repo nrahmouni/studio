@@ -73,9 +73,9 @@ export function AddTrabajadorDialog({ proyecto, onTrabajadorAdded, children }: A
       <DialogTrigger asChild>{children}</DialogTrigger>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
-          <DialogTitle>Añadir Trabajador a {proyecto.nombre}</DialogTitle>
+          <DialogTitle>Añadir y Asignar Trabajador a {proyecto.nombre}</DialogTitle>
           <DialogDescription>
-            Introduce los detalles del nuevo trabajador para este proyecto.
+            Introduce los detalles para crear un nuevo trabajador y asignarlo directamente a este proyecto.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)}>
@@ -135,3 +135,5 @@ export function AddTrabajadorDialog({ proyecto, onTrabajadorAdded, children }: A
     </Dialog>
   );
 }
+
+    

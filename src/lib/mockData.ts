@@ -25,7 +25,7 @@ export const mockTrabajadores: Trabajador[] = [
   // Caram - Meridiana
   { id: 'trab-01', nombre: 'Mohamed Elhamri', subcontrataId: 'sub-caram-mock', codigoAcceso: '111111', proyectosAsignados: ['proy-meridiana'], categoriaProfesional: 'maquinista' },
   { id: 'trab-02', nombre: 'Juan García', subcontrataId: 'sub-caram-mock', codigoAcceso: '222222', proyectosAsignados: ['proy-meridiana'], categoriaProfesional: 'oficial' },
-  { id: 'trab-03', nombre: 'Ana López', subcontrataId: 'sub-caram-mock', codigoAcceso: '333333', proyectosAsignados: ['proy-meridiana'], categoriaProfesional: 'peon' },
+  { id: 'trab-03', nombre: 'Ana López', subcontrataId: 'sub-caram-mock', codigoAcceso: '333333', proyectosAsignados: [], categoriaProfesional: 'peon' },
   
   // Caram - Glorias
   { id: 'trab-04', nombre: 'Lucía Fernández', subcontrataId: 'sub-caram-mock', codigoAcceso: '444444', proyectosAsignados: ['proy-glorias'], categoriaProfesional: 'oficial' },
@@ -39,9 +39,9 @@ export const mockTrabajadores: Trabajador[] = [
 ];
 
 export const mockMaquinaria: Maquinaria[] = [
-    { id: 'maq-01', subcontrataId: 'sub-caram-mock', nombre: 'Retroexcavadora CAT 320', matriculaORef: 'E-1234-BCD' },
-    { id: 'maq-02', subcontrataId: 'sub-caram-mock', nombre: 'Minicargadora Bobcat S70', matriculaORef: 'REF-MC-001' },
-    { id: 'maq-03', subcontrataId: 'sub-perez-mock', nombre: 'Grúa Torre Liebherr', matriculaORef: 'GR-LB-550' },
+    { id: 'maq-01', subcontrataId: 'sub-caram-mock', nombre: 'Retroexcavadora CAT 320', matriculaORef: 'E-1234-BCD', proyectosAsignados: ['proy-meridiana'] },
+    { id: 'maq-02', subcontrataId: 'sub-caram-mock', nombre: 'Minicargadora Bobcat S70', matriculaORef: 'REF-MC-001', proyectosAsignados: [] },
+    { id: 'maq-03', subcontrataId: 'sub-perez-mock', nombre: 'Grúa Torre Liebherr', matriculaORef: 'GR-LB-550', proyectosAsignados: ['proy-marina'] },
 ];
 
 export const mockReportesDiarios: ReporteDiario[] = [
@@ -159,3 +159,5 @@ export const mockReportesDiarios: ReporteDiario[] = [
         }
     }
 ];
+
+    
