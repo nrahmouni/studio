@@ -1,207 +1,178 @@
 'use client';
-import { useState, useEffect, useCallback, useRef } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { Loader2, Building, Trash2, UserPlus, HardHat, User, MapPin, Hash } from 'lucide-react';
-import { getConstructoras, getProyectosByConstructora, getTrabajadoresByProyecto, removeTrabajadorFromProyecto } from '@/lib/actions/app.actions';
+import { getConstructoras, getProyectosBySubcontrata, getTrabajadoresByProyecto, removeTrabajadorFromProyecto } from '@/lib/actions/app.actions';
 import type { Constructora, Proyecto, Trabajador } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
 import { AddTrabajadorDialog } from '@/components/dashboards/AddTrabajadorDialog';
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Badge } from '@/components/ui/badge';
 
 export default function GestionProyectosPage() {
-  const [constructoras, setConstructoras] = useState<Constructora[]>([]);
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
-  const [trabajadores, setTrabajadores] = useState<Trabajador[]>([]);
+  const [constructoraMap, setConstructoraMap] = useState<Record<string, string>>({});
+  const [trabajadoresPorProyecto, setTrabajadoresPorProyecto] = useState<Record<string, Trabajador[]>>({});
   
-  const [selectedConstructora, setSelectedConstructora] = useState<Constructora | null>(null);
-  const [selectedProyecto, setSelectedProyecto] = useState<Proyecto | null>(null);
-
-  const [loadingConstructoras, setLoadingConstructoras] = useState(true);
-  const [loadingProyectos, setLoadingProyectos] = useState(false);
-  const [loadingTrabajadores, setLoadingTrabajadores] = useState(false);
+  const [loadingProyectos, setLoadingProyectos] = useState(true);
+  const [loadingTrabajadoresProyectoId, setLoadingTrabajadoresProyectoId] = useState<string | null>(null);
+  
   const { toast } = useToast();
 
-  const proyectosCardRef = useRef<HTMLDivElement>(null);
-  const trabajadoresCardRef = useRef<HTMLDivElement>(null);
-
   useEffect(() => {
-    const fetchConstructoras = async () => {
-      setLoadingConstructoras(true);
-      const data = await getConstructoras();
-      setConstructoras(data);
-      setLoadingConstructoras(false);
+    const subcontrataId = localStorage.getItem('subcontrataId_obra_link');
+    if (!subcontrataId) {
+      toast({ title: "Error", description: "No se pudo identificar la subcontrata.", variant: "destructive" });
+      setLoadingProyectos(false);
+      return;
+    }
+    const fetchData = async () => {
+        setLoadingProyectos(true);
+        const [proyectosData, constructorasData] = await Promise.all([
+            getProyectosBySubcontrata(subcontrataId),
+            getConstructoras(),
+        ]);
+
+        setProyectos(proyectosData.sort((a,b) => new Date(b.fechaInicio || 0).getTime() - new Date(a.fechaInicio || 0).getTime()));
+        const conMap = constructorasData.reduce((acc, c) => ({...acc, [c.id]: c.nombre}), {});
+        setConstructoraMap(conMap);
+        setLoadingProyectos(false);
     };
-    fetchConstructoras();
-  }, []);
+    fetchData();
+  }, [toast]);
 
-  useEffect(() => {
-    // Scroll to project selection when constructora is selected
-    if (selectedConstructora && proyectosCardRef.current) {
-      setTimeout(() => {
-        proyectosCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 150);
-    }
-  }, [selectedConstructora]);
+  const handleAccordionChange = async (projectId: string) => {
+    if (!projectId) return; // Accordion collapsed
+    if (trabajadoresPorProyecto[projectId]) return; // Data already fetched
 
-  useEffect(() => {
-    // Scroll to worker management when project is selected
-    if (selectedProyecto && trabajadoresCardRef.current) {
-      setTimeout(() => {
-        trabajadoresCardRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' });
-      }, 150);
-    }
-  }, [selectedProyecto]);
-
-  const handleSelectConstructora = async (constructora: Constructora) => {
-    setSelectedConstructora(constructora);
-    setSelectedProyecto(null);
-    setTrabajadores([]);
-    setProyectos([]);
-    setLoadingProyectos(true);
-    const proyData = await getProyectosByConstructora(constructora.id);
-    setProyectos(proyData);
-    setLoadingProyectos(false);
+    setLoadingTrabajadoresProyectoId(projectId);
+    const workers = await getTrabajadoresByProyecto(projectId);
+    setTrabajadoresPorProyecto(prev => ({ ...prev, [projectId]: workers }));
+    setLoadingTrabajadoresProyectoId(null);
   };
 
-  const handleSelectProyecto = async (proyecto: Proyecto) => {
-    setSelectedProyecto(proyecto);
-    setTrabajadores([]);
-    setLoadingTrabajadores(true);
-    const trabData = await getTrabajadoresByProyecto(proyecto.id);
-    setTrabajadores(trabData);
-    setLoadingTrabajadores(false);
-  };
-
-  const handleRemoveTrabajador = async (trabajadorId: string) => {
-    if (!selectedProyecto) return;
-    const result = await removeTrabajadorFromProyecto(selectedProyecto.id, trabajadorId);
+  const handleRemoveTrabajador = async (proyectoId: string, trabajadorId: string) => {
+    const result = await removeTrabajadorFromProyecto(proyectoId, trabajadorId);
     if (result.success) {
       toast({ title: "Éxito", description: `Trabajador eliminado del proyecto.` });
-      setTrabajadores(prev => prev.filter(t => t.id !== trabajadorId));
+      setTrabajadoresPorProyecto(prev => ({
+          ...prev,
+          [proyectoId]: prev[proyectoId]?.filter(t => t.id !== trabajadorId) || []
+      }));
     } else {
       toast({ title: "Error", description: result.message, variant: "destructive" });
     }
   };
   
-  const onTrabajadorAdded = useCallback((newTrabajador: Trabajador) => {
-      setTrabajadores(prev => [...prev, newTrabajador]);
+  const onTrabajadorAdded = useCallback((proyectoId: string, newTrabajador: Trabajador) => {
+      setTrabajadoresPorProyecto(prev => {
+        const currentWorkers = prev[proyectoId] || [];
+        return {
+          ...prev,
+          [proyectoId]: [...currentWorkers, newTrabajador]
+        };
+      });
   }, []);
 
+  const getStatus = (proyecto: Proyecto) => {
+    const now = new Date();
+    if (proyecto.fechaFin && new Date(proyecto.fechaFin) < now) return { text: "Finalizado", color: "bg-gray-500" };
+    if (proyecto.fechaInicio && new Date(proyecto.fechaInicio) > now) return { text: "Próximamente", color: "bg-blue-500" };
+    return { text: "En Curso", color: "bg-green-500" };
+  }
+
+  if (loadingProyectos) {
+    return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin h-10 w-10 text-primary" /></div>;
+  }
+
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold font-headline text-primary">Gestión de Proyectos y Personal</h1>
-        <p className="text-muted-foreground mt-1">Asigna trabajadores a los proyectos de tus clientes.</p>
+        <h1 className="text-3xl font-bold font-headline text-primary">Gestión de Proyectos y Recursos</h1>
+        <p className="text-muted-foreground mt-1">Consulta tus proyectos asignados y gestiona el personal de cada uno.</p>
       </div>
 
-      {/* Step 1: Select Constructora */}
       <Card className="animate-fade-in-up">
         <CardHeader>
-          <CardTitle className="flex items-center gap-3">
-            <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">1</div>
-            <span>Selecciona un Cliente (Constructora)</span>
-          </CardTitle>
+          <CardTitle>Listado de Proyectos Asignados</CardTitle>
+          <CardDescription>Haz clic en un proyecto para ver y asignar trabajadores.</CardDescription>
         </CardHeader>
         <CardContent>
-          {loadingConstructoras ? (
-            <Loader2 className="animate-spin h-8 w-8 text-primary" />
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-              {constructoras.map(c => (
-                <Button
-                  key={c.id}
-                  variant={selectedConstructora?.id === c.id ? 'default' : 'outline'}
-                  className="h-20 text-lg justify-start p-4"
-                  onClick={() => handleSelectConstructora(c)}
-                >
-                  <Building className="mr-4 h-6 w-6"/> {c.nombre}
-                </Button>
-              ))}
-            </div>
-          )}
+            {proyectos.length > 0 ? (
+                <Accordion type="single" collapsible className="w-full space-y-4" onValueChange={handleAccordionChange}>
+                    {proyectos.map(proyecto => {
+                        const status = getStatus(proyecto);
+                        const trabajadores = trabajadoresPorProyecto[proyecto.id];
+                        const isLoadingWorkers = loadingTrabajadoresProyectoId === proyecto.id;
+                        return (
+                            <Card key={proyecto.id} className="animate-fade-in-up transition-shadow hover:shadow-md">
+                                <AccordionItem value={proyecto.id} className="border-b-0">
+                                    <AccordionTrigger className="p-4 hover:no-underline text-left">
+                                        <div className="flex flex-col sm:flex-row justify-between sm:items-center w-full gap-3">
+                                            <div className="flex items-center gap-4">
+                                                <HardHat className="h-10 w-10 text-primary hidden sm:block"/>
+                                                <div>
+                                                    <p className="font-bold text-lg">{proyecto.nombre}</p>
+                                                    <p className="text-sm text-muted-foreground flex items-center gap-2"><Building className="h-4 w-4"/>Cliente: <span className="font-semibold text-foreground">{constructoraMap[proyecto.constructoraId] || 'N/A'}</span></p>
+                                                </div>
+                                            </div>
+                                             <div className="flex items-center gap-4 self-end sm:self-center">
+                                                <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
+                                             </div>
+                                        </div>
+                                    </AccordionTrigger>
+                                    <AccordionContent className="px-6 pb-6">
+                                        <div className="border-t pt-4 space-y-4">
+                                            <h4 className="font-semibold text-lg">Personal Asignado</h4>
+                                            {isLoadingWorkers && <div className="flex justify-center p-4"><Loader2 className="animate-spin h-6 w-6 text-primary"/></div>}
+                                            {trabajadores && (
+                                                <div className="space-y-3">
+                                                    {trabajadores.length > 0 ? trabajadores.map(t => (
+                                                        <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
+                                                            <span className="flex items-center gap-3 text-lg"><User className="h-5 w-5 text-muted-foreground"/> {t.nombre}</span>
+                                                            <AlertDialog>
+                                                              <AlertDialogTrigger asChild>
+                                                                  <Button variant="ghost" size="icon" className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-500/10"><Trash2 className="h-5 w-5"/></Button>
+                                                              </AlertDialogTrigger>
+                                                              <AlertDialogContent>
+                                                                <AlertDialogHeader>
+                                                                    <AlertDialogTitle>¿Desvincular trabajador?</AlertDialogTitle>
+                                                                    <AlertDialogDescription>
+                                                                        Esta acción eliminará a <strong>{t.nombre}</strong> de este proyecto, pero no lo eliminará de tu empresa.
+                                                                    </AlertDialogDescription>
+                                                                </AlertDialogHeader>
+                                                                <AlertDialogFooter>
+                                                                    <AlertDialogCancel>Cancelar</AlertDialogCancel>
+                                                                    <AlertDialogAction onClick={() => handleRemoveTrabajador(proyecto.id, t.id)} className="bg-destructive hover:bg-destructive/90">Desvincular</AlertDialogAction>
+                                                                </AlertDialogFooter>
+                                                              </AlertDialogContent>
+                                                            </AlertDialog>
+                                                        </div>
+                                                    )) : <p className="text-muted-foreground text-center py-4">No hay trabajadores asignados a este proyecto.</p>}
+                                                </div>
+                                            )}
+                                            <AddTrabajadorDialog 
+                                                proyecto={proyecto} 
+                                                onTrabajadorAdded={(newWorker) => onTrabajadorAdded(proyecto.id, newWorker)}
+                                            >
+                                                <Button variant="outline" className="w-full mt-4">
+                                                    <UserPlus className="mr-2 h-4 w-4"/> Asignar o Añadir Trabajador
+                                                </Button>
+                                            </AddTrabajadorDialog>
+                                        </div>
+                                    </AccordionContent>
+                                </AccordionItem>
+                            </Card>
+                        );
+                    })}
+                </Accordion>
+            ) : (
+                <p className="text-center py-6 text-muted-foreground">No tienes proyectos asignados.</p>
+            )}
         </CardContent>
       </Card>
-
-      {/* Step 2: Select Proyecto */}
-      {selectedConstructora && (
-        <Card ref={proyectosCardRef} className="animate-fade-in-up">
-          <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-primary text-primary-foreground font-bold text-lg">2</div>
-              <span>Selecciona el Proyecto</span>
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {loadingProyectos ? (
-              <Loader2 className="animate-spin h-8 w-8 text-primary" />
-            ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {proyectos.length > 0 ? (
-                  proyectos.map(p => (
-                    <Button
-                      key={p.id}
-                      variant={selectedProyecto?.id === p.id ? 'default' : 'outline'}
-                      className="h-20 text-lg justify-start p-4"
-                      onClick={() => handleSelectProyecto(p)}
-                    >
-                      <HardHat className="mr-4 h-6 w-6"/> {p.nombre}
-                    </Button>
-                  ))
-                ) : (
-                  <p className="text-muted-foreground text-center py-4">No hay proyectos para este cliente.</p>
-                )}
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Step 3: Manage Trabajadores */}
-      {selectedProyecto && (
-         <Card ref={trabajadoresCardRef} className="animate-fade-in-up">
-           <CardHeader>
-            <CardTitle className="flex items-center gap-3">
-              <div className="flex items-center justify-center w-8 h-8 rounded-full bg-accent text-accent-foreground font-bold text-lg">3</div>
-              <span>Gestiona los Trabajadores Asignados</span>
-            </CardTitle>
-            <div className="pt-2 pl-4 border-l-2 border-accent/50 space-y-1">
-                <p className="font-bold text-lg text-primary">{selectedProyecto.nombre}</p>
-                <p className="text-sm text-muted-foreground flex items-center gap-2"><MapPin className="h-4 w-4 shrink-0"/> {selectedProyecto.direccion}</p>
-                <p className="text-xs text-muted-foreground flex items-center gap-2"><Hash className="h-4 w-4 shrink-0"/> ID: {selectedProyecto.id}</p>
-            </div>
-            <CardDescription className="!mt-4">
-              Añade o elimina personal para el proyecto seleccionado.
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {loadingTrabajadores ? (
-              <div className="text-center p-8"><Loader2 className="animate-spin h-8 w-8 mx-auto text-primary" /></div>
-            ) : (
-              <div className="space-y-3">
-                {trabajadores.map(t => (
-                  <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                      <span className="flex items-center gap-3 text-lg"><User className="h-5 w-5 text-muted-foreground"/> {t.nombre}</span>
-                      <Button variant="ghost" size="icon" className="h-9 w-9" onClick={() => handleRemoveTrabajador(t.id)}>
-                          <Trash2 className="h-5 w-5 text-red-500 hover:text-red-700"/>
-                          <span className="sr-only">Eliminar</span>
-                      </Button>
-                  </div>
-                ))}
-                
-                {trabajadores.length === 0 && (
-                    <p className="text-muted-foreground text-center py-4">No hay trabajadores asignados a este proyecto todavía.</p>
-                )}
-
-                <AddTrabajadorDialog proyecto={selectedProyecto} onTrabajadorAdded={onTrabajadorAdded}>
-                    <Button variant="default" className="w-full mt-6 text-lg py-6 bg-accent text-accent-foreground hover:bg-accent/90">
-                        <UserPlus className="mr-2 h-5 w-5"/> Añadir Nuevo Trabajador
-                    </Button>
-                </AddTrabajadorDialog>
-              </div>
-            )}
-          </CardContent>
-         </Card>
-      )}
     </div>
   );
 }
