@@ -29,7 +29,7 @@ const allNavItems: NavItem[] = [
   { href: "/subcontrata/partes-validados", label: "Partes a Validar", icon: FileText, roles: ['subcontrata_admin'] },
 
   // Constructora
-  { href: "/constructora/proyectos", label: "Gestión de Proyectos", icon: Briefcase, roles: ['constructora_admin'] },
+  { href: "/constructora/proyectos", label: "Proyectos", icon: Briefcase, roles: ['constructora_admin'] },
   { href: "/constructora/partes", label: "Seguimiento de Partes", icon: UserCheck, roles: ['constructora_admin'] },
   
   // Trabajador

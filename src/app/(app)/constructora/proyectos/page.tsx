@@ -10,6 +10,7 @@ import { AddProyectoDialog } from '@/components/dashboards/AddProyectoDialog';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
+import Link from 'next/link';
 
 export default function GestionProyectosConstructoraPage() {
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -64,8 +65,8 @@ export default function GestionProyectosConstructoraPage() {
     <div className="space-y-6">
       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 animate-fade-in-down">
         <div>
-            <h1 className="text-3xl font-bold font-headline text-primary">Gestión de Proyectos</h1>
-            <p className="text-muted-foreground mt-1">Añade nuevos proyectos y visualiza los existentes.</p>
+            <h1 className="text-3xl font-bold font-headline text-primary">Panel de Proyectos</h1>
+            <p className="text-muted-foreground mt-1">Crea, visualiza y gestiona todos los proyectos de tu constructora.</p>
         </div>
         <AddProyectoDialog onProyectoAdded={onProyectoAdded} subcontratas={subcontratas}>
             <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
@@ -77,7 +78,7 @@ export default function GestionProyectosConstructoraPage() {
       <Card className="animate-fade-in-up">
         <CardHeader>
           <CardTitle>Listado de Proyectos</CardTitle>
-          <CardDescription>Aquí se muestran todos los proyectos de tu constructora.</CardDescription>
+          <CardDescription>Aquí se muestran todos los proyectos de tu constructora. Haz clic en "Gestionar" para ver los detalles.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           {proyectos.length > 0 ? proyectos.map(p => {
@@ -100,7 +101,9 @@ export default function GestionProyectosConstructoraPage() {
                   </div>
                   <div className="flex items-center gap-4 self-end sm:self-start">
                     <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
-                    <Button variant="outline" size="sm" disabled>Gestionar</Button>
+                    <Link href={`/constructora/proyectos/${p.id}`} passHref>
+                        <Button variant="outline" size="sm">Gestionar</Button>
+                    </Link>
                   </div>
                 </div>
               </Card>

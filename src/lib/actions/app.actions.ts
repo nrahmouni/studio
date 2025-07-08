@@ -36,6 +36,15 @@ export async function getProyectosBySubcontrata(subcontrataId: string): Promise<
     return JSON.parse(JSON.stringify(mockProyectos.filter(p => p.subcontrataId === subcontrataId)));
 }
 
+export async function getProyectoById(proyectoId: string): Promise<Proyecto | null> {
+  console.log(`ACTION: getProyectoById for ${proyectoId} (Mock)`);
+  const proyecto = mockProyectos.find(p => p.id === proyectoId);
+  if (!proyecto) return null;
+  const proyectoCopy = JSON.parse(JSON.stringify(proyecto));
+  if (proyectoCopy.fechaInicio) proyectoCopy.fechaInicio = new Date(proyectoCopy.fechaInicio);
+  if (proyectoCopy.fechaFin) proyectoCopy.fechaFin = new Date(proyectoCopy.fechaFin);
+  return proyectoCopy;
+}
 
 export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Trabajador[]> {
   console.log(`ACTION: getTrabajadoresByProyecto for ${proyectoId} (Mock)`);
@@ -114,6 +123,20 @@ export async function addProyecto(
   // In real app, you would add this to mockProyectos or DB
   // mockProyectos.push(newProyecto);
   return { success: true, message: "Nuevo proyecto añadido (simulado).", proyecto: newProyecto };
+}
+
+export async function updateProyecto(
+  proyectoId: string, 
+  data: Partial<Omit<Proyecto, 'id' | 'constructoraId'>>
+): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
+  console.log(`ACTION: updateProyecto (Mocked) for ${proyectoId}`, data);
+  const existingProyecto = mockProyectos.find(p => p.id === proyectoId);
+  if (!existingProyecto) {
+    return { success: false, message: "Proyecto no encontrado." };
+  }
+  // In a real app, you would update the DB. Here, we just simulate success.
+  const updatedProyecto = { ...existingProyecto, ...data };
+  return { success: true, message: "Proyecto actualizado con éxito (simulado).", proyecto: updatedProyecto };
 }
 
 

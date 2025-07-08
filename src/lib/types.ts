@@ -21,6 +21,7 @@ export const ProyectoSchema = z.object({
   constructoraId: z.string(),
   subcontrataId: z.string(),
   direccion: z.string().min(1, "La dirección es requerida"),
+  clienteNombre: z.string().min(1, "El nombre del cliente es requerido").optional(),
   fechaInicio: z.date().optional().nullable(),
   fechaFin: z.date().optional().nullable(),
 });
