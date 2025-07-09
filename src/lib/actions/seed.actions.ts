@@ -14,7 +14,7 @@ import {
 import { revalidatePath } from 'next/cache';
 
 export async function seedDemoData(): Promise<{ success: boolean; message: string; summary?: Record<string, string> }> {
-  console.log('[SEED DATA] Seeding process started...');
+  console.log('[SEED DATA] Seeding process started with minimal data set...');
   const summary: Record<string, string> = {};
   
   try {
@@ -93,7 +93,9 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
     summary.reportes = `${mockReportesDiarios.length} reportes diarios prepared.`;
 
     console.log('[SEED DATA] All data prepared in batch. Committing to Firestore...');
+    console.time('FirestoreBatchCommit');
     await batch.commit();
+    console.timeEnd('FirestoreBatchCommit');
     console.log('[SEED DATA] Batch commit successful.');
 
     revalidatePath('/(app)', 'layout');
