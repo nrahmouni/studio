@@ -9,7 +9,9 @@ import {
   mockProyectos,
   mockTrabajadores,
   mockReportesDiarios,
+  mockMaquinaria,
 } from '@/lib/mockData';
+import { revalidatePath } from 'next/cache';
 
 export async function seedDemoData(): Promise<{ success: boolean; message: string; summary?: Record<string, string> }> {
   console.log('[SEED DATA] Seeding process started...');
@@ -51,6 +53,13 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
     });
     summary.trabajadores = `${mockTrabajadores.length} trabajadores prepared.`;
 
+    // Seed Maquinaria
+    mockMaquinaria.forEach(m => {
+        const ref = doc(db, "maquinaria", m.id);
+        batch.set(ref, m);
+    });
+    summary.maquinaria = `${mockMaquinaria.length} maquinarias prepared.`;
+
     // Seed ReportesDiarios
     mockReportesDiarios.forEach(r => {
       const ref = doc(db, "reportesDiarios", r.id);
@@ -58,7 +67,7 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
       const reportDataForFirestore = {
         ...r,
         fecha: Timestamp.fromDate(new Date(r.fecha)),
-        timestamp: Timestamp.fromDate(new Date(r.timestamp)),
+        timestamp: r.timestamp ? Timestamp.fromDate(new Date(r.timestamp)) : Timestamp.now(),
         validacion: {
           encargado: {
             validado: r.validacion.encargado.validado,
@@ -85,6 +94,8 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
 
     await batch.commit();
     console.log('[SEED DATA] Batch commit successful.');
+
+    revalidatePath('/(app)', 'layout');
 
     return { success: true, message: 'Datos de demostración creados/actualizados en Firestore con éxito.', summary };
 
