@@ -1,6 +1,5 @@
 
 import { initializeApp, getApps, getApp, type FirebaseApp } from 'firebase/app';
-// import { getAuth, type Auth } from 'firebase/auth'; // Auth is no longer used
 import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
@@ -9,13 +8,12 @@ const firebaseConfig = {
   apiKey: "AIzaSyBuf2wYHrRR5_ZQXFFVZ8c53fJmao7P7UE",
   authDomain: "obralink-keqrc.firebaseapp.com",
   projectId: "obralink-keqrc",
-  storageBucket: "obralink-keqrc.firebasestorage.app", // Corrected from "obralink-keqrc.firebasestorage.app" in OCR to match typical Firebase naming
+  storageBucket: "obralink-keqrc.appspot.com", // Corrected storage bucket
   messagingSenderId: "412359783854",
   appId: "1:412359783854:web:f60777fc833ebf6503c43f"
 };
 
 let app: FirebaseApp;
-// let auth: Auth; // Auth is no longer used
 let db: Firestore;
 let storage: FirebaseStorage;
 
@@ -25,7 +23,6 @@ if (!getApps().length) {
   app = getApp();
 }
 
-// auth = getAuth(app); // Auth is no longer used
 db = getFirestore(app);
 storage = getStorage(app);
 

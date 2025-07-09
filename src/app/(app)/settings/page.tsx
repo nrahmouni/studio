@@ -1,14 +1,61 @@
-
 // src/app/(app)/settings/page.tsx
+'use client';
+
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Palette, Bell, ShieldCheck, Info } from "lucide-react";
+import { Settings, Palette, Bell, ShieldCheck, Info, Database, Loader2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { seedDemoData } from "@/lib/actions/seed.actions";
 
 export default function SettingsPage() {
+  const [seeding, setSeeding] = useState(false);
+  const { toast } = useToast();
+
+  const handleSeedData = async () => {
+    setSeeding(true);
+    toast({ title: "Procesando...", description: "Creando datos de demostración en Firestore..." });
+    try {
+      const result = await seedDemoData();
+      if (result.success) {
+        toast({ title: "Éxito", description: result.message, duration: 7000 });
+        console.log("Resumen del Seeding:", result.summary);
+      } else {
+        toast({ title: "Error en Seeding", description: result.message, variant: "destructive", duration: 10000 });
+        console.error("Error en Seeding:", result.summary);
+      }
+    } catch (error: any) {
+      toast({ title: "Error Crítico en Seeding", description: error.message || "Ocurrió un error inesperado.", variant: "destructive", duration: 10000 });
+      console.error("Error Crítico en Seeding:", error);
+    } finally {
+      setSeeding(false);
+    }
+  };
+
   const settingsCards = [
+    {
+      icon: Database,
+      title: "Gestión de Datos (Demo)",
+      description: "Crea o reinicia los datos de demostración en Firestore.",
+      content: (
+        <>
+          <div className="p-3 bg-blue-500/10 rounded-md border border-blue-500/30 text-sm text-blue-700 flex items-start">
+            <Info className="mr-2 h-5 w-5 shrink-0 mt-0.5 text-blue-600" />
+            <span>Para que la aplicación funcione con datos persistentes, necesita acceso a Firestore. Este botón poblará tu base de datos con datos de ejemplo.</span>
+          </div>
+          <Button onClick={handleSeedData} disabled={seeding} className="w-full mt-4">
+            {seeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
+            Poblar Datos de Demostración
+          </Button>
+          <p className="text-xs text-muted-foreground mt-2">
+            Asegúrate de que tus reglas de seguridad de Firestore permiten la escritura (<code>allow read, write: if true;</code>) para el desarrollo.
+          </p>
+        </>
+      )
+    },
     {
       icon: Palette,
       title: "Apariencia y Tema",
@@ -64,8 +111,8 @@ export default function SettingsPage() {
           <p className="text-sm text-muted-foreground">
             Próximamente podrás gestionar tu información personal, cerrar sesiones activas y ver registros de actividad.
           </p>
-          <Link href="/company-profile" passHref>
-            <Button variant="outline" className="w-full">Gestionar Perfil de Empresa</Button>
+          <Link href="/dashboard" passHref>
+            <Button variant="outline" className="w-full">Volver al Simulador de Roles</Button>
           </Link>
         </>
       )
@@ -80,7 +127,7 @@ export default function SettingsPage() {
         </h1>
       </div>
 
-      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-3">
+      <div className="grid gap-8 md:grid-cols-2 lg:grid-cols-2">
         {settingsCards.map((setting, index) => (
           <Card 
             key={setting.title} 
