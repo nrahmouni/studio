@@ -1,3 +1,4 @@
+
 // src/lib/actions/app.actions.ts
 'use server';
 
@@ -188,14 +189,22 @@ const dataToFirestore = (data: any) => {
     return firestoreData;
 };
 
+// OPTIMIZED to remove unnecessary read-after-write
 export async function addProyecto(data: Omit<Proyecto, 'id'>): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
     try {
-        const docRef = await addDoc(collection(db, "proyectos"), { ...dataToFirestore(data), createdAt: serverTimestamp() });
-        const newProyecto = await getProyectoById(docRef.id);
+        const dataToSave = { ...dataToFirestore(data), createdAt: serverTimestamp() };
+        const docRef = await addDoc(collection(db, "proyectos"), dataToSave);
+        
+        const newProyecto: Proyecto = {
+            id: docRef.id,
+            ...data
+        };
+
         revalidatePath('/(app)', 'layout');
-        return { success: true, message: "Proyecto añadido con éxito.", proyecto: newProyecto! };
+        return { success: true, message: "Proyecto añadido con éxito.", proyecto: newProyecto };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] addProyecto: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al añadir el proyecto: ${e.message}` };
     }
 }
 
@@ -207,7 +216,8 @@ export async function updateProyecto(proyectoId: string, data: Partial<Omit<Proy
         revalidatePath('/(app)', 'layout');
         return { success: true, message: "Proyecto actualizado con éxito.", proyecto: updatedProyecto! };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] updateProyecto: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al actualizar el proyecto: ${e.message}` };
     }
 }
 
@@ -229,7 +239,8 @@ export async function saveDailyReport(proyectoId: string, encargadoId: string, t
         revalidatePath('/(app)', 'layout');
         return { success: true, message: 'Reporte diario guardado con éxito.' };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] saveDailyReport: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al guardar el reporte: ${e.message}` };
     }
 }
 
@@ -254,7 +265,8 @@ export async function updateDailyReport(reporteId: string, trabajadoresReporte: 
         revalidatePath('/(app)', 'layout');
         return { success: true, message: 'Reporte actualizado con éxito.', reporte: updatedReporte! };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] updateDailyReport: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al actualizar el reporte: ${e.message}` };
     }
 }
 
@@ -264,20 +276,34 @@ export async function saveFichaje(data: { trabajadorId: string; tipo: 'inicio' |
         revalidatePath('/(app)', 'layout');
         return { success: true, message: `Fichaje de ${data.tipo} guardado con éxito.` };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] saveFichaje: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al guardar el fichaje: ${e.message}` };
     }
 }
 
+// OPTIMIZED to remove unnecessary read-after-write
 export async function addTrabajador(data: { subcontrataId: string, nombre: string, categoriaProfesional: Trabajador['categoriaProfesional'], codigoAcceso: string }): Promise<{ success: boolean, message: string, trabajador?: Trabajador }> {
     try {
-        const docRef = await addDoc(collection(db, "trabajadores"), { ...data, proyectosAsignados: [], createdAt: serverTimestamp() });
-        const snapshot = await getDoc(docRef);
+        const dataToSave = { ...data, proyectosAsignados: [], createdAt: serverTimestamp() };
+        const docRef = await addDoc(collection(db, "trabajadores"), dataToSave);
+        
+        const newTrabajador: Trabajador = {
+            id: docRef.id,
+            subcontrataId: data.subcontrataId,
+            nombre: data.nombre,
+            categoriaProfesional: data.categoriaProfesional,
+            codigoAcceso: data.codigoAcceso,
+            proyectosAsignados: [],
+        };
+
         revalidatePath('/(app)', 'layout');
-        return { success: true, message: "Trabajador añadido.", trabajador: docToObject(snapshot) as Trabajador };
+        return { success: true, message: "Trabajador añadido.", trabajador: newTrabajador };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] addTrabajador: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al añadir trabajador: ${e.message}` };
     }
 }
+
 
 export async function removeTrabajador(trabajadorId: string): Promise<{ success: boolean, message: string }> {
     try {
@@ -285,20 +311,33 @@ export async function removeTrabajador(trabajadorId: string): Promise<{ success:
         revalidatePath('/(app)', 'layout');
         return { success: true, message: "Trabajador eliminado." };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] removeTrabajador: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al eliminar trabajador: ${e.message}` };
     }
 }
 
+// OPTIMIZED to remove unnecessary read-after-write
 export async function addMaquinaria(data: { subcontrataId: string, nombre: string, matriculaORef: string }): Promise<{ success: boolean, message: string, maquinaria?: Maquinaria }> {
     try {
-        const docRef = await addDoc(collection(db, "maquinaria"), { ...data, createdAt: serverTimestamp() });
-        const snapshot = await getDoc(docRef);
+        const dataToSave = { ...data, proyectosAsignados: [], createdAt: serverTimestamp() };
+        const docRef = await addDoc(collection(db, "maquinaria"), dataToSave);
+        
+        const newMaquinaria: Maquinaria = {
+            id: docRef.id,
+            subcontrataId: data.subcontrataId,
+            nombre: data.nombre,
+            matriculaORef: data.matriculaORef,
+            proyectosAsignados: [],
+        };
+        
         revalidatePath('/(app)', 'layout');
-        return { success: true, message: "Maquinaria añadida.", maquinaria: docToObject(snapshot) as Maquinaria };
+        return { success: true, message: "Maquinaria añadida.", maquinaria: newMaquinaria };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] addMaquinaria: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al añadir maquinaria: ${e.message}` };
     }
 }
+
 
 export async function removeMaquinaria(maquinariaId: string): Promise<{ success: boolean, message: string }> {
     try {
@@ -306,7 +345,8 @@ export async function removeMaquinaria(maquinariaId: string): Promise<{ success:
         revalidatePath('/(app)', 'layout');
         return { success: true, message: "Maquinaria eliminada." };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] removeMaquinaria: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al eliminar maquinaria: ${e.message}` };
     }
 }
 
@@ -321,7 +361,8 @@ export async function assignTrabajadoresToProyecto(proyectoId: string, trabajado
         revalidatePath('/(app)', 'layout');
         return { success: true, message: "Personal asignado." };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] assignTrabajadoresToProyecto: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al asignar personal: ${e.message}` };
     }
 }
 
@@ -332,7 +373,8 @@ export async function removeTrabajadorFromProyecto(proyectoId: string, trabajado
         revalidatePath('/(app)', 'layout');
         return { success: true, message: "Trabajador desvinculado." };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] removeTrabajadorFromProyecto: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al desvincular trabajador: ${e.message}` };
     }
 }
 
@@ -347,7 +389,8 @@ export async function assignMaquinariaToProyecto(proyectoId: string, maquinariaI
         revalidatePath('/(app)', 'layout');
         return { success: true, message: "Maquinaria asignada." };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] assignMaquinariaToProyecto: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al asignar maquinaria: ${e.message}` };
     }
 }
 
@@ -358,7 +401,8 @@ export async function removeMaquinariaFromProyecto(proyectoId: string, maquinari
         revalidatePath('/(app)', 'layout');
         return { success: true, message: "Maquinaria desvinculada." };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] removeMaquinariaFromProyecto: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al desvincular maquinaria: ${e.message}` };
     }
 }
 
@@ -388,7 +432,8 @@ export async function validateDailyReport(reporteId: string, role: 'subcontrata'
         revalidatePath('/(app)', 'layout');
         return { success: true, message: `Reporte validado por ${role} con éxito.`, reporte: updatedReporte! };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] validateDailyReport: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al validar el reporte: ${e.message}` };
     }
 }
 
@@ -401,6 +446,7 @@ export async function addTrabajadorToProyecto(proyectoId: string, subcontrataId:
         revalidatePath('/(app)', 'layout');
         return { success: true, message: "Nuevo trabajador creado y asignado.", trabajador: docToObject(snapshot) as Trabajador };
     } catch (e: any) {
-        return { success: false, message: e.message };
+        console.error(`[ACTIONS_ERROR] addTrabajadorToProyecto: ${e.message}`, { code: e.code });
+        return { success: false, message: `Error al crear y asignar trabajador: ${e.message}` };
     }
 }
