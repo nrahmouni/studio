@@ -10,6 +10,7 @@ import { revalidatePath } from 'next/cache';
 const docToObject = (doc: any) => {
     if (!doc.exists()) return null;
     const data = doc.data();
+    if (!data) return null; // Defensive check
     // Recursively convert timestamps
     const convertTimestamps = (obj: any): any => {
         if (obj instanceof Timestamp) {
@@ -36,85 +37,141 @@ const docToObject = (doc: any) => {
 // --- DATA FETCHING ---
 
 export async function getConstructoras(): Promise<Constructora[]> {
-    const snapshot = await getDocs(collection(db, "constructoras"));
-    return snapshot.docs.map(doc => docToObject(doc));
+    try {
+        const snapshot = await getDocs(collection(db, "constructoras"));
+        return snapshot.docs.map(doc => docToObject(doc)).filter(Boolean) as Constructora[];
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getConstructoras: ${e.message}`, { code: e.code });
+        return [];
+    }
 }
 
 export async function getSubcontratas(): Promise<Subcontrata[]> {
-    const snapshot = await getDocs(collection(db, "subcontratas"));
-    return snapshot.docs.map(doc => docToObject(doc));
+    try {
+        const snapshot = await getDocs(collection(db, "subcontratas"));
+        return snapshot.docs.map(doc => docToObject(doc)).filter(Boolean) as Subcontrata[];
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getSubcontratas: ${e.message}`, { code: e.code });
+        return [];
+    }
 }
 
 export async function getProyectosByConstructora(constructoraId: string): Promise<Proyecto[]> {
-    const q = query(collection(db, "proyectos"), where("constructoraId", "==", constructoraId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => docToObject(doc));
+    try {
+        const q = query(collection(db, "proyectos"), where("constructoraId", "==", constructoraId));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => docToObject(doc)).filter(Boolean) as Proyecto[];
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getProyectosByConstructora for ${constructoraId}: ${e.message}`, { code: e.code });
+        return [];
+    }
 }
 
 export async function getProyectosBySubcontrata(subcontrataId: string): Promise<Proyecto[]> {
-    const q = query(collection(db, "proyectos"), where("subcontrataId", "==", subcontrataId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => docToObject(doc));
+    try {
+        const q = query(collection(db, "proyectos"), where("subcontrataId", "==", subcontrataId));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => docToObject(doc)).filter(Boolean) as Proyecto[];
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getProyectosBySubcontrata for ${subcontrataId}: ${e.message}`, { code: e.code });
+        return [];
+    }
 }
 
 export async function getProyectoById(proyectoId: string): Promise<Proyecto | null> {
-    const docRef = doc(db, "proyectos", proyectoId);
-    const docSnap = await getDoc(docRef);
-    return docToObject(docSnap);
+    try {
+        const docRef = doc(db, "proyectos", proyectoId);
+        const docSnap = await getDoc(docRef);
+        return docToObject(docSnap) as Proyecto | null;
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getProyectoById for ${proyectoId}: ${e.message}`, { code: e.code });
+        return null;
+    }
 }
 
 export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Trabajador[]> {
-    const q = query(collection(db, "trabajadores"), where("proyectosAsignados", "array-contains", proyectoId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => docToObject(doc));
+    try {
+        const q = query(collection(db, "trabajadores"), where("proyectosAsignados", "array-contains", proyectoId));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => docToObject(doc)).filter(Boolean) as Trabajador[];
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getTrabajadoresByProyecto for ${proyectoId}: ${e.message}`, { code: e.code });
+        return [];
+    }
 }
 
 export async function getMaquinariaByProyecto(proyectoId: string): Promise<Maquinaria[]> {
-    const q = query(collection(db, "maquinaria"), where("proyectosAsignados", "array-contains", proyectoId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => docToObject(doc));
+    try {
+        const q = query(collection(db, "maquinaria"), where("proyectosAsignados", "array-contains", proyectoId));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => docToObject(doc)).filter(Boolean) as Maquinaria[];
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getMaquinariaByProyecto for ${proyectoId}: ${e.message}`, { code: e.code });
+        return [];
+    }
 }
 
 export async function getReportesDiarios(proyectoId?: string, encargadoId?: string, subcontrataId?: string): Promise<ReporteDiario[]> {
-    let q = query(collection(db, "reportesDiarios"));
+    try {
+        let q = query(collection(db, "reportesDiarios"));
 
-    if (proyectoId) {
-        q = query(q, where("proyectoId", "==", proyectoId));
+        if (proyectoId) {
+            q = query(q, where("proyectoId", "==", proyectoId));
+        }
+        if (encargadoId) {
+            q = query(q, where("encargadoId", "==", encargadoId));
+        }
+
+        const snapshot = await getDocs(q);
+        let reportes = snapshot.docs.map(doc => docToObject(doc)).filter(Boolean) as ReporteDiario[];
+
+        if (subcontrataId) {
+            const proyectosSnapshot = await getDocs(query(collection(db, "proyectos"), where("subcontrataId", "==", subcontrataId)));
+            const proyectosDeSubIds = new Set(proyectosSnapshot.docs.map(p => p.id));
+            reportes = reportes.filter(r => proyectosDeSubIds.has(r.proyectoId));
+        }
+
+        return reportes;
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getReportesDiarios: ${e.message}`, { code: e.code });
+        return [];
     }
-    if (encargadoId) {
-        q = query(q, where("encargadoId", "==", encargadoId));
-    }
-
-    const snapshot = await getDocs(q);
-    let reportes = snapshot.docs.map(doc => docToObject(doc));
-
-    if (subcontrataId) {
-        const proyectosSnapshot = await getDocs(query(collection(db, "proyectos"), where("subcontrataId", "==", subcontrataId)));
-        const proyectosDeSubIds = new Set(proyectosSnapshot.docs.map(p => p.id));
-        reportes = reportes.filter(r => proyectosDeSubIds.has(r.proyectoId));
-    }
-
-    return reportes;
 }
 
 
 export async function getReporteDiarioById(reporteId: string): Promise<ReporteDiario | null> {
-    const docRef = doc(db, "reportesDiarios", reporteId);
-    const docSnap = await getDoc(docRef);
-    return docToObject(docSnap);
+    try {
+        const docRef = doc(db, "reportesDiarios", reporteId);
+        const docSnap = await getDoc(docRef);
+        return docToObject(docSnap) as ReporteDiario | null;
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getReporteDiarioById for ${reporteId}: ${e.message}`, { code: e.code });
+        return null;
+    }
 }
 
 export async function getTrabajadoresBySubcontrata(subcontrataId: string): Promise<Trabajador[]> {
-    const q = query(collection(db, "trabajadores"), where("subcontrataId", "==", subcontrataId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => docToObject(doc));
+    try {
+        const q = query(collection(db, "trabajadores"), where("subcontrataId", "==", subcontrataId));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => docToObject(doc)).filter(Boolean) as Trabajador[];
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getTrabajadoresBySubcontrata for ${subcontrataId}: ${e.message}`, { code: e.code });
+        return [];
+    }
 }
 
 export async function getMaquinariaBySubcontrata(subcontrataId: string): Promise<Maquinaria[]> {
-    const q = query(collection(db, "maquinaria"), where("subcontrataId", "==", subcontrataId));
-    const snapshot = await getDocs(q);
-    return snapshot.docs.map(doc => docToObject(doc));
+    try {
+        const q = query(collection(db, "maquinaria"), where("subcontrataId", "==", subcontrataId));
+        const snapshot = await getDocs(q);
+        return snapshot.docs.map(doc => docToObject(doc)).filter(Boolean) as Maquinaria[];
+    } catch (e: any) {
+        console.error(`[ACTIONS_ERROR] getMaquinariaBySubcontrata for ${subcontrataId}: ${e.message}`, { code: e.code });
+        return [];
+    }
 }
+
 
 // --- DATA MUTATION ---
 
@@ -216,7 +273,7 @@ export async function addTrabajador(data: { subcontrataId: string, nombre: strin
         const docRef = await addDoc(collection(db, "trabajadores"), { ...data, proyectosAsignados: [], createdAt: serverTimestamp() });
         const snapshot = await getDoc(docRef);
         revalidatePath('/(app)', 'layout');
-        return { success: true, message: "Trabajador añadido.", trabajador: docToObject(snapshot) };
+        return { success: true, message: "Trabajador añadido.", trabajador: docToObject(snapshot) as Trabajador };
     } catch (e: any) {
         return { success: false, message: e.message };
     }
@@ -237,7 +294,7 @@ export async function addMaquinaria(data: { subcontrataId: string, nombre: strin
         const docRef = await addDoc(collection(db, "maquinaria"), { ...data, createdAt: serverTimestamp() });
         const snapshot = await getDoc(docRef);
         revalidatePath('/(app)', 'layout');
-        return { success: true, message: "Maquinaria añadida.", maquinaria: docToObject(snapshot) };
+        return { success: true, message: "Maquinaria añadida.", maquinaria: docToObject(snapshot) as Maquinaria };
     } catch (e: any) {
         return { success: false, message: e.message };
     }
@@ -342,7 +399,7 @@ export async function addTrabajadorToProyecto(proyectoId: string, subcontrataId:
         const docRef = await addDoc(collection(db, "trabajadores"), { ...data, createdAt: serverTimestamp() });
         const snapshot = await getDoc(docRef);
         revalidatePath('/(app)', 'layout');
-        return { success: true, message: "Nuevo trabajador creado y asignado.", trabajador: docToObject(snapshot) };
+        return { success: true, message: "Nuevo trabajador creado y asignado.", trabajador: docToObject(snapshot) as Trabajador };
     } catch (e: any) {
         return { success: false, message: e.message };
     }

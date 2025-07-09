@@ -4,6 +4,8 @@ import { getFirestore, type Firestore } from 'firebase/firestore';
 import { getStorage, type FirebaseStorage } from 'firebase/storage';
 
 // Your web app's Firebase configuration (Hardcoded as per user request)
+// IMPORTANT: Make sure these values exactly match the Firebase project configuration
+// in your Firebase console. Any mismatch will cause connection errors.
 const firebaseConfig = {
   apiKey: "AIzaSyBuf2wYHrRR5_ZQXFFVZ8c53fJmao7P7UE",
   authDomain: "obralink-keqrc.firebaseapp.com",
