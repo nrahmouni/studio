@@ -11,7 +11,7 @@ const firebaseConfig = {
   apiKey: "AIzaSyBuf2wYHrRR5_ZQXFFVZ8c53fJmao7P7UE",
   authDomain: "obralink-keqrc.firebaseapp.com",
   projectId: "obralink-keqrc",
-  storageBucket: "obralink-keqrc.appspot.com", // Corrected storage bucket
+  storageBucket: "obralink-keqrc.firebasestorage.app", // Corrected storage bucket
   messagingSenderId: "412359783854",
   appId: "1:412359783854:web:f60777fc833ebf6503c43f"
 };
