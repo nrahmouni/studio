@@ -17,19 +17,19 @@ export default function SettingsPage() {
 
   const handleSeedData = async () => {
     setSeeding(true);
-    toast({ title: "Procesando...", description: "Creando datos de demostración en Firestore..." });
+    toast({ title: "Ejecutando prueba...", description: "Intentando escribir en Firestore..." });
     try {
       const result = await seedDemoData();
       if (result.success) {
-        toast({ title: "Éxito", description: result.message, duration: 7000 });
-        console.log("Resumen del Seeding:", result.summary);
+        toast({ title: "Éxito en la Conexión", description: result.message, duration: 7000 });
+        console.log("Resumen de la prueba:", result.summary);
       } else {
-        toast({ title: "Error en Seeding", description: result.message, variant: "destructive", duration: 10000 });
-        console.error("Error en Seeding:", result.summary);
+        toast({ title: "Error en la Prueba", description: result.message, variant: "destructive", duration: 10000 });
+        console.error("Error en la prueba:", result.summary);
       }
     } catch (error: any) {
-      toast({ title: "Error Crítico en Seeding", description: error.message || "Ocurrió un error inesperado.", variant: "destructive", duration: 10000 });
-      console.error("Error Crítico en Seeding:", error);
+      toast({ title: "Error Crítico en la Prueba", description: error.message || "Ocurrió un error inesperado.", variant: "destructive", duration: 10000 });
+      console.error("Error Crítico en la prueba:", error);
     } finally {
       setSeeding(false);
     }
@@ -38,17 +38,17 @@ export default function SettingsPage() {
   const settingsCards = [
     {
       icon: Database,
-      title: "Gestión de Datos (Demo)",
-      description: "Crea o reinicia los datos de demostración en Firestore.",
+      title: "Prueba de Conexión a Firestore",
+      description: "Verifica si la aplicación puede escribir en la base de datos.",
       content: (
         <>
-          <div className="p-3 bg-blue-500/10 rounded-md border border-blue-500/30 text-sm text-blue-700 flex items-start">
+          <div className="p-3 bg-blue-500/10 rounded-md border border-blue-500/20 text-sm text-blue-700 flex items-start">
             <Info className="mr-2 h-5 w-5 shrink-0 mt-0.5 text-blue-600" />
-            <span>Para que la aplicación funcione con datos persistentes, necesita acceso a Firestore. Este botón poblará tu base de datos con datos de ejemplo.</span>
+            <span>Este botón intentará escribir un único documento de prueba en Firestore. Si funciona, la conexión es correcta. Si falla con un timeout, confirma un problema de red o configuración.</span>
           </div>
           <Button onClick={handleSeedData} disabled={seeding} className="w-full mt-4">
             {seeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-            Poblar Datos de Demostración
+            Ejecutar Prueba de Conexión
           </Button>
           <p className="text-xs text-muted-foreground mt-2">
             Asegúrate de que tus reglas de seguridad de Firestore permiten la escritura (<code>allow read, write: if true;</code>) para el desarrollo.

@@ -2,114 +2,41 @@
 'use server';
 
 import { db } from '@/lib/firebase/firebase';
-import { collection, doc, writeBatch, Timestamp } from 'firebase/firestore';
-import {
-  mockConstructoras,
-  mockSubcontratas,
-  mockProyectos,
-  mockTrabajadores,
-  mockReportesDiarios,
-  mockMaquinaria,
-} from '@/lib/mockData';
+import { doc, setDoc, serverTimestamp } from 'firebase/firestore';
 import { revalidatePath } from 'next/cache';
 
 export async function seedDemoData(): Promise<{ success: boolean; message: string; summary?: Record<string, string> }> {
-  console.log('[SEED DATA] Seeding process started with minimal data set...');
+  const testDocId = `test-doc-${new Date().getTime()}`;
+  const testDocRef = doc(db, "connectivity-tests", testDocId);
   const summary: Record<string, string> = {};
-  
+
   try {
-    const batch = writeBatch(db);
+    console.log(`[SEED_DATA_TEST] Starting simple connectivity test. Writing to: connectivity-tests/${testDocId}`);
+    console.time('FirestoreSimpleWrite');
 
-    // Seed Constructoras
-    mockConstructoras.forEach(c => {
-      const ref = doc(db, "constructoras", c.id);
-      batch.set(ref, c);
+    await setDoc(testDocRef, {
+      message: "Connectivity test successful",
+      timestamp: serverTimestamp(),
     });
-    summary.constructoras = `${mockConstructoras.length} constructoras prepared.`;
 
-    // Seed Subcontratas
-    mockSubcontratas.forEach(s => {
-      const ref = doc(db, "subcontratas", s.id);
-      batch.set(ref, s);
-    });
-    summary.subcontratas = `${mockSubcontratas.length} subcontratas prepared.`;
+    console.timeEnd('FirestoreSimpleWrite');
+    console.log(`[SEED_DATA_TEST] Simple write successful.`);
+    
+    summary.test_result = `Successfully wrote document ${testDocId} to the 'connectivity-tests' collection.`;
+    
+    // No es necesario revalidar la ruta para esta prueba.
+    // revalidatePath('/(app)', 'layout');
 
-    // Seed Proyectos
-    mockProyectos.forEach(p => {
-      const ref = doc(db, "proyectos", p.id);
-      const projectDataForFirestore = {
-        ...p,
-        fechaInicio: p.fechaInicio ? Timestamp.fromDate(new Date(p.fechaInicio)) : null,
-        fechaFin: p.fechaFin ? Timestamp.fromDate(new Date(p.fechaFin)) : null,
-      };
-      batch.set(ref, projectDataForFirestore);
-    });
-    summary.proyectos = `${mockProyectos.length} proyectos prepared.`;
-
-    // Seed Trabajadores
-    mockTrabajadores.forEach(t => {
-      const ref = doc(db, "trabajadores", t.id);
-      batch.set(ref, t);
-    });
-    summary.trabajadores = `${mockTrabajadores.length} trabajadores prepared.`;
-
-    // Seed Maquinaria
-    mockMaquinaria.forEach(m => {
-        const ref = doc(db, "maquinaria", m.id);
-        batch.set(ref, m);
-    });
-    summary.maquinaria = `${mockMaquinaria.length} maquinarias prepared.`;
-
-    // Seed ReportesDiarios
-    mockReportesDiarios.forEach(r => {
-      const ref = doc(db, "reportesDiarios", r.id);
-      
-      const reportDataForFirestore = {
-        ...r,
-        fecha: Timestamp.fromDate(new Date(r.fecha)),
-        timestamp: r.timestamp ? Timestamp.fromDate(new Date(r.timestamp)) : Timestamp.now(),
-        validacion: {
-          encargado: {
-            validado: r.validacion.encargado.validado,
-            timestamp: r.validacion.encargado.timestamp ? Timestamp.fromDate(new Date(r.validacion.encargado.timestamp)) : null,
-          },
-          subcontrata: {
-            validado: r.validacion.subcontrata.validado,
-            timestamp: r.validacion.subcontrata.timestamp ? Timestamp.fromDate(new Date(r.validacion.subcontrata.timestamp)) : null,
-          },
-          constructora: {
-            validado: r.validacion.constructora.validado,
-            timestamp: r.validacion.constructora.timestamp ? Timestamp.fromDate(new Date(r.validacion.constructora.timestamp)) : null,
-          },
-        },
-        modificacionJefeObra: r.modificacionJefeObra ? {
-          ...r.modificacionJefeObra,
-          timestamp: r.modificacionJefeObra.timestamp ? Timestamp.fromDate(new Date(r.modificacionJefeObra.timestamp)) : null,
-        } : r.modificacionJefeObra,
-      };
-      
-      batch.set(ref, reportDataForFirestore);
-    });
-    summary.reportes = `${mockReportesDiarios.length} reportes diarios prepared.`;
-
-    console.log('[SEED DATA] All data prepared in batch. Committing to Firestore...');
-    console.time('FirestoreBatchCommit');
-    await batch.commit();
-    console.timeEnd('FirestoreBatchCommit');
-    console.log('[SEED DATA] Batch commit successful.');
-
-    revalidatePath('/(app)', 'layout');
-
-    return { success: true, message: 'Datos de demostración creados/actualizados en Firestore con éxito.', summary };
+    return { success: true, message: 'Prueba de conectividad con Firestore exitosa.', summary };
 
   } catch (error: any) {
-    console.error('--- [SEED DATA] ERROR ---');
-    console.error(`Error al crear datos de demostración: ${error.message}`);
-    console.error(`Stack: ${error.stack}`);
+    console.error('--- [SEED DATA TEST] CRITICAL ERROR ---');
+    console.error(`Error during simple write test: ${error.message}`);
+    if (error.stack) console.error(`Stack: ${error.stack}`);
     
-    let userMessage = `Error al crear datos de demostración: ${error.message}`;
+    let userMessage = `Error en la prueba de conectividad: ${error.message}`;
     if (error.code === 'permission-denied') {
-      userMessage = "Error de Permiso en Firestore. La base de datos denegó el acceso. Por favor, asegúrate de que tus reglas de seguridad en la Consola de Firebase permiten la escritura (allow write: if true;).";
+      userMessage = "Error de Permiso en Firestore. La base de datos denegó el acceso. Por favor, asegúrate de que tus reglas de seguridad permiten la escritura (allow write: if true;).";
     }
     
     summary.error = userMessage;
