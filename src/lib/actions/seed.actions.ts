@@ -92,6 +92,7 @@ export async function seedDemoData(): Promise<{ success: boolean; message: strin
     });
     summary.reportes = `${mockReportesDiarios.length} reportes diarios prepared.`;
 
+    console.log('[SEED DATA] All data prepared in batch. Committing to Firestore...');
     await batch.commit();
     console.log('[SEED DATA] Batch commit successful.');
 
