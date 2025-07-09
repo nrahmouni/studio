@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from "next/link";
@@ -24,7 +25,7 @@ const allNavItems: NavItem[] = [
   { href: "/encargado/asistencia", label: "Control de Asistencia", icon: ClipboardCheck, roles: ['encargado'] },
 
   // Subcontrata
-  { href: "/subcontrata/proyectos", label: "Proyectos y Personal", icon: HardHat, roles: ['subcontrata_admin'] },
+  { href: "/subcontrata/proyectos", label: "Proyectos", icon: HardHat, roles: ['subcontrata_admin'] },
   { href: "/subcontrata/recursos", label: "Personal y Maquinaria", icon: Wrench, roles: ['subcontrata_admin'] },
   { href: "/subcontrata/partes-validados", label: "Partes a Validar", icon: FileText, roles: ['subcontrata_admin'] },
 

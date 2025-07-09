@@ -1,92 +1,54 @@
+
 'use client';
 import { useState, useEffect, useCallback } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Loader2, Building, Trash2, UserPlus, HardHat, User, Truck, MapPin, Hash, PlusCircle } from 'lucide-react';
-import { getConstructoras, getProyectosBySubcontrata, getTrabajadoresByProyecto, removeTrabajadorFromProyecto, getMaquinariaByProyecto, removeMaquinariaFromProyecto } from '@/lib/actions/app.actions';
-import type { Constructora, Proyecto, Trabajador, Maquinaria } from '@/lib/types';
+import { Loader2, Building, HardHat, PlusCircle, Calendar } from 'lucide-react';
+import { getConstructoras, getProyectosBySubcontrata } from '@/lib/actions/app.actions';
+import type { Constructora, Proyecto } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import { Badge } from '@/components/ui/badge';
-import { AssignPersonalDialog } from '@/components/dashboards/AssignPersonalDialog';
-import { AssignMaquinariaDialog } from '@/components/dashboards/AssignMaquinariaDialog';
+import Link from 'next/link';
+import { format } from 'date-fns';
+import { es } from 'date-fns/locale';
+import { AddProyectoSubcontrataDialog } from '@/components/dashboards/AddProyectoSubcontrataDialog';
 
-export default function GestionProyectosPage() {
+export default function SubcontrataProyectosPage() {
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
+  const [constructoras, setConstructoras] = useState<Constructora[]>([]);
   const [constructoraMap, setConstructoraMap] = useState<Record<string, string>>({});
-  const [trabajadoresPorProyecto, setTrabajadoresPorProyecto] = useState<Record<string, Trabajador[]>>({});
-  const [maquinariaPorProyecto, setMaquinariaPorProyecto] = useState<Record<string, Maquinaria[]>>({});
-  
-  const [loadingProyectos, setLoadingProyectos] = useState(true);
-  const [loadingRecursosProyectoId, setLoadingRecursosProyectoId] = useState<string | null>(null);
-  
+  const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
-  const fetchInitialData = useCallback(async () => {
+  const fetchData = useCallback(async () => {
+    setLoading(true);
     const subcontrataId = localStorage.getItem('subcontrataId_obra_link');
     if (!subcontrataId) {
       toast({ title: "Error", description: "No se pudo identificar la subcontrata.", variant: "destructive" });
-      setLoadingProyectos(false);
+      setLoading(false);
       return;
     }
-    setLoadingProyectos(true);
     const [proyectosData, constructorasData] = await Promise.all([
         getProyectosBySubcontrata(subcontrataId),
         getConstructoras(),
     ]);
 
     setProyectos(proyectosData.sort((a,b) => new Date(b.fechaInicio || 0).getTime() - new Date(a.fechaInicio || 0).getTime()));
+    setConstructoras(constructorasData);
     const conMap = constructorasData.reduce((acc, c) => ({...acc, [c.id]: c.nombre}), {});
     setConstructoraMap(conMap);
-    setLoadingProyectos(false);
+    setLoading(false);
   }, [toast]);
   
   useEffect(() => {
-    fetchInitialData();
-  }, [fetchInitialData]);
+    fetchData();
+  }, [fetchData]);
 
-  const handleAccordionChange = useCallback(async (projectId: string) => {
-    if (!projectId) return; // Accordion collapsed
-    if (trabajadoresPorProyecto[projectId] && maquinariaPorProyecto[projectId]) return; // Data already fetched
-
-    setLoadingRecursosProyectoId(projectId);
-    const [workers, machines] = await Promise.all([
-        getTrabajadoresByProyecto(projectId),
-        getMaquinariaByProyecto(projectId),
-    ]);
-    setTrabajadoresPorProyecto(prev => ({ ...prev, [projectId]: workers }));
-    setMaquinariaPorProyecto(prev => ({ ...prev, [projectId]: machines }));
-    setLoadingRecursosProyectoId(null);
-  }, [trabajadoresPorProyecto, maquinariaPorProyecto]);
-
-  const handleRecursoChange = useCallback((projectId: string) => {
-    // This forces a re-fetch of resources for a specific project
-    setTrabajadoresPorProyecto(prev => { const newPrev = {...prev}; delete newPrev[projectId]; return newPrev; });
-    setMaquinariaPorProyecto(prev => { const newPrev = {...prev}; delete newPrev[projectId]; return newPrev; });
-    handleAccordionChange(projectId);
-  }, [handleAccordionChange]);
-
-
-  const handleRemoveTrabajador = async (proyectoId: string, trabajadorId: string) => {
-    const result = await removeTrabajadorFromProyecto(proyectoId, trabajadorId);
-    if (result.success) {
-      toast({ title: "Éxito", description: `Trabajador desvinculado del proyecto.` });
-      handleRecursoChange(proyectoId);
-    } else {
-      toast({ title: "Error", description: result.message, variant: "destructive" });
-    }
-  };
-
-  const handleRemoveMaquinaria = async (proyectoId: string, maquinariaId: string) => {
-    const result = await removeMaquinariaFromProyecto(proyectoId, maquinariaId);
-    if (result.success) {
-      toast({ title: "Éxito", description: `Maquinaria desvinculada del proyecto.` });
-      handleRecursoChange(proyectoId);
-    } else {
-        toast({ title: "Error", description: result.message, variant: "destructive" });
-    }
-  };
+  const onProyectoAdded = useCallback((newProyecto: Proyecto) => {
+    setProyectos(prev => [newProyecto, ...prev]);
+    // Optional: refetch all data to ensure consistency if other data changes
+    fetchData();
+  }, [fetchData]);
   
   const getStatus = (proyecto: Proyecto) => {
     const now = new Date();
@@ -95,120 +57,62 @@ export default function GestionProyectosPage() {
     return { text: "En Curso", color: "bg-green-500" };
   }
 
-  if (loadingProyectos) {
+  if (loading) {
     return <div className="flex justify-center items-center h-full"><Loader2 className="animate-spin h-10 w-10 text-primary" /></div>;
   }
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold font-headline text-primary">Gestión de Proyectos y Recursos</h1>
-        <p className="text-muted-foreground mt-1">Consulta tus proyectos asignados y gestiona el personal y maquinaria de cada uno.</p>
+       <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 animate-fade-in-down">
+        <div>
+          <h1 className="text-3xl font-bold font-headline text-primary">Gestión de Proyectos</h1>
+          <p className="text-muted-foreground mt-1">Crea nuevos proyectos y gestiona los recursos de los existentes.</p>
+        </div>
+        <AddProyectoSubcontrataDialog constructoras={constructoras} onProyectoAdded={onProyectoAdded}>
+          <Button size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <PlusCircle className="mr-2 h-5 w-5"/> Crear Nuevo Proyecto
+          </Button>
+        </AddProyectoSubcontrataDialog>
       </div>
 
       <Card className="animate-fade-in-up">
         <CardHeader>
-          <CardTitle>Listado de Proyectos Asignados</CardTitle>
-          <CardDescription>Haz clic en un proyecto para ver sus detalles y asignar recursos.</CardDescription>
+          <CardTitle>Listado de Proyectos</CardTitle>
+          <CardDescription>Aquí se muestran todos los proyectos que gestiona tu empresa. Haz clic en "Gestionar" para ver los detalles y asignar recursos.</CardDescription>
         </CardHeader>
-        <CardContent>
-            {proyectos.length > 0 ? (
-                <Accordion type="single" collapsible className="w-full space-y-4" onValueChange={handleAccordionChange}>
-                    {proyectos.map(proyecto => {
-                        const status = getStatus(proyecto);
-                        const trabajadores = trabajadoresPorProyecto[proyecto.id];
-                        const maquinaria = maquinariaPorProyecto[proyecto.id];
-                        const isLoadingResources = loadingRecursosProyectoId === proyecto.id;
-                        return (
-                            <Card key={proyecto.id} className="animate-fade-in-up transition-shadow hover:shadow-md">
-                                <AccordionItem value={proyecto.id} className="border-b-0">
-                                    <AccordionTrigger className="p-4 hover:no-underline text-left">
-                                        <div className="flex flex-col sm:flex-row justify-between sm:items-center w-full gap-3">
-                                            <div className="flex items-center gap-4">
-                                                <HardHat className="h-10 w-10 text-primary hidden sm:block"/>
-                                                <div>
-                                                    <p className="font-bold text-lg">{proyecto.nombre}</p>
-                                                    <p className="text-sm text-muted-foreground flex items-center gap-2"><Building className="h-4 w-4"/>Cliente: <span className="font-semibold text-foreground">{constructoraMap[proyecto.constructoraId] || 'N/A'}</span></p>
-                                                </div>
-                                            </div>
-                                             <div className="flex items-center gap-4 self-end sm:self-center">
-                                                <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
-                                             </div>
-                                        </div>
-                                    </AccordionTrigger>
-                                    <AccordionContent className="px-6 pb-6">
-                                        <div className="border-t pt-4 space-y-6">
-                                            {/* Project Info */}
-                                            <div className="space-y-1 text-sm text-muted-foreground">
-                                                <p className="flex items-center gap-2"><MapPin className="h-4 w-4"/>{proyecto.direccion}</p>
-                                                <p className="flex items-center gap-2"><Hash className="h-4 w-4"/>ID: {proyecto.id}</p>
-                                            </div>
-
-                                            {isLoadingResources ? <div className="flex justify-center p-4"><Loader2 className="animate-spin h-6 w-6 text-primary"/></div> : (
-                                                <>
-                                                    {/* Personal Section */}
-                                                    <div className="space-y-4">
-                                                        <h4 className="font-semibold text-lg flex items-center justify-between">
-                                                            <span>Personal Asignado</span>
-                                                            <AssignPersonalDialog proyecto={proyecto} trabajadoresAsignados={trabajadores || []} onPersonalAsignado={() => handleRecursoChange(proyecto.id)}>
-                                                                <Button variant="outline" size="sm"><UserPlus className="mr-2 h-4 w-4"/>Asignar Personal</Button>
-                                                            </AssignPersonalDialog>
-                                                        </h4>
-                                                        <div className="space-y-3">
-                                                            {trabajadores && trabajadores.length > 0 ? trabajadores.map(t => (
-                                                                <div key={t.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                                                                    <span className="flex items-center gap-3 text-base"><User className="h-5 w-5 text-muted-foreground"/> {t.nombre}</span>
-                                                                    <AlertDialog>
-                                                                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-500/10"><Trash2 className="h-5 w-5"/></Button></AlertDialogTrigger>
-                                                                        <AlertDialogContent>
-                                                                            <AlertDialogHeader><AlertDialogTitle>¿Desvincular trabajador?</AlertDialogTitle><AlertDialogDescription>Esta acción desvinculará a <strong>{t.nombre}</strong> de este proyecto.</AlertDialogDescription></AlertDialogHeader>
-                                                                            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleRemoveTrabajador(proyecto.id, t.id)} className="bg-destructive hover:bg-destructive/90">Desvincular</AlertDialogAction></AlertDialogFooter>
-                                                                        </AlertDialogContent>
-                                                                    </AlertDialog>
-                                                                </div>
-                                                            )) : <p className="text-muted-foreground text-center py-2">No hay personal asignado a este proyecto.</p>}
-                                                        </div>
-                                                    </div>
-
-                                                    {/* Maquinaria Section */}
-                                                    <div className="space-y-4">
-                                                        <h4 className="font-semibold text-lg flex items-center justify-between">
-                                                            <span>Maquinaria Asignada</span>
-                                                            <AssignMaquinariaDialog proyecto={proyecto} maquinariaAsignada={maquinaria || []} onMaquinariaAsignada={() => handleRecursoChange(proyecto.id)}>
-                                                                <Button variant="outline" size="sm"><PlusCircle className="mr-2 h-4 w-4"/>Asignar Maquinaria</Button>
-                                                            </AssignMaquinariaDialog>
-                                                        </h4>
-                                                         <div className="space-y-3">
-                                                            {maquinaria && maquinaria.length > 0 ? maquinaria.map(m => (
-                                                                <div key={m.id} className="flex items-center justify-between p-3 rounded-lg border bg-card hover:bg-muted/50 transition-colors">
-                                                                    <span className="flex items-center gap-3 text-base"><Truck className="h-5 w-5 text-muted-foreground"/> {m.nombre}</span>
-                                                                    <AlertDialog>
-                                                                        <AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-9 w-9 text-red-500 hover:text-red-700 hover:bg-red-500/10"><Trash2 className="h-5 w-5"/></Button></AlertDialogTrigger>
-                                                                        <AlertDialogContent>
-                                                                            <AlertDialogHeader><AlertDialogTitle>¿Desvincular maquinaria?</AlertDialogTitle><AlertDialogDescription>Esta acción desvinculará a <strong>{m.nombre}</strong> de este proyecto.</AlertDialogDescription></AlertDialogHeader>
-                                                                            <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleRemoveMaquinaria(proyecto.id, m.id)} className="bg-destructive hover:bg-destructive/90">Desvincular</AlertDialogAction></AlertDialogFooter>
-                                                                        </AlertDialogContent>
-                                                                    </AlertDialog>
-                                                                </div>
-                                                            )) : <p className="text-muted-foreground text-center py-2">No hay maquinaria asignada a este proyecto.</p>}
-                                                        </div>
-                                                    </div>
-                                                </>
-                                            )}
-                                        </div>
-                                    </AccordionContent>
-                                </AccordionItem>
-                            </Card>
-                        );
-                    })}
-                </Accordion>
-            ) : (
-                <p className="text-center py-6 text-muted-foreground">No tienes proyectos asignados.</p>
+        <CardContent className="space-y-4">
+            {proyectos.length > 0 ? proyectos.map(p => {
+              const status = getStatus(p);
+              return (
+                 <Card key={p.id} className="p-4 hover:shadow-md transition-shadow bg-card hover:bg-muted/50">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-3">
+                        <div className="flex items-center gap-4">
+                            <HardHat className="h-8 w-8 text-accent hidden sm:block"/>
+                            <div>
+                                <p className="font-bold text-lg">{p.nombre}</p>
+                                <p className="text-sm text-muted-foreground flex items-center gap-2 capitalize"><Building className="h-4 w-4"/>
+                                Cliente: <span className="font-semibold text-foreground">{constructoraMap[p.constructoraId] || 'N/A'}</span>
+                                </p>
+                                <p className="text-sm text-muted-foreground flex items-center gap-2">
+                                <Calendar className="h-4 w-4"/>
+                                {p.fechaInicio ? format(new Date(p.fechaInicio), 'd MMM yyyy', {locale: es}) : 'N/A'} - {p.fechaFin ? format(new Date(p.fechaFin), 'd MMM yyyy', {locale: es}) : 'Indefinido'}
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-4 self-end sm:self-start">
+                            <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
+                            <Link href={`/subcontrata/proyectos/${p.id}`} passHref>
+                                <Button variant="outline" size="sm">Gestionar</Button>
+                            </Link>
+                        </div>
+                    </div>
+                </Card>
+              )
+            }) : (
+                <p className="text-center py-6 text-muted-foreground">No tienes proyectos creados o asignados.</p>
             )}
         </CardContent>
       </Card>
     </div>
   );
 }
-
-    

@@ -1,3 +1,4 @@
+
 import { z } from 'zod';
 
 export const ConstructoraSchema = z.object({
@@ -45,6 +46,7 @@ export const MaquinariaSchema = z.object({
     nombre: z.string().min(1, "El nombre es requerido"),
     matriculaORef: z.string().min(1, "La matrícula o referencia es requerida"),
     proyectosAsignados: z.array(z.string()).optional(),
+    dataAIHint: z.string().optional(),
 });
 export type Maquinaria = z.infer<typeof MaquinariaSchema>;
 
@@ -105,5 +107,3 @@ export const FichajeTrabajadorSchema = z.object({
   ubicacion: z.string().optional(), // e.g., "lat,long"
 });
 export type FichajeTrabajador = z.infer<typeof FichajeTrabajadorSchema>;
-
-    
