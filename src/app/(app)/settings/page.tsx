@@ -2,56 +2,33 @@
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Settings, Palette, Bell, ShieldCheck, Info, Database, Loader2 } from "lucide-react";
+import { Settings, Palette, Bell, ShieldCheck, Info, Database } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { seedDemoData } from "@/lib/actions/seed.actions";
 
 export default function SettingsPage() {
-  const [seeding, setSeeding] = useState(false);
   const { toast } = useToast();
-
-  const handleSeedData = async () => {
-    setSeeding(true);
-    toast({ title: "Ejecutando prueba...", description: "Intentando escribir en Firestore..." });
-    try {
-      const result = await seedDemoData();
-      if (result.success) {
-        toast({ title: "Éxito en la Conexión", description: result.message, duration: 7000 });
-        console.log("Resumen de la prueba:", result.summary);
-      } else {
-        toast({ title: "Error en la Prueba", description: result.message, variant: "destructive", duration: 10000 });
-        console.error("Error en la prueba:", result.summary);
-      }
-    } catch (error: any) {
-      toast({ title: "Error Crítico en la Prueba", description: error.message || "Ocurrió un error inesperado.", variant: "destructive", duration: 10000 });
-      console.error("Error Crítico en la prueba:", error);
-    } finally {
-      setSeeding(false);
-    }
-  };
 
   const settingsCards = [
     {
       icon: Database,
-      title: "Prueba de Conexión a Firestore",
-      description: "Verifica si la aplicación puede escribir en la base de datos.",
+      title: "Gestión de Datos (Demo)",
+      description: "La aplicación está funcionando con datos de demostración locales.",
       content: (
         <>
           <div className="p-3 bg-blue-500/10 rounded-md border border-blue-500/20 text-sm text-blue-700 flex items-start">
             <Info className="mr-2 h-5 w-5 shrink-0 mt-0.5 text-blue-600" />
-            <span>Este botón intentará escribir un único documento de prueba en Firestore. Si funciona, la conexión es correcta. Si falla con un timeout, confirma un problema de red o configuración.</span>
+            <span>Todos los cambios que realices (crear proyectos, añadir personal, etc.) se guardarán solo durante tu sesión actual y se reiniciarán al recargar la página.</span>
           </div>
-          <Button onClick={handleSeedData} disabled={seeding} className="w-full mt-4">
-            {seeding ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Database className="mr-2 h-4 w-4" />}
-            Ejecutar Prueba de Conexión
+          <Button onClick={() => window.location.reload()} className="w-full mt-4">
+            Recargar y Reiniciar Datos
           </Button>
           <p className="text-xs text-muted-foreground mt-2">
-            Asegúrate de que tus reglas de seguridad de Firestore permiten la escritura (<code>allow read, write: if true;</code>) para el desarrollo.
+            Esta es la configuración de desarrollo actual para evitar problemas de conexión a la base de datos.
           </p>
         </>
       )
@@ -67,7 +44,7 @@ export default function SettingsPage() {
             <Switch id="dark-mode-switch" checked disabled title="El tema se gestiona desde la cabecera" />
           </div>
           <p className="text-sm text-muted-foreground">
-            Puedes cambiar entre el tema claro y oscuro usando el icono <Palette className="inline h-4 w-4 text-primary" /> / <Settings className="inline h-4 w-4 text-primary" />  en la esquina superior derecha de la cabecera.
+            Puedes cambiar entre el tema claro y oscuro usando el icono en la esquina superior derecha.
           </p>
           <Button variant="outline" className="w-full opacity-50 cursor-not-allowed" title="Más opciones de tema (Próximamente)">
             Personalización Avanzada (Próximamente)
@@ -91,7 +68,7 @@ export default function SettingsPage() {
           </div>
            <div className="p-3 bg-blue-500/10 rounded-md border border-blue-500/30 text-sm text-blue-700 flex items-start">
                 <Info className="mr-2 h-5 w-5 shrink-0 mt-0.5 text-blue-600" />
-                <span>Las opciones detalladas para las notificaciones (ej. por tipo de evento, frecuencia) estarán disponibles en futuras versiones.</span>
+                <span>Las opciones detalladas para las notificaciones estarán disponibles en futuras versiones.</span>
             </div>
         </>
       )
@@ -109,7 +86,7 @@ export default function SettingsPage() {
             Autenticación de Dos Factores (2FA)
           </Button>
           <p className="text-sm text-muted-foreground">
-            Próximamente podrás gestionar tu información personal, cerrar sesiones activas y ver registros de actividad.
+            Próximamente podrás gestionar tu información personal y cerrar sesiones activas.
           </p>
           <Link href="/dashboard" passHref>
             <Button variant="outline" className="w-full">Volver al Simulador de Roles</Button>
