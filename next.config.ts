@@ -3,6 +3,10 @@ import type {NextConfig} from 'next';
 
 const nextConfig: NextConfig = {
   /* config options here */
+  experimental: {
+    // This is required by next-intl to correctly generate locales.
+    serverComponentsExternalPackages: ['next-intl'],
+  },
   images: {
     remotePatterns: [
       {

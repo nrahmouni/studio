@@ -1,13 +1,18 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { NextIntlClientProvider } from 'next-intl';
+import { NextIntlClientProvider, createTranslator } from 'next-intl';
 import { getMessages } from 'next-intl/server';
 
-export const metadata: Metadata = {
-  title: 'ObraLink',
-  description: 'Planificación y entrega de partes para obras y reformas.',
-};
+export async function generateMetadata({params: {locale}}: {params: {locale: string}}): Promise<Metadata> {
+  const messages = await getMessages();
+  const t = createTranslator({locale, messages});
+ 
+  return {
+    title: t('LandingPage.nav.access') + ' | ObraLink', // Example of using translations in metadata
+    description: 'Planificación y entrega de partes para obras y reformas.',
+  };
+}
 
 export default async function RootLayout({
   children,
@@ -27,7 +32,7 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
         </NextIntlClientProvider>
         <Toaster />
