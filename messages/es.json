@@ -1,0 +1,79 @@
+{
+  "LandingPage": {
+    "nav": {
+      "spanish": "Español",
+      "english": "Inglés",
+      "french": "Francés",
+      "access": "Acceder"
+    },
+    "hero": {
+      "title": "La <span>Revolución Digital</span> para tus Obras",
+      "subtitle": "ObraLink optimiza la gestión de tus proyectos de construcción y reformas. Digitaliza partes de trabajo, aprovecha la IA para la asignación de recursos y toma el control total de tu operación.",
+      "cta_button": "¡Empieza a Optimizar Ahora!",
+      "image_alt": "Equipo de profesionales de la construcción colaborando y planificando un proyecto en una obra con planos y tabletas digitales."
+    },
+    "features": {
+      "title": "Todo lo que Necesitas para Triunfar",
+      "subtitle": "Descubre las herramientas diseñadas para potenciar tu empresa de construcción y reformas, mejorando la eficiencia y el control.",
+      "centralized_management": {
+        "title": "Gestión Centralizada",
+        "description": "Administra perfiles de empresa, obras y usuarios en un solo lugar."
+      },
+      "smart_reports": {
+        "title": "Partes Digitales Inteligentes",
+        "description": "Crea y valida partes de trabajo digitales con fotos y firmas."
+      },
+      "ai_optimization": {
+        "title": "Optimización con IA",
+        "description": "Genera informes y recibe sugerencias de asignación de recursos con IA."
+      },
+      "proven_efficiency": {
+        "title": "Eficiencia Comprobada",
+        "description": "Reduce el papeleo, minimiza errores y agiliza tus procesos diarios."
+      }
+    },
+    "benefits": {
+      "title": "Transforma tu Manera de Trabajar",
+      "subtitle": "ObraLink no es solo una app, es tu socio estratégico para la eficiencia, el control y la modernización de tus proyectos.",
+      "digitize_simplify": {
+        "title": "Digitaliza y Simplifica tus Partes",
+        "description": "Transforma tus partes de trabajo en papel a un formato digital, accesible y fácil de gestionar. Adjunta fotos, registra incidencias y obtén firmas digitales al instante.",
+        "image_alt": "Trabajador utilizando una tablet en una obra para gestionar partes digitales."
+      },
+      "total_control": {
+        "title": "Control Total de tus Proyectos",
+        "description": "Desde el perfil de tu empresa hasta el detalle de cada obra y usuario. Asigna jefes de obra, gestiona accesos y mantén toda la información organizada y segura.",
+        "image_alt": "Panel de control mostrando gráficos y datos de gestión de proyectos de construcción."
+      },
+      "smart_decisions": {
+        "title": "Decisiones Inteligentes con IA",
+        "description": "Nuestra IA analiza los datos de tus partes para ofrecerte sugerencias de asignación de recursos, ayudándote a prevenir cuellos de botella y optimizar la productividad de tu equipo.",
+        "image_alt": "Gráfico ilustrando la optimización de recursos mediante inteligencia artificial."
+      },
+      "check_1": "Información centralizada y segura",
+      "check_2": "Mejora la comunicación del equipo",
+      "check_3": "Acceso móvil para gestión en obra"
+    },
+    "final_cta": {
+      "title": "¿Listo para dar el Salto Digital?",
+      "subtitle": "Únete a las empresas que ya están construyendo el futuro con ObraLink. Optimiza, gestiona y crece con la plataforma líder del sector.",
+      "cta_button": "Accede o Regístrate",
+      "image_alt": "Trabajador de construcción sonriente con casco y herramientas, indicando éxito y satisfacción con la eficiencia obtenida."
+    },
+    "footer": {
+      "rights": "Todos los derechos reservados.",
+      "tagline": "Innovación Digital para la Construcción Moderna"
+    }
+  },
+  "Sidebar": {
+    "daily_report": "Reporte Diario",
+    "sent_reports": "Partes Enviados",
+    "attendance_control": "Control de Asistencia",
+    "projects": "Proyectos",
+    "resources": "Personal y Maquinaria",
+    "reports_to_validate": "Partes a Validar",
+    "reports_tracking": "Seguimiento de Partes",
+    "clock_in_out": "Mi Fichaje",
+    "settings": "Configuración"
+  }
+}

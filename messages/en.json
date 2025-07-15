@@ -1,0 +1,79 @@
+{
+  "LandingPage": {
+    "nav": {
+      "spanish": "Spanish",
+      "english": "English",
+      "french": "French",
+      "access": "Access"
+    },
+    "hero": {
+      "title": "The <span>Digital Revolution</span> for your Construction Sites",
+      "subtitle": "ObraLink optimizes the management of your construction and renovation projects. Digitize work reports, leverage AI for resource allocation, and take full control of your operation.",
+      "cta_button": "Start Optimizing Now!",
+      "image_alt": "Team of construction professionals collaborating and planning a project on a construction site with plans and digital tablets."
+    },
+    "features": {
+      "title": "Everything You Need to Succeed",
+      "subtitle": "Discover the tools designed to empower your construction and renovation company, improving efficiency and control.",
+      "centralized_management": {
+        "title": "Centralized Management",
+        "description": "Manage company profiles, construction sites, and users in one place."
+      },
+      "smart_reports": {
+        "title": "Smart Digital Reports",
+        "description": "Create and validate digital work reports with photos and signatures."
+      },
+      "ai_optimization": {
+        "title": "AI Optimization",
+        "description": "Generate reports and receive resource allocation suggestions with AI."
+      },
+      "proven_efficiency": {
+        "title": "Proven Efficiency",
+        "description": "Reduce paperwork, minimize errors, and streamline your daily processes."
+      }
+    },
+    "benefits": {
+      "title": "Transform How You Work",
+      "subtitle": "ObraLink is not just an app; it's your strategic partner for efficiency, control, and modernization of your projects.",
+      "digitize_simplify": {
+        "title": "Digitize and Simplify Your Reports",
+        "description": "Transform your paper work reports into an accessible and easy-to-manage digital format. Attach photos, record incidents, and get digital signatures instantly.",
+        "image_alt": "Worker using a tablet on a construction site to manage digital reports."
+      },
+      "total_control": {
+        "title": "Total Control of Your Projects",
+        "description": "From your company profile to the details of each site and user. Assign site managers, manage access, and keep all information organized and secure.",
+        "image_alt": "Dashboard showing charts and data for construction project management."
+      },
+      "smart_decisions": {
+        "title": "Smart Decisions with AI",
+        "description": "Our AI analyzes data from your reports to offer resource allocation suggestions, helping you prevent bottlenecks and optimize your team's productivity.",
+        "image_alt": "Chart illustrating resource optimization through artificial intelligence."
+      },
+      "check_1": "Centralized and secure information",
+      "check_2": "Improves team communication",
+      "check_3": "Mobile access for on-site management"
+    },
+    "final_cta": {
+      "title": "Ready to Make the Digital Leap?",
+      "subtitle": "Join the companies that are already building the future with ObraLink. Optimize, manage, and grow with the leading platform in the sector.",
+      "cta_button": "Access or Register",
+      "image_alt": "Smiling construction worker with a helmet and tools, indicating success and satisfaction with the efficiency gained."
+    },
+    "footer": {
+      "rights": "All rights reserved.",
+      "tagline": "Digital Innovation for Modern Construction"
+    }
+  },
+  "Sidebar": {
+    "daily_report": "Daily Report",
+    "sent_reports": "Sent Reports",
+    "attendance_control": "Attendance Control",
+    "projects": "Projects",
+    "resources": "Staff & Machinery",
+    "reports_to_validate": "Reports to Validate",
+    "reports_tracking": "Reports Tracking",
+    "clock_in_out": "Clock In/Out",
+    "settings": "Settings"
+  }
+}

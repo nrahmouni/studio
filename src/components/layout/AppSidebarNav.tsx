@@ -1,18 +1,29 @@
-
 'use client';
 
-import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { Button } from "@/components/ui/button";
-import { cn } from "@/lib/utils";
-import { Home, HardHat, Construction, FileText, UserCheck, Fingerprint, Send, ListChecks, Settings, Shield, ClipboardCheck, Wrench, Briefcase } from "lucide-react";
-import { useEffect, useState } from "react";
+import Link from 'next-intl/link';
+import {usePathname} from 'next-intl/client';
+import {Button} from '@/components/ui/button';
+import {cn} from '@/lib/utils';
+import {
+  HardHat,
+  FileText,
+  UserCheck,
+  Fingerprint,
+  Send,
+  ListChecks,
+  Settings,
+  ClipboardCheck,
+  Wrench,
+  Briefcase,
+} from 'lucide-react';
+import {useEffect, useState} from 'react';
+import {useTranslations} from 'next-intl';
 
 type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'trabajador';
 
 interface NavItem {
   href: string;
-  label: string;
+  labelKey: string; // Now a key for translations
   icon: React.ElementType;
   roles: Role[];
   exact?: boolean;
@@ -20,28 +31,34 @@ interface NavItem {
 
 const allNavItems: NavItem[] = [
   // Encargado
-  { href: "/encargado/reporte-diario", label: "Reporte Diario", icon: Send, roles: ['encargado'] },
-  { href: "/encargado/partes-enviados", label: "Partes Enviados", icon: ListChecks, roles: ['encargado'] },
-  { href: "/encargado/asistencia", label: "Control de Asistencia", icon: ClipboardCheck, roles: ['encargado'] },
+  {href: '/encargado/reporte-diario', labelKey: 'daily_report', icon: Send, roles: ['encargado']},
+  {href: '/encargado/partes-enviados', labelKey: 'sent_reports', icon: ListChecks, roles: ['encargado']},
+  {href: '/encargado/asistencia', labelKey: 'attendance_control', icon: ClipboardCheck, roles: ['encargado']},
 
   // Subcontrata
-  { href: "/subcontrata/proyectos", label: "Proyectos", icon: HardHat, roles: ['subcontrata_admin'] },
-  { href: "/subcontrata/recursos", label: "Personal y Maquinaria", icon: Wrench, roles: ['subcontrata_admin'] },
-  { href: "/subcontrata/partes-validados", label: "Partes a Validar", icon: FileText, roles: ['subcontrata_admin'] },
+  {href: '/subcontrata/proyectos', labelKey: 'projects', icon: HardHat, roles: ['subcontrata_admin']},
+  {href: '/subcontrata/recursos', labelKey: 'resources', icon: Wrench, roles: ['subcontrata_admin']},
+  {href: '/subcontrata/partes-validados', labelKey: 'reports_to_validate', icon: FileText, roles: ['subcontrata_admin']},
 
   // Constructora
-  { href: "/constructora/proyectos", label: "Proyectos", icon: Briefcase, roles: ['constructora_admin'] },
-  { href: "/constructora/partes", label: "Seguimiento de Partes", icon: UserCheck, roles: ['constructora_admin'] },
-  
-  // Trabajador
-  { href: "/trabajador/fichar", label: "Mi Fichaje", icon: Fingerprint, roles: ['trabajador'] },
+  {href: '/constructora/proyectos', labelKey: 'projects', icon: Briefcase, roles: ['constructora_admin']},
+  {href: '/constructora/partes', labelKey: 'reports_tracking', icon: UserCheck, roles: ['constructora_admin']},
 
-  // Common (Settings is now common, dashboard is the role switcher)
-  { href: "/settings", label: "Configuración", icon: Settings, roles: ['encargado', 'subcontrata_admin', 'constructora_admin'] },
+  // Trabajador
+  {href: '/trabajador/fichar', labelKey: 'clock_in_out', icon: Fingerprint, roles: ['trabajador']},
+
+  // Common
+  {
+    href: '/settings',
+    labelKey: 'settings',
+    icon: Settings,
+    roles: ['encargado', 'subcontrata_admin', 'constructora_admin', 'trabajador'],
+  },
 ];
 
 export function AppSidebarNav() {
   const pathname = usePathname();
+  const t = useTranslations('Sidebar');
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
 
@@ -55,16 +72,16 @@ export function AppSidebarNav() {
 
   if (isLoadingRole) {
     return (
-        <nav className="flex flex-col gap-2 px-4 py-6">
-            {[...Array(5)].map((_, i) => ( 
-                 <div key={i} className={`h-12 w-full bg-sidebar-accent/10 rounded-md animate-pulse mb-2 animation-delay-${i * 100}`}></div>
-            ))}
-        </nav>
+      <nav className="flex flex-col gap-2 px-4 py-6">
+        {[...Array(5)].map((_, i) => (
+          <div key={i} className={`h-12 w-full bg-sidebar-accent/10 rounded-md animate-pulse mb-2 animation-delay-${i * 100}`}></div>
+        ))}
+      </nav>
     );
   }
 
-  const visibleNavItems = allNavItems.filter(item => {
-    if (!userRole) return false; 
+  const visibleNavItems = allNavItems.filter((item) => {
+    if (!userRole) return false;
     return item.roles.includes(userRole);
   });
 
@@ -72,23 +89,24 @@ export function AppSidebarNav() {
     <nav className="flex flex-col gap-2 px-4 py-6">
       {visibleNavItems.map((item) => {
         const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+        const label = t(item.labelKey);
         return (
           <Button
             asChild
-            key={item.label}
-            variant={isActive ? "secondary" : "ghost"}
+            key={item.href}
+            variant={isActive ? 'secondary' : 'ghost'}
             className={cn(
-              "w-full justify-start text-base h-12", 
-              isActive 
-                ? "bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/90 font-semibold shadow-sm" 
-                : "text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-accent-foreground",
-              "transition-all duration-200 ease-in-out transform hover:scale-[1.02]" 
+              'w-full justify-start text-base h-12',
+              isActive
+                ? 'bg-sidebar-accent text-sidebar-accent-foreground hover:bg-sidebar-accent/90 font-semibold shadow-sm'
+                : 'text-sidebar-foreground hover:bg-sidebar-accent/20 hover:text-sidebar-accent-foreground',
+              'transition-all duration-200 ease-in-out transform hover:scale-[1.02]'
             )}
-            title={item.label}
+            title={label}
           >
             <Link href={item.href}>
               <item.icon className="mr-3 h-5 w-5 shrink-0" />
-              <span className="truncate">{item.label}</span>
+              <span className="truncate">{label}</span>
             </Link>
           </Button>
         );

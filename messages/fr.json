@@ -1,0 +1,79 @@
+{
+  "LandingPage": {
+    "nav": {
+      "spanish": "Espagnol",
+      "english": "Anglais",
+      "french": "Français",
+      "access": "Accéder"
+    },
+    "hero": {
+      "title": "La <span>Révolution Numérique</span> pour vos Chantiers",
+      "subtitle": "ObraLink optimise la gestion de vos projets de construction et de rénovation. Numérisez les rapports de travail, utilisez l'IA pour l'allocation des ressources et prenez le contrôle total de vos opérations.",
+      "cta_button": "Commencez à Optimiser Maintenant !",
+      "image_alt": "Équipe de professionnels du bâtiment collaborant et planifiant un projet sur un chantier avec des plans et des tablettes numériques."
+    },
+    "features": {
+      "title": "Tout ce dont Vous Avez Besoin pour Réussir",
+      "subtitle": "Découvrez les outils conçus pour dynamiser votre entreprise de construction et de rénovation, en améliorant l'efficacité et le contrôle.",
+      "centralized_management": {
+        "title": "Gestion Centralisée",
+        "description": "Gérez les profils d'entreprise, les chantiers et les utilisateurs en un seul endroit."
+      },
+      "smart_reports": {
+        "title": "Rapports Numériques Intelligents",
+        "description": "Créez et validez des rapports de travail numériques avec photos et signatures."
+      },
+      "ai_optimization": {
+        "title": "Optimisation par l'IA",
+        "description": "Générez des rapports et recevez des suggestions d'allocation de ressources grâce à l'IA."
+      },
+      "proven_efficiency": {
+        "title": "Efficacité Prouvée",
+        "description": "Réduisez la paperasse, minimisez les erreurs et rationalisez vos processus quotidiens."
+      }
+    },
+    "benefits": {
+      "title": "Transformez votre Façon de Travailler",
+      "subtitle": "ObraLink n'est pas seulement une application ; c'est votre partenaire stratégique pour l'efficacité, le contrôle et la modernisation de vos projets.",
+      "digitize_simplify": {
+        "title": "Numérisez et Simplifiez vos Rapports",
+        "description": "Transformez vos rapports de travail papier en un format numérique accessible et facile à gérer. Joignez des photos, enregistrez des incidents et obtenez des signatures numériques instantanément.",
+        "image_alt": "Ouvrier utilisant une tablette sur un chantier pour gérer les rapports numériques."
+      },
+      "total_control": {
+        "title": "Contrôle Total de vos Projets",
+        "description": "Du profil de votre entreprise aux détails de chaque chantier et utilisateur. Assignez des chefs de chantier, gérez les accès et gardez toutes les informations organisées et sécurisées.",
+        "image_alt": "Tableau de bord affichant des graphiques et des données pour la gestion de projets de construction."
+      },
+      "smart_decisions": {
+        "title": "Décisions Intelligentes avec l'IA",
+        "description": "Notre IA analyse les données de vos rapports pour vous proposer des suggestions d'allocation de ressources, vous aidant à prévenir les goulots d'étranglement et à optimiser la productivité de votre équipe.",
+        "image_alt": "Graphique illustrant l'optimisation des ressources grâce à l'intelligence artificielle."
+      },
+      "check_1": "Information centralisée et sécurisée",
+      "check_2": "Améliore la communication de l'équipe",
+      "check_3": "Accès mobile pour la gestion sur site"
+    },
+    "final_cta": {
+      "title": "Prêt à faire le Saut Numérique ?",
+      "subtitle": "Rejoignez les entreprises qui construisent déjà l'avenir avec ObraLink. Optimisez, gérez et développez-vous avec la plateforme leader du secteur.",
+      "cta_button": "Accéder ou S'inscrire",
+      "image_alt": "Ouvrier du bâtiment souriant avec un casque et des outils, indiquant le succès et la satisfaction de l'efficacité obtenue."
+    },
+    "footer": {
+      "rights": "Tous droits réservés.",
+      "tagline": "Innovation Numérique pour la Construction Moderne"
+    }
+  },
+  "Sidebar": {
+    "daily_report": "Rapport Journalier",
+    "sent_reports": "Rapports Envoyés",
+    "attendance_control": "Contrôle des Présences",
+    "projects": "Projets",
+    "resources": "Personnel & Machinerie",
+    "reports_to_validate": "Rapports à Valider",
+    "reports_tracking": "Suivi des Rapports",
+    "clock_in_out": "Pointage",
+    "settings": "Paramètres"
+  }
+}
