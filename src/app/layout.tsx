@@ -1,26 +1,21 @@
 import type {Metadata} from 'next';
 import './globals.css';
 import { Toaster } from "@/components/ui/toaster";
-import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { NextIntlClientProvider, useMessages } from 'next-intl';
 
-// This is a placeholder for generating metadata, can be enhanced later
-// The critical part is that it doesn't call getMessages or createTranslator directly in a conflicting way
 export const metadata: Metadata = {
   title: 'ObraLink',
   description: 'Planificación y entrega de partes para obras y reformas.',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
   params: {locale}
 }: Readonly<{
   children: React.ReactNode;
   params: {locale: string};
 }>) {
-  // Providing all messages to the client
-  // is the easiest way to get started
-  const messages = await getMessages();
+  const messages = useMessages();
 
   return (
     <html lang={locale}>
@@ -31,7 +26,7 @@ export default async function RootLayout({
         <link href="https://fonts.googleapis.com/css2?family=PT+Sans:wght@400;700&display=swap" rel="stylesheet" />
       </head>
       <body className="font-body antialiased">
-        <NextIntlClientProvider messages={messages}>
+        <NextIntlClientProvider locale={locale} messages={messages}>
           {children}
         </NextIntlClientProvider>
         <Toaster />
