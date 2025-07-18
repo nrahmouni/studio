@@ -1,4 +1,3 @@
-
 'use client';
 import { usePathname } from 'next-intl/client';
 import { useEffect, useState } from "react";
