@@ -1,6 +1,5 @@
-
-//This is the root layout, but the main layout is in [locale]/layout.tsx
-//This file is required for the app to work.
-export default function RootLayout({children}: {children: React.ReactNode}) {
+// This file is obsolete. The main layout is now at /src/app/[locale]/layout.tsx
+// Keeping it empty to avoid potential build errors, but it can be removed.
+export default function ObsoleteRootLayout({children}: {children: React.ReactNode}) {
   return children;
 }
