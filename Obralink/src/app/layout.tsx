@@ -4,4 +4,3 @@
 export default function ObsoleteRootLayout({children}: {children: React.ReactNode}) {
   return children;
 }
-
