@@ -1,3 +1,4 @@
+
 import {getRequestConfig} from 'next-intl/server';
 import {locales} from './navigation';
 import {notFound} from 'next/navigation';
