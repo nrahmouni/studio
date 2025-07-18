@@ -1,3 +1,4 @@
+
 import {
   createLocalizedPathnamesNavigation
 } from 'next-intl/navigation';
