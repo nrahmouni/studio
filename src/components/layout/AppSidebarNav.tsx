@@ -1,9 +1,10 @@
+
 'use client';
 
-import Link from 'next-intl/link';
-import {usePathname} from 'next-intl/client';
-import {Button} from '@/components/ui/button';
-import {cn} from '@/lib/utils';
+import Link from 'next/link';
+import { usePathname } from 'next/navigation';
+import { Button } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   HardHat,
   FileText,
@@ -16,14 +17,13 @@ import {
   Wrench,
   Briefcase,
 } from 'lucide-react';
-import {useEffect, useState} from 'react';
-import {useTranslations} from 'next-intl';
+import { useEffect, useState } from 'react';
 
 type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'trabajador';
 
 interface NavItem {
   href: string;
-  labelKey: string; // Now a key for translations
+  label: string;
   icon: React.ElementType;
   roles: Role[];
   exact?: boolean;
@@ -31,26 +31,26 @@ interface NavItem {
 
 const allNavItems: NavItem[] = [
   // Encargado
-  {href: '/encargado/reporte-diario', labelKey: 'daily_report', icon: Send, roles: ['encargado']},
-  {href: '/encargado/partes-enviados', labelKey: 'sent_reports', icon: ListChecks, roles: ['encargado']},
-  {href: '/encargado/asistencia', labelKey: 'attendance_control', icon: ClipboardCheck, roles: ['encargado']},
+  { href: '/encargado/reporte-diario', label: 'Reporte Diario', icon: Send, roles: ['encargado'] },
+  { href: '/encargado/partes-enviados', label: 'Partes Enviados', icon: ListChecks, roles: ['encargado'] },
+  { href: '/encargado/asistencia', label: 'Control de Asistencia', icon: ClipboardCheck, roles: ['encargado'] },
 
   // Subcontrata
-  {href: '/subcontrata/proyectos', labelKey: 'projects', icon: HardHat, roles: ['subcontrata_admin']},
-  {href: '/subcontrata/recursos', labelKey: 'resources', icon: Wrench, roles: ['subcontrata_admin']},
-  {href: '/subcontrata/partes-validados', labelKey: 'reports_to_validate', icon: FileText, roles: ['subcontrata_admin']},
+  { href: '/subcontrata/proyectos', label: 'Proyectos', icon: HardHat, roles: ['subcontrata_admin'] },
+  { href: '/subcontrata/recursos', label: 'Personal y Maquinaria', icon: Wrench, roles: ['subcontrata_admin'] },
+  { href: '/subcontrata/partes-validados', label: 'Partes a Validar', icon: FileText, roles: ['subcontrata_admin'] },
 
   // Constructora
-  {href: '/constructora/proyectos', labelKey: 'projects', icon: Briefcase, roles: ['constructora_admin']},
-  {href: '/constructora/partes', labelKey: 'reports_tracking', icon: UserCheck, roles: ['constructora_admin']},
+  { href: '/constructora/proyectos', label: 'Proyectos', icon: Briefcase, roles: ['constructora_admin'] },
+  { href: '/constructora/partes', label: 'Seguimiento de Partes', icon: UserCheck, roles: ['constructora_admin'] },
 
   // Trabajador
-  {href: '/trabajador/fichar', labelKey: 'clock_in_out', icon: Fingerprint, roles: ['trabajador']},
+  { href: '/trabajador/fichar', label: 'Mi Fichaje', icon: Fingerprint, roles: ['trabajador'] },
 
   // Common
   {
     href: '/settings',
-    labelKey: 'settings',
+    label: 'Configuración',
     icon: Settings,
     roles: ['encargado', 'subcontrata_admin', 'constructora_admin', 'trabajador'],
   },
@@ -58,7 +58,6 @@ const allNavItems: NavItem[] = [
 
 export function AppSidebarNav() {
   const pathname = usePathname();
-  const t = useTranslations('Sidebar');
   const [userRole, setUserRole] = useState<Role | null>(null);
   const [isLoadingRole, setIsLoadingRole] = useState(true);
 
@@ -89,7 +88,7 @@ export function AppSidebarNav() {
     <nav className="flex flex-col gap-2 px-4 py-6">
       {visibleNavItems.map((item) => {
         const isActive = item.exact ? pathname === item.href : pathname.startsWith(item.href);
-        const label = t(item.labelKey);
+        const label = item.label;
         return (
           <Button
             asChild
