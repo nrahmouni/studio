@@ -1,18 +1,12 @@
 
-import createMiddleware from 'next-intl/middleware';
-import {locales, localePrefix} from './navigation';
- 
-export default createMiddleware({
-  // A list of all locales that are supported
-  locales,
-  localePrefix,
- 
-  // Used when no locale matches
-  defaultLocale: 'es'
-});
- 
+import { NextRequest, NextResponse } from 'next/server';
+
+// This middleware is now a pass-through.
+// All logic is handled by the framework's routing.
+export function middleware(request: NextRequest) {
+  return NextResponse.next();
+}
+
 export const config = {
-  // Match only internationalized pathnames
-  // The matcher is configured to run on all paths except for static assets.
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)']
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };
