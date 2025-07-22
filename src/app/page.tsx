@@ -1,6 +1,14 @@
 
-// This file is no longer needed as the root page is now handled by /app/[locale]/page.tsx
-// It can be deleted, but keeping it empty avoids breaking any potential (though unlikely) imports.
-export default function ObsoleteRootPage() {
+'use client';
+import { redirect } from '@/navigation';
+import { useEffect } from 'react';
+
+// This is the root page of the app.
+// It redirects to the default locale's landing page.
+export default function RootPage() {
+  useEffect(() => {
+    redirect('/');
+  }, []);
+
   return null;
 }
