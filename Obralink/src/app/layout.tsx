@@ -8,12 +8,11 @@ export const metadata: Metadata = {
   description: 'Planificación y entrega de partes para obras y reformas.',
 };
 
-export default async function RootLayout({
+export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-
   return (
     <html lang="es">
       <head>
