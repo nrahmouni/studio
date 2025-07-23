@@ -69,9 +69,12 @@ export default async function HomePage() {
               <span className="font-headline text-2xl font-bold">ObraLink</span>
           </Link>
           <nav className="flex items-center gap-4">
-            <Link href="/dashboard" passHref>
+             <Link href="/auth/login/empresa" passHref>
+                <Button variant="ghost" size="lg">Iniciar Sesión</Button>
+            </Link>
+            <Link href="/auth/register/empresa" passHref>
               <Button variant="secondary" size="lg" className="text-primary hover:bg-secondary/80">
-                Acceder
+                Registrar Empresa
               </Button>
             </Link>
           </nav>
@@ -100,14 +103,25 @@ export default async function HomePage() {
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-3xl mx-auto animate-fade-in-up animation-delay-200">
               ObraLink optimiza la gestión de tus proyectos de construcción y reformas. Digitaliza partes de trabajo, aprovecha la IA para la asignación de recursos y toma el control total de tu operación.
             </p>
-            <Link href="/dashboard" passHref>
-              <Button
-                size="lg"
-                className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-6 rounded-lg shadow-xl transform hover:scale-105 transition-transform duration-300 animate-fade-in-up animation-delay-400"
-              >
-                <Zap className="mr-3 h-6 w-6" /> ¡Empieza a Optimizar Ahora!
-              </Button>
-            </Link>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <Link href="/auth/register/empresa" passHref>
+                  <Button
+                    size="lg"
+                    className="bg-accent hover:bg-accent/90 text-accent-foreground text-lg px-10 py-6 rounded-lg shadow-xl transform hover:scale-105 transition-transform duration-300 animate-fade-in-up animation-delay-400"
+                  >
+                    <Zap className="mr-3 h-6 w-6" /> ¡Empieza Ahora!
+                  </Button>
+                </Link>
+                 <Link href="/dashboard" passHref>
+                    <Button
+                        size="lg"
+                        variant="outline"
+                        className="bg-primary-foreground/10 hover:bg-primary-foreground/20 text-primary-foreground border-primary-foreground/50 text-lg px-10 py-6 rounded-lg shadow-lg transform hover:scale-105 transition-transform duration-300 animate-fade-in-up animation-delay-600"
+                    >
+                         Ver Demo
+                    </Button>
+                 </Link>
+            </div>
           </div>
         </section>
 
@@ -212,7 +226,7 @@ export default async function HomePage() {
             <p className="text-lg md:text-xl text-primary-foreground/80 mb-10 max-w-2xl mx-auto">
               Únete a las empresas que ya están construyendo el futuro con ObraLink. Optimiza, gestiona y crece con la plataforma líder del sector.
             </p>
-            <Link href="/dashboard" passHref>
+            <Link href="/auth/register/empresa" passHref>
               <Button
                 size="lg"
                 variant="secondary"
