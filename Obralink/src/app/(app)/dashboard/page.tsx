@@ -1,3 +1,4 @@
+
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -16,7 +17,7 @@ const availableRoles: { name: Role; label: string; icon: React.ElementType }[] =
 const roleRedirects: Record<Role, string> = {
     encargado: '/encargado/reporte-diario',
     subcontrata_admin: '/subcontrata/proyectos',
-    constructora_admin: '/constructora/dashboard',
+    constructora_admin: '/constructora/partes', // Redirect to the main control page
     trabajador: '/trabajador/fichar',
 };
 
