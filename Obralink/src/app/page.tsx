@@ -1,7 +1,7 @@
 
 import {Button} from '@/components/ui/button';
 import {Card, CardContent, CardHeader, CardTitle} from '@/components/ui/card';
-import {CheckCircle, Construction, Cpu, FileText, ShieldCheck, TrendingUp, Zap} from 'lucide-react';
+import {CheckCircle, Construction, Cpu, FileText, ShieldCheck, TrendingUp, Zap, Briefcase} from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 
@@ -64,15 +64,9 @@ export default async function HomePage() {
     <div className="flex flex-col min-h-screen bg-background">
       <header className="sticky top-0 z-50 bg-primary/95 text-primary-foreground py-3 shadow-lg backdrop-blur-md">
         <div className="container mx-auto px-4 flex justify-between items-center">
-          <Link href="/" className="hover:opacity-90 transition-opacity">
-            <Image
-              src="https://placehold.co/160x36.png"
-              alt="ObraLink Logo"
-              width={160}
-              height={36}
-              priority
-              data-ai-hint="logo"
-            />
+          <Link href="/" className="hover:opacity-90 transition-opacity flex items-center gap-2">
+              <Briefcase className="h-7 w-7"/>
+              <span className="font-headline text-2xl font-bold">ObraLink</span>
           </Link>
           <nav className="flex items-center gap-4">
             <Link href="/dashboard" passHref>
