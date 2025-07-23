@@ -1,0 +1,6 @@
+
+[
+    { "id": "maq-01-mock", "subcontrataId": "sub-caram-mock", "nombre": "Retroexcavadora CAT 320", "matriculaORef": "E-1234-BCN", "proyectosAsignados": ["proy-meridiana"] },
+    { "id": "maq-02-mock", "subcontrataId": "sub-caram-mock", "nombre": "Furgoneta Ford Transit", "matriculaORef": "5678-JFK", "proyectosAsignados": ["proy-meridiana", "proy-granvia"] },
+    { "id": "maq-03-mock", "subcontrataId": "sub-estructuras-sl", "nombre": "Grúa Torre", "matriculaORef": "GT-500", "proyectosAsignados": [] }
+]

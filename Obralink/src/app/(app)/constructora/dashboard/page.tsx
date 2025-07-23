@@ -1,12 +1,13 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
-import { Loader2, Building, HardHat, FileText, CheckCircle, Clock, BarChart3, Users, AlertCircle } from 'lucide-react';
+import { Loader2, Building, HardHat, FileText, CheckCircle, Clock, BarChart3, Users, AlertCircle, Briefcase } from 'lucide-react';
 import type { Proyecto, ReporteDiario } from '@/lib/types';
 import { getProyectosByConstructora, getReportesDiarios } from '@/lib/actions/app.actions';
 import { useToast } from '@/hooks/use-toast';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
 
@@ -63,7 +64,9 @@ export default function ConstructoraDashboardPage() {
 
     const proyectosActivos = proyectos.filter(p => {
         const now = new Date();
-        return p.fechaInicio && new Date(p.fechaInicio) <= now && (!p.fechaFin || new Date(p.fechaFin) >= now);
+        const fechaInicio = p.fechaInicio ? parseISO(p.fechaInicio) : null;
+        const fechaFin = p.fechaFin ? parseISO(p.fechaFin) : null;
+        return fechaInicio && fechaInicio <= now && (!fechaFin || fechaFin >= now);
     }).length;
 
     const reportesPendientes = reportes.filter(r => !r.validacion.constructora.validado).length;
@@ -129,11 +132,11 @@ export default function ConstructoraDashboardPage() {
                                            {r.validacion.constructora.validado ? <CheckCircle className="h-5 w-5 text-green-500"/> : <Clock className="h-5 w-5 text-yellow-500"/>}
                                            <div>
                                                <p className="font-semibold capitalize">{r.proyectoId.replace('proy-', '').replace(/-/g, ' ')}</p>
-                                               <p className="text-sm text-muted-foreground">Reporte del {format(new Date(r.fecha), 'PPP', {locale: es})}</p>
+                                               <p className="text-sm text-muted-foreground">Reporte del {format(parseISO(r.fecha), 'PPP', {locale: es})}</p>
                                            </div>
                                        </div>
                                        <div className="text-right">
-                                           <p className="text-sm font-medium">{formatDistanceToNow(new Date(r.timestamp), {locale: es, addSuffix: true})}</p>
+                                           <p className="text-sm font-medium">{formatDistanceToNow(parseISO(r.timestamp), {locale: es, addSuffix: true})}</p>
                                            <Link href="/constructora/partes"><Button variant="link" size="sm" className="h-auto p-0">Ir a validar</Button></Link>
                                        </div>
                                    </li>

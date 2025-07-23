@@ -1,0 +1,7 @@
+
+[
+  { "id": "trab-01-mock", "nombre": "Mohamed Elhamri", "subcontrataId": "sub-caram-mock", "codigoAcceso": "111111", "proyectosAsignados": ["proy-meridiana", "proy-granvia"], "categoriaProfesional": "maquinista" },
+  { "id": "trab-02-mock", "nombre": "Ana García López", "subcontrataId": "sub-caram-mock", "codigoAcceso": "222222", "proyectosAsignados": ["proy-meridiana"], "categoriaProfesional": "oficial" },
+  { "id": "trab-03-mock", "nombre": "David Ruiz Soler", "subcontrataId": "sub-caram-mock", "codigoAcceso": "333333", "proyectosAsignados": ["proy-meridiana"], "categoriaProfesional": "peon" },
+  { "id": "trab-04-mock", "nombre": "Lucía Martín", "subcontrataId": "sub-estructuras-sl", "codigoAcceso": "444444", "proyectosAsignados": ["proy-finalizado"], "categoriaProfesional": "encofrador" }
+]

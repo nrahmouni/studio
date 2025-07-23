@@ -1,0 +1,5 @@
+
+[
+  { "id": "sub-caram-mock", "nombre": "Excavaciones Caram", "clientesConstructoraIds": ["const-sorigui-mock"] },
+  { "id": "sub-estructuras-sl", "nombre": "Estructuras Poveda S.L.", "clientesConstructoraIds": ["const-sorigui-mock", "const-ferrovial-mock"] }
+]

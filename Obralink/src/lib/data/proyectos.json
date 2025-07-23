@@ -1,0 +1,6 @@
+
+[
+  { "id": "proy-meridiana", "nombre": "Reforma Av. Meridiana", "constructoraId": "const-sorigui-mock", "subcontrataId": "sub-caram-mock", "direccion": "Avinguda Meridiana, 350, Barcelona", "clienteNombre": "Ayuntamiento de Barcelona", "fechaInicio": "2024-05-15T10:00:00.000Z", "fechaFin": "2024-08-13T10:00:00.000Z" },
+  { "id": "proy-granvia", "nombre": "Oficinas Gran Vía", "constructoraId": "const-ferrovial-mock", "subcontrataId": "sub-caram-mock", "direccion": "Calle Gran Vía, 28, Madrid", "clienteNombre": "Banco Innovador", "fechaInicio": "2024-05-01T10:00:00.000Z", "fechaFin": "2024-10-12T10:00:00.000Z" },
+  { "id": "proy-finalizado", "nombre": "Centro Cívico Raval", "constructoraId": "const-sorigui-mock", "subcontrataId": "sub-estructuras-sl", "direccion": "Carrer de la Cera, 1, Barcelona", "clienteNombre": "Distrito Ciutat Vella", "fechaInicio": "2023-11-26T10:00:00.000Z", "fechaFin": "2024-06-20T10:00:00.000Z" }
+]

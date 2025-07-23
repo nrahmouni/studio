@@ -1,0 +1,54 @@
+
+[
+    {
+        "id": "rep-01",
+        "proyectoId": "proy-meridiana",
+        "fecha": "2024-07-24T08:00:00.000Z",
+        "encargadoId": "user-encargado-mock",
+        "trabajadores": [
+            { "trabajadorId": "trab-01-mock", "nombre": "Mohamed Elhamri", "asistencia": true, "horas": 8 },
+            { "trabajadorId": "trab-02-mock", "nombre": "Ana García López", "asistencia": true, "horas": 8 },
+            { "trabajadorId": "trab-03-mock", "nombre": "David Ruiz Soler", "asistencia": false, "horas": 0 }
+        ],
+        "comentarios": "Jornada sin incidencias. Se ha completado el replanteo de la zona sur.",
+        "timestamp": "2024-07-24T18:00:00.000Z",
+        "validacion": {
+            "encargado": { "validado": true, "timestamp": "2024-07-24T18:00:00.000Z" },
+            "subcontrata": { "validado": false, "timestamp": null },
+            "constructora": { "validado": false, "timestamp": null }
+        }
+    },
+    {
+        "id": "rep-02",
+        "proyectoId": "proy-meridiana",
+        "fecha": "2024-07-23T08:00:00.000Z",
+        "encargadoId": "user-encargado-mock",
+        "trabajadores": [
+            { "trabajadorId": "trab-01-mock", "nombre": "Mohamed Elhamri", "asistencia": true, "horas": 8 },
+            { "trabajadorId": "trab-02-mock", "nombre": "Ana García López", "asistencia": true, "horas": 4 }
+        ],
+        "comentarios": "Ana García se retiró a mediodía por indisposición. Se avanzó en la excavación.",
+        "timestamp": "2024-07-23T18:00:00.000Z",
+        "validacion": {
+            "encargado": { "validado": true, "timestamp": "2024-07-23T18:00:00.000Z" },
+            "subcontrata": { "validado": true, "timestamp": "2024-07-24T09:00:00.000Z" },
+            "constructora": { "validado": false, "timestamp": null }
+        }
+    },
+     {
+        "id": "rep-03",
+        "proyectoId": "proy-granvia",
+        "fecha": "2024-07-24T08:00:00.000Z",
+        "encargadoId": "user-encargado-mock",
+        "trabajadores": [
+            { "trabajadorId": "trab-01-mock", "nombre": "Mohamed Elhamri", "asistencia": true, "horas": 7 }
+        ],
+        "comentarios": "Inicio de demoliciones interiores en planta 2.",
+        "timestamp": "2024-07-24T18:00:00.000Z",
+        "validacion": {
+            "encargado": { "validado": true, "timestamp": "2024-07-24T18:00:00.000Z" },
+            "subcontrata": { "validado": false, "timestamp": null },
+            "constructora": { "validado": false, "timestamp": null }
+        }
+    }
+]
