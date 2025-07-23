@@ -1,16 +1,8 @@
 
-'use client';
-
-import { useRouter } from 'next/navigation';
-import { useEffect } from 'react';
-
-// This page now simply redirects to the landingdemo page.
-export default function AppRootPage() {
-  const router = useRouter();
-
-  useEffect(() => {
-    router.replace('/landingdemo');
-  }, [router]);
-
-  return null; // Or a loading spinner
+export default function TestPage() {
+  return (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '4rem' }}>
+      Test
+    </div>
+  );
 }
