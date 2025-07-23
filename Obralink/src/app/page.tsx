@@ -1,8 +1,14 @@
+'use client';
 
-export default function TestPage() {
-  return (
-    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh', fontSize: '4rem' }}>
-      Test
-    </div>
-  );
+import { useRouter } from 'next/navigation';
+import { useEffect } from 'react';
+
+export default function RootRedirectPage() {
+  const router = useRouter();
+
+  useEffect(() => {
+    router.replace('/landingdemo');
+  }, [router]);
+
+  return null; 
 }
