@@ -45,15 +45,15 @@ export default function HomePage() {
             />
             <span className="text-2xl font-bold font-headline text-primary">ObraLink</span>
           </Link>
-          <nav className="flex items-center gap-4">
+          <nav className="flex items-center gap-2">
             <Link href="/dashboard" passHref>
-              <Button variant="ghost" className="hidden sm:inline-flex">
+              <Button variant="ghost">
                 Log In
               </Button>
             </Link>
-            <Link href="/dashboard" passHref>
+            <Link href="/auth/register/empresa" passHref>
               <Button className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-full">
-                Get Started
+                Register Company
               </Button>
             </Link>
           </nav>
@@ -79,16 +79,7 @@ export default function HomePage() {
                     size="lg"
                     className="bg-primary hover:bg-primary/90 text-primary-foreground text-lg px-8 py-6 rounded-full shadow-lg transform hover:scale-105 transition-transform duration-300"
                   >
-                    Start Free Trial
-                  </Button>
-                </Link>
-                 <Link href="/dashboard" passHref>
-                  <Button
-                    size="lg"
-                    variant="link"
-                    className="text-primary text-lg"
-                  >
-                    View Demo <ArrowRight className="ml-2 h-5 w-5" />
+                    View Demo
                   </Button>
                 </Link>
             </div>
