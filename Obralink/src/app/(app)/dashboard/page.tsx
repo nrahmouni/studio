@@ -2,9 +2,10 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Loader2, Shield, User, Building, HardHat, Wrench, Database } from 'lucide-react';
+import { Loader2, Shield, User, Building, HardHat, Wrench, Database, PlusCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
+import Link from 'next/link';
 
 type Role = 'encargado' | 'subcontrata_admin' | 'constructora_admin' | 'trabajador';
 const availableRoles: { name: Role; label: string; icon: React.ElementType }[] = [
@@ -35,7 +36,7 @@ function RoleSwitcher() {
     <Card className="w-full max-w-md mx-auto animate-fade-in-up">
       <CardHeader>
         <CardTitle className="flex items-center"><Shield className="mr-2 h-6 w-6 text-primary"/> Simulador de Roles (Desarrollo)</CardTitle>
-        <CardDescription>Selecciona un rol para ver su panel de control. La aplicación está usando datos de demostración sin autenticación real.</CardDescription>
+        <CardDescription>Selecciona un rol para ver su panel de control o crea una nueva empresa.</CardDescription>
       </CardHeader>
       <CardContent className="grid grid-cols-1 gap-3">
         {availableRoles.map(roleInfo => (
@@ -47,6 +48,23 @@ function RoleSwitcher() {
             </div>
           </Button>
         ))}
+         <div className="relative my-2">
+            <div className="absolute inset-0 flex items-center">
+                <span className="w-full border-t" />
+            </div>
+            <div className="relative flex justify-center text-xs uppercase">
+                <span className="bg-card px-2 text-muted-foreground">O</span>
+            </div>
+        </div>
+        <Link href="/auth/register/empresa" passHref>
+             <Button variant="outline" className="w-full justify-start h-12 text-left text-accent border-accent hover:bg-accent/10 hover:text-accent">
+                <PlusCircle className="mr-3 h-5 w-5" />
+                <div>
+                     <p className="text-xs text-muted-foreground">Empezar de cero:</p>
+                    <p className="font-bold">Registrar nueva empresa</p>
+                </div>
+            </Button>
+        </Link>
       </CardContent>
     </Card>
   );
