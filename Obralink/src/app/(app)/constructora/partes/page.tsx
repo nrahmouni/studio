@@ -5,17 +5,17 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Loader2, Building, HardHat, FileText, UserCheck } from 'lucide-react';
+import { Loader2, Building, HardHat, FileText, UserCheck, Calendar, AlertTriangle } from 'lucide-react';
 import type { Subcontrata, Proyecto, ReporteDiario } from '@/lib/types';
 import { getSubcontratas, getProyectosBySubcontrata, getReportesDiarios, validateDailyReport } from '@/lib/actions/app.actions';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
 
-function ReporteItem({ reporte, onValidate }: { reporte: ReporteDiario, onValidate: (id) => void }) {
+function ReporteItem({ reporte, onValidate }: { reporte: ReporteDiario, onValidate: (id: string) => void }) {
     const [isOpen, setIsOpen] = useState(false);
     
-    const getValidationStatus = (validacion) => {
+    const getValidationStatus = (validacion: ReporteDiario['validacion']) => {
         if(validacion.constructora.validado) return {text: "Validado por ti", color: "bg-green-500"};
         if(validacion.subcontrata.validado) return {text: "Validado (Subcontrata)", color: "bg-blue-500"};
         if(validacion.encargado.validado) return {text: "Enviado por Encargado", color: "bg-yellow-500 text-black"};
@@ -24,45 +24,59 @@ function ReporteItem({ reporte, onValidate }: { reporte: ReporteDiario, onValida
     const status = getValidationStatus(reporte.validacion);
     
     return (
-         {format(parseISO(reporte.fecha), 'PPP', { locale: es })}
-                         {status.text}
-                     
-                 
-                    {isOpen ? 'Ocultar' : 'Ver Detalles'}
+        <Card className="p-3 bg-card hover:bg-muted/50 transition-colors">
+            <div className="flex justify-between items-center gap-3">
+                 <div className="flex items-center gap-3">
+                    <FileText className="h-5 w-5 text-primary"/>
+                    <span className="font-semibold">
+                      Reporte del {format(parseISO(reporte.fecha), 'PPP', { locale: es })}
+                    </span>
+                    <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
+                 </div>
+
+                 <div className="flex items-center gap-2">
+                    <Button variant="ghost" size="sm" onClick={() => setIsOpen(!isOpen)}>{isOpen ? 'Ocultar' : 'Ver Detalles'}</Button>
                     {!reporte.validacion.constructora.validado && reporte.validacion.subcontrata.validado && (
-                        Validar
+                        <Button onClick={() => onValidate(reporte.id)} size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">Validar</Button>
                     )}
-                
-             {reporte.encargadoId} (ID)
-                     {reporte.modificacionJefeObra?.modificado && }
-                   
-                      Trabajadores Reportados:
-                      
+                 </div>
+            </div>
+             {isOpen && (
+                <div className="mt-4 p-4 bg-background rounded-md border space-y-3 animate-fade-in-up">
+                   <p className="font-semibold flex items-center gap-2"><UserCheck className="h-4 w-4"/>Reportado por: <span className="font-normal">{reporte.encargadoId} (ID)</span></p>
+                   {reporte.modificacionJefeObra?.modificado && (
+                        <p className="font-semibold text-orange-600 flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>
+                            Este parte fue modificado por el jefe de obra.
+                        </p>
+                   )}
+                   <div className="space-y-1">
+                      <p className="font-semibold">Trabajadores Reportados:</p>
+                      <ul className="list-disc pl-5 text-sm space-y-1">
                          {reporte.trabajadores.map(t => (
-                             - 
-                                 {t.nombre}
-                                  - 
-                                 {t.asistencia ?  ${t.horas} horas :  Ausente}
-                             
+                             <li key={t.trabajadorId}>
+                                 <span className="font-medium">{t.nombre}</span> - 
+                                 <span className={!t.asistencia ? 'text-destructive' : ''}> {t.asistencia ? ` ${t.horas} horas` :  'Ausente'}</span>
+                             </li>
                          ))}
-                      
+                      </ul>
+                   </div>
                    
                    {reporte.comentarios && (
-                     
-                        Comentarios:
-                        {reporte.comentarios}
-                     
+                     <div className="pt-2">
+                        <p className="font-semibold">Comentarios:</p>
+                        <p className="text-sm text-muted-foreground p-2 bg-muted/50 border rounded-md">{reporte.comentarios}</p>
+                     </div>
                    )}
-                
-            
-        
+                </div>
+            )}
+        </Card>
     )
 }
 
 export default function ConstructoraPartesPage() {
-  const [subcontratas, setSubcontratas] = useState([]);
-  const [proyectosPorSub, setProyectosPorSub] = useState({});
-  const [reportesPorProyecto, setReportesPorProyecto] = useState({});
+  const [subcontratas, setSubcontratas] = useState<Subcontrata[]>([]);
+  const [proyectosPorSub, setProyectosPorSub] = useState<Record<string, Proyecto[]>>({});
+  const [reportesPorProyecto, setReportesPorProyecto] = useState<Record<string, ReporteDiario[]>>({});
   const [loading, setLoading] = useState(true);
   const { toast } = useToast();
 
@@ -81,8 +95,8 @@ export default function ConstructoraPartesPage() {
 
       const promsProyectos = subs.map(s => getProyectosBySubcontrata(s.id));
       const proyectosArrays = await Promise.all(promsProyectos);
-      const proyMap = {};
-      const allProyectos = [];
+      const proyMap: Record<string, Proyecto[]> = {};
+      const allProyectos: Proyecto[] = [];
       proyectosArrays.forEach((proyArray, index) => {
         const filteredByConstructora = proyArray.filter(p => p.constructoraId === constructoraId);
         proyMap[subs[index].id] = filteredByConstructora;
@@ -92,9 +106,9 @@ export default function ConstructoraPartesPage() {
       
       const promsReportes = allProyectos.map(p => getReportesDiarios(p.id));
       const reportesArrays = await Promise.all(promsReportes);
-      const repMap = {};
+      const repMap: Record<string, ReporteDiario[]> = {};
       allProyectos.forEach((proy, index) => {
-          repMap[proy.id] = reportesArrays[index];
+          repMap[proy.id] = reportesArrays[index] || [];
       });
       setReportesPorProyecto(repMap);
 
@@ -103,7 +117,7 @@ export default function ConstructoraPartesPage() {
     fetchData();
   }, [toast]);
   
-  const handleValidation = async (reporteId) => {
+  const handleValidation = async (reporteId: string) => {
     const result = await validateDailyReport(reporteId, 'constructora');
     if (result.success && result.reporte) {
       toast({ title: 'Éxito', description: 'Reporte validado correctamente.' });
@@ -124,54 +138,52 @@ export default function ConstructoraPartesPage() {
   }
 
   if (loading) {
-    return ;
+    return <div className="text-center p-8"><Loader2 className="animate-spin h-10 w-10 mx-auto text-primary" /></div>;
   }
 
   return (
-    
-      
-        
-           Seguimiento de Subcontratas
-        
-           Visualiza los reportes de las subcontratas por proyecto y valida su trabajo.
-        
-      
+    <div className="space-y-6">
+      <div className="animate-fade-in-down">
+        <h1 className="text-3xl font-bold font-headline text-primary">Seguimiento de Subcontratas</h1>
+        <p className="text-muted-foreground mt-1">Visualiza los reportes de las subcontratas por proyecto y valida su trabajo.</p>
+      </div>
 
-      
+      <Accordion type="single" collapsible className="w-full space-y-4">
         {subcontratas.map(sub => (
-          
-            
-              
-                
+          <Card key={sub.id} className="animate-fade-in-up">
+            <AccordionItem value={sub.id} className="border-b-0">
+              <AccordionTrigger className="p-6 text-xl hover:no-underline">
+                <div className="flex items-center gap-3">
+                  <Building className="h-6 w-6 text-primary" />
                   {sub.nombre}
-                
-              
-              
-                
-                   Proyectos Asignados
+                </div>
+              </AccordionTrigger>
+              <AccordionContent className="px-6 pb-6">
+                <div className="space-y-2">
+                  <h3 className="font-semibold text-lg mb-2 flex items-center gap-2"><HardHat className="h-5 w-5"/>Proyectos Asignados</h3>
                   {(proyectosPorSub[sub.id] || []).length > 0 ? (
                     (proyectosPorSub[sub.id] || []).map(proy => (
-                      
-                         {proy.nombre}
-                        
-                          Reportes Diarios Recibidos
+                      <Card key={proy.id} className="p-4 bg-muted/50">
+                        <p className="font-bold text-base capitalize">{proy.nombre}</p>
+                        <div className="mt-2 space-y-3 pl-4 border-l-2 border-accent/50 ml-2">
+                          <h4 className="font-semibold mt-3 text-muted-foreground">Reportes Diarios Recibidos</h4>
                            {(reportesPorProyecto[proy.id] || []).length > 0 ? (
                              (reportesPorProyecto[proy.id] || []).sort((a,b) => parseISO(b.fecha).getTime() - parseISO(a.fecha).getTime()).map(rep => (
-                                
+                                <ReporteItem key={rep.id} reporte={rep} onValidate={handleValidation} />
                              ))
-                           ) : No hay reportes para este proyecto. }
-                        
-                      
+                           ) : <p className="text-sm text-muted-foreground">No hay reportes para este proyecto.</p> }
+                        </div>
+                      </Card>
                     ))
                   ) : (
-                    No hay proyectos asignados a esta subcontrata para tu empresa.
+                    <p className="text-sm text-muted-foreground pl-2">No hay proyectos asignados a esta subcontrata para tu empresa.</p>
                   )}
-                
-              
-            
-          
+                </div>
+              </AccordionContent>
+            </AccordionItem>
+          </Card>
         ))}
-      
-    
+      </Accordion>
+    </div>
   );
 }
