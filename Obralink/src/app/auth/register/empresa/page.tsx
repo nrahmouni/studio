@@ -47,9 +47,14 @@ export default function EmpresaRegisterPage() {
     if (result.success && result.empresa) {
         toast({
             title: 'Empresa Registrada con Éxito',
-            description: `La empresa ${result.empresa.nombre} ha sido creada.`,
+            description: `La empresa ${result.empresa.nombre} ha sido creada. Ahora, configuremos los primeros pasos.`,
         });
-        router.push('/');
+        
+        // Set mock role and redirect to the new setup page
+        localStorage.setItem('userRole_obra_link', 'constructora_admin');
+        localStorage.setItem('constructoraId_obra_link', result.empresa.id);
+        
+        router.push('/company-setup');
     } else {
          toast({
           title: 'Error en el Registro',

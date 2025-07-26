@@ -18,6 +18,7 @@ import {
   Briefcase,
   LayoutDashboard,
   Wand2,
+  Building,
 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 
@@ -44,6 +45,7 @@ const allNavItems: NavItem[] = [
 
   // Constructora
   { href: '/constructora/dashboard', label: 'Panel General', icon: LayoutDashboard, roles: ['constructora_admin'] },
+  { href: '/company-setup', label: 'Configuración Inicial', icon: Building, roles: ['constructora_admin']},
   { href: '/constructora/proyectos', label: 'Proyectos', icon: Briefcase, roles: ['constructora_admin'] },
   { href: '/constructora/partes', label: 'Seguimiento de Partes', icon: UserCheck, roles: ['constructora_admin'] },
   { href: '/constructora/analisis-recursos', label: 'Análisis IA', icon: Wand2, roles: ['constructora_admin'] },
