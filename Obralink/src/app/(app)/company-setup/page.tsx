@@ -26,9 +26,9 @@ const setupSteps: SetupStep[] = [
     {
         step: 2,
         title: "Registra tus Subcontratas",
-        description: "Da de alta a las empresas subcontratadas con las que trabajas. Podrás asignarlas a tus proyectos.",
-        link: "/subcontrata/recursos", // A placeholder link, ideally this would be a dedicated subcontrata management page for the constructora
-        linkText: "Gestionar Subcontratas",
+        description: "Da de alta a las empresas subcontratadas con las que trabajas desde la gestión de proyectos.",
+        link: "/constructora/proyectos", // Changed to projects page
+        linkText: "Gestionar Proyectos",
         icon: HardHat,
     },
     {
@@ -43,8 +43,8 @@ const setupSteps: SetupStep[] = [
         step: 4,
         title: "Gestiona Personal y Maquinaria",
         description: "El personal y la maquinaria son gestionados por cada subcontrata. Puedes ver los recursos asignados en cada proyecto.",
-        link: "/subcontrata/recursos", // Links to the subcontrata resource page as there is no central one
-        linkText: "Ver Recursos de Subcontrata (Demo)",
+        link: "/constructora/proyectos", // Changed to projects page
+        linkText: "Ver Proyectos",
         icon: Wrench,
     }
 ];
