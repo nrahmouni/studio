@@ -1,4 +1,3 @@
-
 'use client';
 import { Button } from "@/components/ui/button";
 import { Briefcase, LayoutDashboard } from "lucide-react";
