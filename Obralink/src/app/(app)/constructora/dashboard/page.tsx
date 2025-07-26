@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Loader2, Building, HardHat, FileText, CheckCircle, Clock, BarChart3, Users, AlertCircle, Briefcase } from 'lucide-react';
 import type { Proyecto, ReporteDiario } from '@/lib/types';
-import { getProyectosByConstructora, getReportesDiarios } from '@/lib/actions/app.actions';
+import { getProyectosByConstructora, getReportesDiariosByConstructora } from '@/lib/actions/app.actions';
 import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -50,7 +50,7 @@ export default function ConstructoraDashboardPage() {
             try {
                 const [proyectosData, reportesData] = await Promise.all([
                     getProyectosByConstructora(constructoraId),
-                    getReportesDiarios(), // In a real app, this would be filtered by constructoraId
+                    getReportesDiariosByConstructora(constructoraId),
                 ]);
                 setProyectos(proyectosData);
                 setReportes(reportesData);

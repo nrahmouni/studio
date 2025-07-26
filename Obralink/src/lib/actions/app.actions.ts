@@ -66,6 +66,16 @@ export async function getReportesDiarios(proyectoId?: string, encargadoId?: stri
     return reportes;
 }
 
+export async function getReportesDiariosByConstructora(constructoraId: string): Promise<ReporteDiario[]> {
+    await delay(150);
+    let reportes = JSON.parse(JSON.stringify(mockReportesDiarios));
+    
+    const proyectosDeConstructora = mockProyectos.filter(p => p.constructoraId === constructoraId).map(p => p.id);
+    reportes = reportes.filter((r: ReporteDiario) => proyectosDeConstructora.includes(r.proyectoId));
+
+    return reportes;
+}
+
 export async function getReporteDiarioById(reporteId: string): Promise<ReporteDiario | null> {
     await delay(50);
     const reporte = mockReportesDiarios.find(r => r.id === reporteId) || null;
