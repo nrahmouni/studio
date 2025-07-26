@@ -8,13 +8,14 @@ import { Button } from '@/components/ui/button';
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent, CardDescription as CardUiDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { useRouter } from 'next/navigation';
 import { useToast } from '@/hooks/use-toast';
 import { useState } from 'react';
@@ -82,9 +83,9 @@ export default function EmpresaRegisterPage() {
       <Card className="w-full max-w-md shadow-xl animate-fade-in-up">
         <CardHeader>
           <CardTitle className="text-2xl font-headline flex items-center"><Building className="mr-3 text-primary"/>Crea tu Empresa en ObraLink</CardTitle>
-          <CardDescription>
+          <CardUiDescription>
             Solo necesitas el nombre de tu empresa, tu email y una contraseña para empezar. Podrás añadir más detalles después.
-          </CardDescription>
+          </CardUiDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
