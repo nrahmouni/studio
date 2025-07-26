@@ -25,8 +25,6 @@ import { addEmpresa } from '@/lib/actions/app.actions';
 
 const RegisterEmpresaFormSchema = z.object({
   empresaNombre: z.string().min(2, { message: "El nombre de la empresa debe tener al menos 2 caracteres." }),
-  adminEmail: z.string().email({ message: "Tu email de administrador es inválido." }),
-  adminPassword: z.string().min(6, { message: "La contraseña debe tener al menos 6 caracteres." }),
 });
 
 type RegisterEmpresaFormData = z.infer<typeof RegisterEmpresaFormSchema>;
@@ -40,21 +38,19 @@ export default function EmpresaRegisterPage() {
     resolver: zodResolver(RegisterEmpresaFormSchema),
     defaultValues: {
       empresaNombre: '',
-      adminEmail: '',
-      adminPassword: '',
     },
   });
 
   async function onSubmit(values: RegisterEmpresaFormData) {
     setIsLoading(true);
-    const result = await addEmpresa(values);
+    const result = await addEmpresa({ empresaNombre: values.empresaNombre });
     
     if (result.success && result.empresa) {
         toast({
             title: 'Empresa Registrada con Éxito',
-            description: `La empresa ${result.empresa.nombre} ha sido creada. Ya puedes iniciar sesión.`,
+            description: `La empresa ${result.empresa.nombre} ha sido creada.`,
         });
-        router.push('/auth/login/empresa');
+        router.push('/');
     } else {
          toast({
           title: 'Error en el Registro',
@@ -84,7 +80,7 @@ export default function EmpresaRegisterPage() {
         <CardHeader>
           <CardTitle className="text-2xl font-headline flex items-center"><Building className="mr-3 text-primary"/>Crea tu Empresa en ObraLink</CardTitle>
           <CardUiDescription>
-            Solo necesitas el nombre de tu empresa, tu email y una contraseña para empezar. Podrás añadir más detalles después.
+            Solo necesitas el nombre de tu empresa para empezar.
           </CardUiDescription>
         </CardHeader>
         <CardContent>
@@ -101,29 +97,6 @@ export default function EmpresaRegisterPage() {
                   </FormItem>
                 )}
               />
-              <FormField
-                control={form.control}
-                name="adminEmail"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Tu Email (será tu usuario administrador)</FormLabel>
-                    <FormControl><Input type="email" placeholder="tu.email@dominio.com" {...field} /></FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="adminPassword"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Contraseña para el Administrador</FormLabel>
-                    <FormControl><Input type="password" placeholder="••••••••" {...field} /></FormControl>
-                    <FormDescription>Mínimo 6 caracteres.</FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               
               <Button type="submit" className="w-full bg-accent hover:bg-accent/90 text-accent-foreground text-lg py-3" disabled={isLoading}>
                 {isLoading ? <Loader2 className="mr-2 h-5 w-5 animate-spin" /> : 'Registrar Empresa'}
@@ -133,7 +106,7 @@ export default function EmpresaRegisterPage() {
         </CardContent>
       </Card>
       <p className="mt-6 text-center text-sm text-muted-foreground">
-        ¿Ya tienes una cuenta de empresa? <Link href="/auth/login/empresa" className="font-medium text-primary hover:underline">Inicia sesión aquí</Link>.
+        Esta es una versión de demostración. No se requiere inicio de sesión.
       </p>
     </div>
   );

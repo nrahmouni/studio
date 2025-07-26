@@ -78,12 +78,12 @@ export async function getTrabajadoresBySubcontrata(subcontrataId: string): Promi
 
 export async function getMaquinariaBySubcontrata(subcontrataId: string): Promise<Maquinaria[]> {
      await delay(100);
-    return JSON.parse(JSON.stringify(mockMaquinaria.filter(m => m.subcontrataId === subcontrataId)));
+    return JSON.parse(JSON.stringify(mockMaquinaria.filter(m => m.subcontrataId === m.subcontrataId)));
 }
 
 // --- DATA MUTATION ---
 
-export async function addEmpresa(data: { empresaNombre: string, adminEmail: string, adminPassword: string }): Promise<{ success: boolean; message: string; empresa?: Constructora }> {
+export async function addEmpresa(data: { empresaNombre: string }): Promise<{ success: boolean; message: string; empresa?: Constructora }> {
     await delay(200);
     try {
         const newEmpresa: Constructora = {
@@ -92,9 +92,9 @@ export async function addEmpresa(data: { empresaNombre: string, adminEmail: stri
         };
         mockConstructoras.unshift(newEmpresa);
         await saveDataToFile('constructoras', mockConstructoras);
-        // Here we would also create an admin user, but for now we just create the company
         return { success: true, message: 'Empresa añadida con éxito.', empresa: JSON.parse(JSON.stringify(newEmpresa)) };
     } catch(e: any) {
+        console.error("Error en addEmpresa:", e);
         return { success: false, message: e.message || 'Error al añadir empresa.' };
     }
 }
