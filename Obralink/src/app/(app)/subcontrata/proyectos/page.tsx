@@ -33,7 +33,12 @@ export default function SubcontrataProyectosPage() {
         getConstructoras(),
     ]);
 
-    setProyectos(proyectosData.sort((a,b) => new Date(b.fechaInicio || 0).getTime() - new Date(a.fechaInicio || 0).getTime()));
+    const sortedProyectos = proyectosData.sort((a, b) => {
+        const dateA = a.fechaInicio ? new Date(a.fechaInicio).getTime() : 0;
+        const dateB = b.fechaInicio ? new Date(b.fechaInicio).getTime() : 0;
+        return dateB - dateA;
+    });
+    setProyectos(sortedProyectos);
     setConstructoras(constructorasData);
     const conMap = constructorasData.reduce((acc, c) => ({...acc, [c.id]: c.nombre}), {});
     setConstructoraMap(conMap);
@@ -114,4 +119,7 @@ export default function SubcontrataProyectosPage() {
                 <p className="text-center py-6 text-muted-foreground">No tienes proyectos creados o asignados.</p>
             )}
         </CardContent>
-      
+      </Card>
+    </div>
+  );
+}
