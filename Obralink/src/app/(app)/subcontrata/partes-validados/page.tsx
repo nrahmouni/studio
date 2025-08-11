@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Loader2, Calendar, HardHat, Eye } from 'lucide-react';
-import { getReportesDiarios, validateDailyReport } from '@/lib/actions/app.actions';
+import { getReportesDiariosBySubcontrata, validateDailyReport } from '@/lib/actions/app.actions';
 import type { ReporteDiario } from '@/lib/types';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -25,14 +25,18 @@ export default function SubcontrataPartesValidadosPage() {
     const fetchReportes = async () => {
       setLoading(true);
       const subcontrataId = localStorage.getItem('subcontrataId_obra_link');
-      // Mock function gets all reports, in real app it would be filtered by subcontrata
-      const data = await getReportesDiarios(undefined, undefined, subcontrataId || undefined);
+      if (!subcontrataId) {
+        toast({ title: "Error", description: "No se pudo identificar la subcontrata.", variant: "destructive" });
+        setLoading(false);
+        return;
+      }
+      const data = await getReportesDiariosBySubcontrata(subcontrataId);
       // Filter for reports that have been validated by the encargado
       setReportes(data.filter(r => r.validacion.encargado.validado));
       setLoading(false);
     };
     fetchReportes();
-  }, []);
+  }, [toast]);
 
   const generatePDF = (reporte: ReporteDiario) => {
     const doc = new jsPDF();

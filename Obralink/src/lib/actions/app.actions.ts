@@ -95,8 +95,8 @@ export async function getMaquinariaByProyecto(proyectoId: string): Promise<Maqui
     return JSON.parse(JSON.stringify(maquinaria));
 }
 
-export async function getReportesDiarios(proyectoId?: string, encargadoId?: string, subcontrataId?: string): Promise<ReporteDiario[]> {
-    console.log(`[ACTION LOG] getReportesDiarios called with filters: proyectoId=${proyectoId}, encargadoId=${encargadoId}, subcontrataId=${subcontrataId}`);
+export async function getReportesDiarios(proyectoId?: string, encargadoId?: string): Promise<ReporteDiario[]> {
+    console.log(`[ACTION LOG] getReportesDiarios called with filters: proyectoId=${proyectoId}, encargadoId=${encargadoId}`);
     await delay(150);
     let reportes = [...mockReportesDiarios];
     
@@ -106,10 +106,7 @@ export async function getReportesDiarios(proyectoId?: string, encargadoId?: stri
     if (encargadoId) {
         reportes = reportes.filter((r: any) => r.encargadoId === encargadoId);
     }
-    if (subcontrataId) {
-        const proyectosDeSub = mockProyectos.filter(p => p.subcontrataId === subcontrataId).map(p => p.id);
-        reportes = reportes.filter((r: any) => proyectosDeSub.includes(r.proyectoId));
-    }
+    
     console.log(`[ACTION LOG] Found ${reportes.length} reportes with applied filters.`);
     return JSON.parse(JSON.stringify(reportes));
 }
@@ -119,11 +116,23 @@ export async function getReportesDiariosByConstructora(constructoraId: string): 
     await delay(150);
     let reportes = [...mockReportesDiarios];
     
-    const proyectosDeConstructora = mockProyectos.filter(p => p.constructoraId === constructoraId).map(p => p.id);
-    reportes = reportes.filter((r: any) => proyectosDeConstructora.includes(r.proyectoId));
+    const proyectosDeConstructoraIds = mockProyectos.filter(p => p.constructoraId === constructoraId).map(p => p.id);
+    reportes = reportes.filter((r: any) => proyectosDeConstructoraIds.includes(r.proyectoId));
     console.log(`[ACTION LOG] Found ${reportes.length} reportes for constructoraId: ${constructoraId}`);
     return JSON.parse(JSON.stringify(reportes));
 }
+
+export async function getReportesDiariosBySubcontrata(subcontrataId: string): Promise<ReporteDiario[]> {
+    console.log(`[ACTION LOG] getReportesDiariosBySubcontrata called with subcontrataId: ${subcontrataId}`);
+    await delay(150);
+    let reportes = [...mockReportesDiarios];
+    
+    const proyectosDeSubcontrataIds = mockProyectos.filter(p => p.subcontrataId === subcontrataId).map(p => p.id);
+    reportes = reportes.filter((r: any) => proyectosDeSubcontrataIds.includes(r.proyectoId));
+    console.log(`[ACTION LOG] Found ${reportes.length} reportes for subcontrataId: ${subcontrataId}`);
+    return JSON.parse(JSON.stringify(reportes));
+}
+
 
 export async function getReporteDiarioById(reporteId: string): Promise<ReporteDiario | null> {
     console.log(`[ACTION LOG] getReporteDiarioById called with reporteId: ${reporteId}`);
@@ -174,8 +183,8 @@ const AddProyectoSchema = z.object({
   clienteNombre: z.string().min(1, "El nombre del cliente final es requerido"),
   constructoraId: z.string().optional(),
   subcontrataId: z.string().optional(),
-  fechaInicio: z.date().optional().nullable(),
-  fechaFin: z.date().optional().nullable(),
+  fechaInicio: z.string().optional().nullable(),
+  fechaFin: z.string().optional().nullable(),
 });
 
 export async function addProyecto(data: z.infer<typeof AddProyectoSchema>): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
@@ -187,8 +196,8 @@ export async function addProyecto(data: z.infer<typeof AddProyectoSchema>): Prom
             ...data,
             constructoraId: data.constructoraId || '',
             subcontrataId: data.subcontrataId || '',
-            fechaInicio: data.fechaInicio ? (data.fechaInicio as Date).toISOString() : null,
-            fechaFin: data.fechaFin ? (data.fechaFin as Date).toISOString() : null,
+            fechaInicio: data.fechaInicio,
+            fechaFin: data.fechaFin,
         };
         mockProyectos.unshift(newProyecto as any);
         console.log('[ACTION LOG] addProyecto successful. New proyecto:', newProyecto);
@@ -210,9 +219,6 @@ export async function updateProyecto(proyectoId: string, data: Partial<Omit<Proy
         }
         
         const updatedData: any = { ...data };
-        if (data.fechaInicio) updatedData.fechaInicio = (data.fechaInicio as unknown as Date).toISOString();
-        if (data.fechaFin) updatedData.fechaFin = (data.fechaFin as unknown as Date).toISOString();
-
         mockProyectos[index] = { ...mockProyectos[index], ...updatedData };
         console.log('[ACTION LOG] updateProyecto successful.');
         return { success: true, message: 'Proyecto actualizado.', proyecto: JSON.parse(JSON.stringify(mockProyectos[index])) };
