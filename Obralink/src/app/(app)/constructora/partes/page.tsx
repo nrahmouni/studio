@@ -93,28 +93,21 @@ export default function ConstructoraPartesPage() {
       const subs = await getSubcontratas();
       setSubcontratas(subs);
 
-      const promsProyectos = subs.map(s => getProyectosByConstructora(constructoraId));
-      const proyectosArrays = await Promise.all(promsProyectos);
-
-      const allProyectos: Proyecto[] = [];
+      const allProyectos = await getProyectosByConstructora(constructoraId);
+      
       const proyMap: Record<string, Proyecto[]> = {};
-      subs.forEach((sub, index) => {
-          const proyectosDeSubcontrataParaEstaConstructora = proyectosArrays[index].filter(p => p.subcontrataId === sub.id);
+      subs.forEach((sub) => {
+          const proyectosDeSubcontrataParaEstaConstructora = allProyectos.filter(p => p.subcontrataId === sub.id);
           proyMap[sub.id] = proyectosDeSubcontrataParaEstaConstructora;
-          allProyectos.push(...proyectosDeSubcontrataParaEstaConstructora);
       });
       setProyectosPorSub(proyMap);
       
       if (allProyectos.length > 0) {
-        const promsReportes = allProyectos.map(p => getReportesDiarios(p.id));
-        const reportesArrays = await Promise.all(promsReportes);
+        const reportes = await getReportesDiariosByConstructora(constructoraId);
         const repMap: Record<string, ReporteDiario[]> = {};
-        reportesArrays.forEach((repArray, index) => {
-            const proyId = allProyectos[index].id;
-            if(repArray) {
-               repMap[proyId] = repArray;
-            }
-        });
+        allProyectos.forEach(p => {
+            repMap[p.id] = reportes.filter(r => r.proyectoId === p.id);
+        })
         setReportesPorProyecto(repMap);
       }
 
