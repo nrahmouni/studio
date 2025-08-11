@@ -17,12 +17,20 @@ function readData<T>(filename: string): T[] {
 }
 
 export async function saveDataToFile(filename: string, data: any) {
-    const filePath = path.join(dataDirectory, `${filename}.json`);
-    try {
-        await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
-    } catch (error) {
-        console.error(`Error writing to ${filename}.json:`, error);
-        throw new Error(`Could not save data to ${filename}.json`);
+    // This function is now a no-op in the production environment to avoid file system errors.
+    // The data is mutated in memory. In a real application, this would write to a database.
+    if (process.env.NODE_ENV === 'development') {
+        const filePath = path.join(dataDirectory, `${filename}.json`);
+        try {
+            await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
+        } catch (error) {
+            console.error(`Error writing to ${filename}.json:`, error);
+            throw new Error(`Could not save data to ${filename}.json`);
+        }
+    } else {
+        // In a deployed/demo environment, we don't want to write files.
+        // The data is already being updated in the in-memory array.
+        return Promise.resolve();
     }
 }
 
