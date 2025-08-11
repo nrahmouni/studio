@@ -11,6 +11,7 @@ import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador } from '@/lib
 import { Loader2, Send, Building, HardHat, User, Plus, Minus, MessageSquare, Camera } from 'lucide-react';
 import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
+import { Skeleton } from '@/components/ui/skeleton';
 
 interface TrabajadorConEstado extends Trabajador {
   asistencia: boolean;

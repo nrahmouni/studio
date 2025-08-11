@@ -1,0 +1,116 @@
+@startuml
+!theme spacelab
+
+skinparam classAttributeIconSize 0
+
+package "Core Entities" {
+  class Constructora {
+    +id: string
+    +nombre: string
+  }
+
+  class Subcontrata {
+    +id: string
+    +nombre: string
+    +clientesConstructoraIds: string[]
+  }
+
+  class Proyecto {
+    +id: string
+    +nombre: string
+    +constructoraId: string
+    +subcontrataId: string
+    +direccion: string
+    +clienteNombre: string
+    +fechaInicio: Date
+    +fechaFin: Date
+  }
+
+  class Trabajador {
+    +id: string
+    +nombre: string
+    +subcontrataId: string
+    +codigoAcceso: string
+    +categoriaProfesional: string
+    +proyectosAsignados: string[]
+  }
+
+  class Maquinaria {
+    +id: string
+    +nombre: string
+    +subcontrataId: string
+    +matriculaORef: string
+    +proyectosAsignados: string[]
+  }
+}
+
+package "Reporting & Validation" {
+    class ReporteDiario {
+        +id: string
+        +proyectoId: string
+        +fecha: Date
+        +encargadoId: string
+        +timestamp: Date
+        +comentarios: string
+        +fotosURLs: string[]
+        +validacion: ValidationStatus
+        +modificacionJefeObra: ModificationInfo
+        +trabajadores: ReporteTrabajador[]
+    }
+
+    class ReporteTrabajador {
+        +trabajadorId: string
+        +nombre: string
+        +asistencia: boolean
+        +horas: number
+    }
+
+    class ValidationStatus {
+        +encargado: ValidationStep
+        +subcontrata: ValidationStep
+        +constructora: ValidationStep
+    }
+
+    class ValidationStep {
+        +validado: boolean
+        +timestamp: Date
+    }
+
+    class ModificationInfo {
+      +modificado: boolean
+      +jefeObraId: string
+      +timestamp: Date
+    }
+}
+
+
+package "User Roles & Auth" {
+    class Usuario {
+        +id: string
+        +email: string
+        +nombre: string
+        +rol: "encargado" | "subcontrata_admin" | "constructora_admin"
+        +subcontrataId: string
+        +constructoraId: string
+        +activo: boolean
+    }
+}
+
+
+' Relationships
+Constructora "1" -- "0..*" Proyecto : "supervisa"
+Subcontrata "1" -- "0..*" Proyecto : "ejecuta"
+Constructora "1..*" -- "0..*" Subcontrata : "contrata a"
+
+Subcontrata "1" -- "0..*" Trabajador : "emplea"
+Subcontrata "1" -- "0..*" Maquinaria : "posee"
+
+Proyecto "1" -- "0..*" Trabajador : "tiene asignado"
+Proyecto "1" -- "0..*" Maquinaria : "tiene asignada"
+Proyecto "1" -- "0..*" ReporteDiario : "genera"
+
+Usuario "1" -- "0..*" ReporteDiario : "crea/valida (Encargado)"
+ReporteDiario "1" o-- "1..*" ReporteTrabajador : "contiene"
+Trabajador "1" -- "0..*" ReporteTrabajador : "es reportado en"
+
+@enduml
