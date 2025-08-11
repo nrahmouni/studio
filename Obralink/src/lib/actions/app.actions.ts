@@ -1,11 +1,9 @@
-
 // src/lib/actions/app.actions.ts
 'use server';
 
 import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador, ReporteDiario, Constructora, Maquinaria } from '../types';
 import { 
-    mockConstructoras, mockSubcontratas, mockProyectos, mockTrabajadores, mockMaquinaria, mockReportesDiarios, mockFichajes,
-    saveDataToFile
+    mockConstructoras, mockSubcontratas, mockProyectos, mockTrabajadores, mockMaquinaria, mockReportesDiarios, mockFichajes
 } from '../mockData';
 import { parseISO } from 'date-fns';
 
@@ -175,30 +173,41 @@ export async function addEmpresa(data: { empresaNombre: string }): Promise<{ suc
 }
 
 
-export async function addProyecto(data: Omit<Proyecto, 'id'>): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
+export async function addProyecto(data: Omit<Proyecto, 'id' | 'fechaInicio' | 'fechaFin'> & { fechaInicio: string | null, fechaFin: string | null }): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
     await delay(200);
     try {
         const newProyecto: Proyecto = {
             id: `proy-mock-${Date.now()}`,
             ...data,
+            fechaInicio: data.fechaInicio ? new Date(data.fechaInicio) : null,
+            fechaFin: data.fechaFin ? new Date(data.fechaFin) : null,
         };
         mockProyectos.unshift(newProyecto as any); // Type assertion to bypass string/date mismatch temporarily
-        await saveDataToFile('proyectos', mockProyectos);
+        // await saveDataToFile('proyectos', mockProyectos);
         return { success: true, message: 'Proyecto añadido con éxito.', proyecto: parseProyectos([JSON.parse(JSON.stringify(newProyecto))])[0] };
     } catch(e: any) {
         return { success: false, message: e.message || 'Error al añadir proyecto.' };
     }
 }
 
-export async function updateProyecto(proyectoId: string, data: Partial<Omit<Proyecto, 'id'>>): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
+export async function updateProyecto(proyectoId: string, data: Partial<Omit<Proyecto, 'id' | 'fechaInicio' | 'fechaFin'>> & { fechaInicio?: string | null, fechaFin?: string | null }): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
     await delay(150);
     try {
         const index = mockProyectos.findIndex(p => p.id === proyectoId);
         if (index === -1) {
             return { success: false, message: 'Proyecto no encontrado.' };
         }
-        mockProyectos[index] = { ...mockProyectos[index], ...data } as any; // Temp assertion
-        await saveDataToFile('proyectos', mockProyectos);
+        
+        const updatedData = { ...data };
+        if (data.fechaInicio) {
+            (updatedData as any).fechaInicio = new Date(data.fechaInicio);
+        }
+        if (data.fechaFin) {
+            (updatedData as any).fechaFin = new Date(data.fechaFin);
+        }
+
+        mockProyectos[index] = { ...mockProyectos[index], ...updatedData } as any; // Temp assertion
+        // await saveDataToFile('proyectos', mockProyectos);
         return { success: true, message: 'Proyecto actualizado.', proyecto: parseProyectos([JSON.parse(JSON.stringify(mockProyectos[index]))])[0] };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al actualizar el proyecto.' };
@@ -224,7 +233,7 @@ export async function saveDailyReport(proyectoId: string, encargadoId: string, t
             },
         };
         mockReportesDiarios.unshift(newReporte);
-        await saveDataToFile('reportesDiarios', mockReportesDiarios);
+        // await saveDataToFile('reportesDiarios', mockReportesDiarios);
         return { success: true, message: 'Reporte diario guardado con éxito.' };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al guardar el reporte.' };
@@ -245,7 +254,7 @@ export async function updateDailyReport(reporteId: string, trabajadoresReporte: 
             timestamp: new Date().toISOString(),
             reporteOriginal: '[]' // Mocked
         };
-        await saveDataToFile('reportesDiarios', mockReportesDiarios);
+        // await saveDataToFile('reportesDiarios', mockReportesDiarios);
         return { success: true, message: 'Reporte actualizado.', reporte: parseReportes([JSON.parse(JSON.stringify(mockReportesDiarios[index]))])[0] };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al actualizar el reporte.' };
@@ -257,7 +266,7 @@ export async function saveFichaje(data: { trabajadorId: string; tipo: 'inicio' |
     try {
         const newFichaje = { id: `fichaje-mock-${Date.now()}`, ...data, timestamp: new Date().toISOString() };
         mockFichajes.push(newFichaje);
-        await saveDataToFile('fichajes', mockFichajes);
+        // await saveDataToFile('fichajes', mockFichajes);
         return { success: true, message: `Fichaje de ${data.tipo} guardado.` };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al guardar el fichaje.' };
@@ -273,7 +282,7 @@ export async function addTrabajador(data: { subcontrataId: string, nombre: strin
             ...data,
         };
         mockTrabajadores.push(newTrabajador);
-        await saveDataToFile('trabajadores', mockTrabajadores);
+        // await saveDataToFile('trabajadores', mockTrabajadores);
         return { success: true, message: "Trabajador añadido.", trabajador: JSON.parse(JSON.stringify(newTrabajador)) };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al añadir trabajador.' };
@@ -288,7 +297,7 @@ export async function removeTrabajador(trabajadorId: string): Promise<{ success:
             return { success: false, message: "Trabajador no encontrado." };
         }
         mockTrabajadores.splice(index, 1);
-        await saveDataToFile('trabajadores', mockTrabajadores);
+        // await saveDataToFile('trabajadores', mockTrabajadores);
         return { success: true, message: "Trabajador eliminado." };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al eliminar trabajador.' };
@@ -304,7 +313,7 @@ export async function addMaquinaria(data: { subcontrataId: string, nombre: strin
             ...data,
         };
         mockMaquinaria.push(newMaquinaria);
-        await saveDataToFile('maquinaria', mockMaquinaria);
+        // await saveDataToFile('maquinaria', mockMaquinaria);
         return { success: true, message: "Maquinaria añadida.", maquinaria: JSON.parse(JSON.stringify(newMaquinaria)) };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al añadir maquinaria.' };
@@ -319,7 +328,7 @@ export async function removeMaquinaria(maquinariaId: string): Promise<{ success:
             return { success: false, message: "Maquinaria no encontrada." };
         }
         mockMaquinaria.splice(index, 1);
-        await saveDataToFile('maquinaria', mockMaquinaria);
+        // await saveDataToFile('maquinaria', mockMaquinaria);
         return { success: true, message: "Maquinaria eliminada." };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al eliminar maquinaria.' };
@@ -335,7 +344,7 @@ export async function assignTrabajadoresToProyecto(proyectoId: string, trabajado
                 trabajador.proyectosAsignados?.push(proyectoId);
             }
         });
-        await saveDataToFile('trabajadores', mockTrabajadores);
+        // await saveDataToFile('trabajadores', mockTrabajadores);
         return { success: true, message: "Personal asignado." };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al asignar personal.' };
@@ -352,7 +361,7 @@ export async function removeTrabajadorFromProyecto(proyectoId: string, trabajado
                 trabajador.proyectosAsignados.splice(index, 1);
             }
         }
-        await saveDataToFile('trabajadores', mockTrabajadores);
+        // await saveDataToFile('trabajadores', mockTrabajadores);
         return { success: true, message: "Trabajador desvinculado." };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al desvincular trabajador.' };
@@ -368,7 +377,7 @@ export async function assignMaquinariaToProyecto(proyectoId: string, maquinariaI
                 maquina.proyectosAsignados?.push(proyectoId);
             }
         });
-        await saveDataToFile('maquinaria', mockMaquinaria);
+        // await saveDataToFile('maquinaria', mockMaquinaria);
         return { success: true, message: "Maquinaria asignada." };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al asignar maquinaria.' };
@@ -385,7 +394,7 @@ export async function removeMaquinariaFromProyecto(proyectoId: string, maquinari
                 maquina.proyectosAsignados.splice(index, 1);
             }
         }
-        await saveDataToFile('maquinaria', mockMaquinaria);
+        // await saveDataToFile('maquinaria', mockMaquinaria);
         return { success: true, message: "Maquinaria desvinculada." };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al desvincular maquinaria.' };
@@ -405,11 +414,9 @@ export async function validateDailyReport(reporteId: string, role: 'subcontrata'
         } else if (role === 'constructora') {
             reporte.validacion.constructora = { validado: true, timestamp: new Date().toISOString() };
         }
-        await saveDataToFile('reportesDiarios', mockReportesDiarios);
+        // await saveDataToFile('reportesDiarios', mockReportesDiarios);
         return { success: true, message: `Reporte validado por ${role}.`, reporte: parseReportes([JSON.parse(JSON.stringify(reporte))])[0] };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al validar el reporte.' };
     }
 }
-
-    

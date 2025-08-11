@@ -9,7 +9,7 @@ import { Loader2, ArrowLeft, Edit, Calendar, Building, User, HardHat, UserCheck,
 import { getProyectoById, getSubcontratas, getTrabajadoresByProyecto } from '@/lib/actions/app.actions';
 import type { Proyecto, Subcontrata, Trabajador } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -132,5 +132,3 @@ export default function ProyectoDetailPage() {
     </div>
   );
 }
-
-    

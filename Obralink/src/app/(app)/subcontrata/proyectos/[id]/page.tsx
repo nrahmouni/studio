@@ -8,7 +8,7 @@ import { Loader2, ArrowLeft, Edit, Calendar, Building, User, HardHat, MapPin, Br
 import { getProyectoById, getConstructoras, getTrabajadoresByProyecto, getMaquinariaByProyecto, removeTrabajadorFromProyecto, removeMaquinariaFromProyecto } from '@/lib/actions/app.actions';
 import type { Proyecto, Constructora, Trabajador, Maquinaria } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -193,5 +193,3 @@ export default function SubcontrataProyectoDetailPage() {
     </div>
   );
 }
-
-    

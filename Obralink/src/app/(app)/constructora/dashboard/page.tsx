@@ -7,7 +7,7 @@ import { Loader2, Building, HardHat, FileText, CheckCircle, Clock, BarChart3, Us
 import type { Proyecto, ReporteDiario } from '@/lib/types';
 import { getProyectosByConstructora, getReportesDiariosByConstructora, getInitialDataLoadStatus } from '@/lib/actions/app.actions';
 import { useToast } from '@/hooks/use-toast';
-import { format, formatDistanceToNow, parseISO } from 'date-fns';
+import { format, formatDistanceToNow } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
 
@@ -172,5 +172,3 @@ export default function ConstructoraDashboardPage() {
         </div>
     )
 }
-
-    
