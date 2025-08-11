@@ -34,8 +34,7 @@ export default function AsistenciaDashboardPage() {
         const subMap = subs.reduce((acc, s) => ({ ...acc, [s.id]: s }), {});
         setSubcontratasMap(subMap);
 
-        const proyPromises = subs.map(s => getProyectosBySubcontrata(s.id));
-        const proyArrays = await Promise.all(promsProyectos);
+        const proyArrays = await Promise.all(subs.map(s => getProyectosBySubcontrata(s.id)));
         const allProyectos = proyArrays.flat();
         const proyMap = allProyectos.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
         setProyectosMap(proyMap);

@@ -95,8 +95,8 @@ export async function getMaquinariaByProyecto(proyectoId: string): Promise<Maqui
     return JSON.parse(JSON.stringify(maquinaria));
 }
 
-export async function getReportesDiarios(proyectoId?: string, encargadoId?: string): Promise<ReporteDiario[]> {
-    console.log(`[ACTION LOG] getReportesDiarios called with filters: proyectoId=${proyectoId}, encargadoId=${encargadoId}`);
+export async function getReportesDiarios(proyectoId?: string, encargadoId?: string, subcontrataId?: string): Promise<ReporteDiario[]> {
+    console.log(`[ACTION LOG] getReportesDiarios called with filters: proyectoId=${proyectoId}, encargadoId=${encargadoId}, subcontrataId=${subcontrataId}`);
     await delay(150);
     let reportes = [...mockReportesDiarios];
     
@@ -105,6 +105,10 @@ export async function getReportesDiarios(proyectoId?: string, encargadoId?: stri
     }
     if (encargadoId) {
         reportes = reportes.filter((r: any) => r.encargadoId === encargadoId);
+    }
+    if (subcontrataId) {
+        const proyectosDeSubcontrataIds = mockProyectos.filter(p => p.subcontrataId === subcontrataId).map(p => p.id);
+        reportes = reportes.filter((r: any) => proyectosDeSubcontrataIds.includes(r.proyectoId));
     }
     
     console.log(`[ACTION LOG] Found ${reportes.length} reportes with applied filters.`);
