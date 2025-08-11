@@ -7,7 +7,7 @@ import { Loader2, Building, HardHat, FileText, CheckCircle, Clock, BarChart3, Us
 import type { Proyecto, ReporteDiario } from '@/lib/types';
 import { getProyectosByConstructora, getReportesDiariosByConstructora, getInitialDataLoadStatus } from '@/lib/actions/app.actions';
 import { useToast } from '@/hooks/use-toast';
-import { format, formatDistanceToNow } from 'date-fns';
+import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
 
@@ -74,15 +74,15 @@ export default function ConstructoraDashboardPage() {
 
     const proyectosActivos = proyectos.filter(p => {
         const now = new Date();
-        const fechaInicio = p.fechaInicio;
-        const fechaFin = p.fechaFin;
+        const fechaInicio = p.fechaInicio ? parseISO(p.fechaInicio) : null;
+        const fechaFin = p.fechaFin ? parseISO(p.fechaFin) : null;
         return fechaInicio && fechaInicio <= now && (!fechaFin || fechaFin >= now);
     }).length;
 
     const reportesPendientes = reportes.filter(r => !r.validacion.constructora.validado).length;
 
     const reportesRecientes = reportes
-        .sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .sort((a,b) => parseISO(b.timestamp).getTime() - parseISO(a.timestamp).getTime())
         .slice(0, 5);
         
     return (
@@ -142,11 +142,11 @@ export default function ConstructoraDashboardPage() {
                                            {r.validacion.constructora.validado ? <CheckCircle className="h-5 w-5 text-green-500"/> : <Clock className="h-5 w-5 text-yellow-500"/>}
                                            <div>
                                                <p className="font-semibold capitalize">{r.proyectoId.replace('proy-', '').replace(/-/g, ' ')}</p>
-                                               <p className="text-sm text-muted-foreground">Reporte del {format(r.fecha, 'PPP', {locale: es})}</p>
+                                               <p className="text-sm text-muted-foreground">Reporte del {format(parseISO(r.fecha), 'PPP', {locale: es})}</p>
                                            </div>
                                        </div>
                                        <div className="text-right">
-                                           <p className="text-sm font-medium">{formatDistanceToNow(r.timestamp, {locale: es, addSuffix: true})}</p>
+                                           <p className="text-sm font-medium">{formatDistanceToNow(parseISO(r.timestamp), {locale: es, addSuffix: true})}</p>
                                            <Link href="/constructora/partes"><Button variant="link" size="sm" className="h-auto p-0">Ir a validar</Button></Link>
                                        </div>
                                    </li>
