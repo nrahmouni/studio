@@ -34,8 +34,8 @@ export default function SubcontrataProyectosPage() {
     ]);
 
     const sortedProyectos = proyectosData.sort((a, b) => {
-        const dateA = a.fechaInicio ? new Date(a.fechaInicio).getTime() : 0;
-        const dateB = b.fechaInicio ? new Date(b.fechaInicio).getTime() : 0;
+        const dateA = a.fechaInicio ? parseISO(a.fechaInicio).getTime() : 0;
+        const dateB = b.fechaInicio ? parseISO(b.fechaInicio).getTime() : 0;
         return dateB - dateA;
     });
     setProyectos(sortedProyectos);

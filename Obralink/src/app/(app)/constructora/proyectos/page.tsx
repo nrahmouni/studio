@@ -33,7 +33,11 @@ export default function GestionProyectosConstructoraPage() {
       getSubcontratas(),
     ]);
     
-    proyectosData.sort((a,b) => new Date(b.fechaInicio || 0).getTime() - new Date(a.fechaInicio || 0).getTime());
+    proyectosData.sort((a,b) => {
+        const dateA = a.fechaInicio ? parseISO(a.fechaInicio).getTime() : 0;
+        const dateB = b.fechaInicio ? parseISO(b.fechaInicio).getTime() : 0;
+        return dateB - dateA;
+    });
     setProyectos(proyectosData);
     setSubcontratas(subcontratasData);
 
@@ -48,7 +52,15 @@ export default function GestionProyectosConstructoraPage() {
   }, [fetchData]);
 
   const onProyectoAdded = useCallback((newProyecto: Proyecto) => {
-    setProyectos(prev => [newProyecto, ...prev]);
+    setProyectos(prev => {
+        const newProyectos = [newProyecto, ...prev];
+        newProyectos.sort((a,b) => {
+             const dateA = a.fechaInicio ? parseISO(a.fechaInicio).getTime() : 0;
+             const dateB = b.fechaInicio ? parseISO(b.fechaInicio).getTime() : 0;
+             return dateB - dateA;
+        });
+        return newProyectos;
+    });
   }, []);
 
   const getStatus = (proyecto: Proyecto) => {

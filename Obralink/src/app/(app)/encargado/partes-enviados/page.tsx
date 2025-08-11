@@ -29,7 +29,7 @@ export default function PartesEnviadosPage() {
       const encargadoId = localStorage.getItem('encargadoId_obra_link');
       
       const reportsData = await getReportesDiarios(undefined, encargadoId || undefined);
-      reportsData.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime());
+      reportsData.sort((a, b) => parseISO(b.fecha).getTime() - parseISO(a.fecha).getTime());
       setReportes(reportsData);
 
       const subs = await getSubcontratas();
@@ -37,7 +37,7 @@ export default function PartesEnviadosPage() {
       setSubcontratasMap(subMap);
 
       const proyPromises = subs.map(s => getProyectosBySubcontrata(s.id));
-      const proyArrays = await Promise.all(proyPromises);
+      const proyArrays = await Promise.all(promsProyectos);
       const allProyectos = proyArrays.flat();
       const proyMap = allProyectos.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
       setProyectosMap(proyMap);

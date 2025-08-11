@@ -81,111 +81,93 @@ export function AddProyectoSubcontrataDialog({ onProyectoAdded, constructoras, c
   };
 
   return (
-    
-        
-          {children}
-        
-        
-          
-            Añadir Nuevo Proyecto
-          
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>{children}</DialogTrigger>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Añadir Nuevo Proyecto</DialogTitle>
+          <DialogDescription>
             Introduce los detalles del nuevo proyecto que gestionará tu empresa.
-          
-        
-        
-            
-              Nombre del Proyecto
-              
-              {form.formState.errors.nombre && El nombre es requeridoEj: Reforma Local Comercial}
-            
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={form.handleSubmit(handleSubmit)} className="grid gap-4 py-4">
+            <div>
+              <Label htmlFor="nombre">Nombre del Proyecto</Label>
+              <Input id="nombre" {...form.register('nombre')} className="mt-1" placeholder="Ej: Reforma Local Comercial" />
+              {form.formState.errors.nombre && <p className="text-sm text-destructive mt-1">{form.formState.errors.nombre.message}</p>}
+            </div>
 
+            <div>
+              <Label htmlFor="direccion">Dirección</Label>
+              <Input id="direccion" {...form.register('direccion')} className="mt-1" placeholder="Ej: Calle Gran Vía, 28, Madrid" />
+              {form.formState.errors.direccion && <p className="text-sm text-destructive mt-1">{form.formState.errors.direccion.message}</p>}
+            </div>
             
-              Dirección
-              
-              {form.formState.errors.direccion && La dirección es requeridaEj: Calle Gran Vía, 28, Madrid}
-            
-            
-                Cliente (Constructora)
-                
-                    
-                        
-                            Selecciona una constructora
-                        
-                        
-                            {constructoras.map(s => (
-                                {s.nombre}
-                            ))}
-                        
-                    
-                
-                {form.formState.errors.constructoraId && Debes asignar una constructora cliente.}
-            
+            <div>
+                <Label htmlFor="constructoraId">Cliente (Constructora)</Label>
+                <Controller
+                    name="constructoraId"
+                    control={form.control}
+                    render={({ field }) => (
+                        <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <SelectTrigger className="w-full mt-1">
+                                <SelectValue placeholder="Selecciona una constructora" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                {constructoras.map(s => (
+                                    <SelectItem key={s.id} value={s.id}>{s.nombre}</SelectItem>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                    )}
+                />
+                {form.formState.errors.constructoraId && <p className="text-sm text-destructive mt-1">{form.formState.errors.constructoraId.message}</p>}
+            </div>
 
-            
-              Nombre del Cliente Final
-              
-              {form.formState.errors.clienteNombre && El nombre del cliente final es requeridoEj: Zara Home S.A.}
-            
+            <div>
+              <Label htmlFor="clienteNombre">Nombre del Cliente Final</Label>
+              <Input id="clienteNombre" {...form.register('clienteNombre')} className="mt-1" placeholder="Ej: Zara Home S.A." />
+              {form.formState.errors.clienteNombre && <p className="text-sm text-destructive mt-1">{form.formState.errors.clienteNombre.message}</p>}
+            </div>
 
-            
-                
-                    
-                        Fecha de Inicio
-                        
-                            
-                                  
-                                    
-                                      
-                                        
-                                          {field.value ? format(field.value, "PPP", {locale: es}) : Selecciona}
-                                        
-                                      
-                                    
-                                  
-                                  
-                                    
-                                    
-                                    
-                                    
-                                  
-                                
-                            
-                        
-                        {form.formState.errors.fechaInicio && La fecha de inicio es requerida.}
-                    
-                    
-                        Fecha de Fin (Opc.)
-                        
-                            
-                                  
-                                    
-                                      
-                                        
-                                          {field.value ? format(field.value, "PPP", {locale: es}) : Selecciona}
-                                        
-                                      
-                                    
-                                  
-                                  
-                                    
-                                    
-                                    
-                                    
-                                  
-                                
-                            
-                        
-                    
-                
-            
+            <div className="grid grid-cols-2 gap-4">
+                <div>
+                    <Label htmlFor="fechaInicio">Fecha de Inicio</Label>
+                    <Controller
+                        name="fechaInicio"
+                        control={form.control}
+                        render={({ field }) => (
+                             <Popover><PopoverTrigger asChild>
+                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal mt-1", !field.value && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP", {locale: es}) : <span>Selecciona</span>}
+                                </Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus locale={es}/></PopoverContent></Popover>
+                        )}
+                    />
+                    {form.formState.errors.fechaInicio && <p className="text-sm text-destructive mt-1">{form.formState.errors.fechaInicio.message}</p>}
+                </div>
+                <div>
+                    <Label htmlFor="fechaFin">Fecha de Fin (Opc.)</Label>
+                    <Controller
+                        name="fechaFin"
+                        control={form.control}
+                        render={({ field }) => (
+                             <Popover><PopoverTrigger asChild>
+                                <Button variant={"outline"} className={cn("w-full justify-start text-left font-normal mt-1", !field.value && "text-muted-foreground")}>
+                                    <CalendarIcon className="mr-2 h-4 w-4" />{field.value ? format(field.value, "PPP", {locale: es}) : <span>Selecciona</span>}
+                                </Button></PopoverTrigger><PopoverContent className="w-auto p-0"><Calendar mode="single" selected={field.value} onSelect={field.onChange} initialFocus locale={es}/></PopoverContent></Popover>
+                        )}
+                    />
+                </div>
+            </div>
 
-          
-            
-              {form.formState.isSubmitting ?   Crear Proyecto
-            
-          
-        
-      
-    
+          <DialogFooter className="pt-4">
+            <Button type="submit" disabled={form.formState.isSubmitting}>
+              {form.formState.isSubmitting ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <PlusCircle className="mr-2 h-4 w-4" />}
+              Crear Proyecto
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }

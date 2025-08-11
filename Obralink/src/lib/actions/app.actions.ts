@@ -7,9 +7,45 @@ import {
     mockConstructoras, mockSubcontratas, mockProyectos, mockTrabajadores, mockMaquinaria, mockReportesDiarios, mockFichajes,
     saveDataToFile
 } from '../mockData';
+import { parseISO } from 'date-fns';
 
 // Helper para simular latencia de red
 const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
+
+const parseProyectos = (proyectos: any[]): Proyecto[] => {
+    return proyectos.map(p => ({
+        ...p,
+        fechaInicio: p.fechaInicio ? parseISO(p.fechaInicio) : null,
+        fechaFin: p.fechaFin ? parseISO(p.fechaFin) : null,
+    }));
+}
+
+const parseReportes = (reportes: any[]): ReporteDiario[] => {
+    return reportes.map(r => ({
+        ...r,
+        fecha: parseISO(r.fecha),
+        timestamp: parseISO(r.timestamp),
+        validacion: {
+            encargado: {
+                validado: r.validacion.encargado.validado,
+                timestamp: r.validacion.encargado.timestamp ? parseISO(r.validacion.encargado.timestamp) : null,
+            },
+            subcontrata: {
+                validado: r.validacion.subcontrata.validado,
+                timestamp: r.validacion.subcontrata.timestamp ? parseISO(r.validacion.subcontrata.timestamp) : null,
+            },
+            constructora: {
+                validado: r.validacion.constructora.validado,
+                timestamp: r.validacion.constructora.timestamp ? parseISO(r.validacion.constructora.timestamp) : null,
+            },
+        },
+        modificacionJefeObra: r.modificacionJefeObra ? {
+            ...r.modificacionJefeObra,
+            timestamp: r.modificacionJefeObra.timestamp ? parseISO(r.modificacionJefeObra.timestamp) : null,
+        } : undefined,
+    }));
+}
+
 
 // --- DATA FETCHING ---
 
@@ -25,18 +61,20 @@ export async function getSubcontratas(): Promise<Subcontrata[]> {
 
 export async function getProyectosByConstructora(constructoraId: string): Promise<Proyecto[]> {
     await delay(100);
-    return JSON.parse(JSON.stringify(mockProyectos.filter(p => p.constructoraId === constructoraId)));
+    const proyectos = mockProyectos.filter(p => p.constructoraId === constructoraId);
+    return parseProyectos(JSON.parse(JSON.stringify(proyectos)));
 }
 
 export async function getProyectosBySubcontrata(subcontrataId: string): Promise<Proyecto[]> {
     await delay(100);
-    return JSON.parse(JSON.stringify(mockProyectos.filter(p => p.subcontrataId === subcontrataId)));
+    const proyectos = mockProyectos.filter(p => p.subcontrataId === subcontrataId);
+    return parseProyectos(JSON.parse(JSON.stringify(proyectos)));
 }
 
 export async function getProyectoById(proyectoId: string): Promise<Proyecto | null> {
     await delay(50);
     const proyecto = mockProyectos.find(p => p.id === proyectoId) || null;
-    return proyecto ? JSON.parse(JSON.stringify(proyecto)) : null;
+    return proyecto ? parseProyectos([JSON.parse(JSON.stringify(proyecto))])[0] : null;
 }
 
 export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Trabajador[]> {
@@ -51,35 +89,35 @@ export async function getMaquinariaByProyecto(proyectoId: string): Promise<Maqui
 
 export async function getReportesDiarios(proyectoId?: string, encargadoId?: string, subcontrataId?: string): Promise<ReporteDiario[]> {
     await delay(150);
-    let reportes = JSON.parse(JSON.stringify(mockReportesDiarios));
+    let reportes = [...mockReportesDiarios];
     
     if (proyectoId) {
-        reportes = reportes.filter((r: ReporteDiario) => r.proyectoId === proyectoId);
+        reportes = reportes.filter((r: any) => r.proyectoId === proyectoId);
     }
     if (encargadoId) {
-        reportes = reportes.filter((r: ReporteDiario) => r.encargadoId === encargadoId);
+        reportes = reportes.filter((r: any) => r.encargadoId === encargadoId);
     }
     if (subcontrataId) {
         const proyectosDeSub = mockProyectos.filter(p => p.subcontrataId === subcontrataId).map(p => p.id);
-        reportes = reportes.filter((r: ReporteDiario) => proyectosDeSub.includes(r.proyectoId));
+        reportes = reportes.filter((r: any) => proyectosDeSub.includes(r.proyectoId));
     }
-    return reportes;
+    return parseReportes(JSON.parse(JSON.stringify(reportes)));
 }
 
 export async function getReportesDiariosByConstructora(constructoraId: string): Promise<ReporteDiario[]> {
     await delay(150);
-    let reportes = JSON.parse(JSON.stringify(mockReportesDiarios));
+    let reportes = [...mockReportesDiarios];
     
     const proyectosDeConstructora = mockProyectos.filter(p => p.constructoraId === constructoraId).map(p => p.id);
-    reportes = reportes.filter((r: ReporteDiario) => proyectosDeConstructora.includes(r.proyectoId));
+    reportes = reportes.filter((r: any) => proyectosDeConstructora.includes(r.proyectoId));
 
-    return reportes;
+    return parseReportes(JSON.parse(JSON.stringify(reportes)));
 }
 
 export async function getReporteDiarioById(reporteId: string): Promise<ReporteDiario | null> {
     await delay(50);
     const reporte = mockReportesDiarios.find(r => r.id === reporteId) || null;
-    return reporte ? JSON.parse(JSON.stringify(reporte)) : null;
+    return reporte ? parseReportes([JSON.parse(JSON.stringify(reporte))])[0] : null;
 }
 
 export async function getTrabajadoresBySubcontrata(subcontrataId: string): Promise<Trabajador[]> {
@@ -89,7 +127,7 @@ export async function getTrabajadoresBySubcontrata(subcontrataId: string): Promi
 
 export async function getMaquinariaBySubcontrata(subcontrataId: string): Promise<Maquinaria[]> {
      await delay(100);
-    return JSON.parse(JSON.stringify(mockMaquinaria.filter(m => m.subcontrataId === m.subcontrataId)));
+    return JSON.parse(JSON.stringify(mockMaquinaria.filter(m => m.subcontrataId === subcontrataId)));
 }
 
 // --- DATA MUTATION ---
@@ -118,9 +156,9 @@ export async function addProyecto(data: Omit<Proyecto, 'id'>): Promise<{ success
             id: `proy-mock-${Date.now()}`,
             ...data,
         };
-        mockProyectos.unshift(newProyecto);
+        mockProyectos.unshift(newProyecto as any); // Type assertion to bypass string/date mismatch temporarily
         await saveDataToFile('proyectos', mockProyectos);
-        return { success: true, message: 'Proyecto añadido con éxito.', proyecto: JSON.parse(JSON.stringify(newProyecto)) };
+        return { success: true, message: 'Proyecto añadido con éxito.', proyecto: parseProyectos([JSON.parse(JSON.stringify(newProyecto))])[0] };
     } catch(e: any) {
         return { success: false, message: e.message || 'Error al añadir proyecto.' };
     }
@@ -133,9 +171,9 @@ export async function updateProyecto(proyectoId: string, data: Partial<Omit<Proy
         if (index === -1) {
             return { success: false, message: 'Proyecto no encontrado.' };
         }
-        mockProyectos[index] = { ...mockProyectos[index], ...data };
+        mockProyectos[index] = { ...mockProyectos[index], ...data } as any; // Temp assertion
         await saveDataToFile('proyectos', mockProyectos);
-        return { success: true, message: 'Proyecto actualizado.', proyecto: JSON.parse(JSON.stringify(mockProyectos[index])) };
+        return { success: true, message: 'Proyecto actualizado.', proyecto: parseProyectos([JSON.parse(JSON.stringify(mockProyectos[index]))])[0] };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al actualizar el proyecto.' };
     }
@@ -144,7 +182,7 @@ export async function updateProyecto(proyectoId: string, data: Partial<Omit<Proy
 export async function saveDailyReport(proyectoId: string, encargadoId: string, trabajadoresReporte: ReporteTrabajador[], comentarios: string, fotosURLs: string[]): Promise<{ success: boolean; message: string }> {
     await delay(250);
     try {
-        const newReporte: ReporteDiario = {
+        const newReporte: any = {
             id: `rep-mock-${Date.now()}`,
             proyectoId,
             encargadoId,
@@ -174,15 +212,15 @@ export async function updateDailyReport(reporteId: string, trabajadoresReporte: 
         if (index === -1) {
             return { success: false, message: 'Reporte no encontrado.' };
         }
-        mockReportesDiarios[index].trabajadores = trabajadoresReporte;
-        mockReportesDiarios[index].modificacionJefeObra = {
+        (mockReportesDiarios as any)[index].trabajadores = trabajadoresReporte;
+        (mockReportesDiarios as any)[index].modificacionJefeObra = {
             modificado: true,
             jefeObraId: 'jefe-obra-mock-id',
             timestamp: new Date().toISOString(),
             reporteOriginal: '[]' // Mocked
         };
         await saveDataToFile('reportesDiarios', mockReportesDiarios);
-        return { success: true, message: 'Reporte actualizado.', reporte: JSON.parse(JSON.stringify(mockReportesDiarios[index])) };
+        return { success: true, message: 'Reporte actualizado.', reporte: parseReportes([JSON.parse(JSON.stringify(mockReportesDiarios[index]))])[0] };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al actualizar el reporte.' };
     }
@@ -335,14 +373,14 @@ export async function validateDailyReport(reporteId: string, role: 'subcontrata'
         if (index === -1) {
             return { success: false, message: 'Reporte no encontrado.' };
         }
-        const reporte = mockReportesDiarios[index];
+        const reporte = (mockReportesDiarios as any)[index];
         if (role === 'subcontrata') {
             reporte.validacion.subcontrata = { validado: true, timestamp: new Date().toISOString() };
         } else if (role === 'constructora') {
             reporte.validacion.constructora = { validado: true, timestamp: new Date().toISOString() };
         }
         await saveDataToFile('reportesDiarios', mockReportesDiarios);
-        return { success: true, message: `Reporte validado por ${role}.`, reporte: JSON.parse(JSON.stringify(reporte)) };
+        return { success: true, message: `Reporte validado por ${role}.`, reporte: parseReportes([JSON.parse(JSON.stringify(reporte))])[0] };
     } catch (e: any) {
         return { success: false, message: e.message || 'Error al validar el reporte.' };
     }
