@@ -16,33 +16,33 @@ const parseProyectos = (proyectos: any[]): Proyecto[] => {
     return proyectos.map(p => ({
         ...p,
         // fechaInicio and fechaFin can be null, so check before parsing
-        fechaInicio: p.fechaInicio ? parseISO(p.fechaInicio) : null,
-        fechaFin: p.fechaFin ? parseISO(p.fechaFin) : null,
+        fechaInicio: p.fechaInicio ? p.fechaInicio : null,
+        fechaFin: p.fechaFin ? p.fechaFin : null,
     }));
 }
 
 const parseReportes = (reportes: any[]): ReporteDiario[] => {
     return reportes.map(r => ({
         ...r,
-        fecha: parseISO(r.fecha),
-        timestamp: parseISO(r.timestamp),
+        fecha: r.fecha,
+        timestamp: r.timestamp,
         validacion: {
             encargado: {
                 validado: r.validacion.encargado.validado,
-                timestamp: r.validacion.encargado.timestamp ? parseISO(r.validacion.encargado.timestamp) : null,
+                timestamp: r.validacion.encargado.timestamp ? r.validacion.encargado.timestamp : null,
             },
             subcontrata: {
                 validado: r.validacion.subcontrata.validado,
-                timestamp: r.validacion.subcontrata.timestamp ? parseISO(r.validacion.subcontrata.timestamp) : null,
+                timestamp: r.validacion.subcontrata.timestamp ? r.validacion.subcontrata.timestamp : null,
             },
             constructora: {
                 validado: r.validacion.constructora.validado,
-                timestamp: r.validacion.constructora.timestamp ? parseISO(r.validacion.constructora.timestamp) : null,
+                timestamp: r.validacion.constructora.timestamp ? r.validacion.constructora.timestamp : null,
             },
         },
         modificacionJefeObra: r.modificacionJefeObra ? {
             ...r.modificacionJefeObra,
-            timestamp: r.modificacionJefeObra.timestamp ? parseISO(r.modificacionJefeObra.timestamp) : null,
+            timestamp: r.modificacionJefeObra.timestamp ? r.modificacionJefeObra.timestamp : null,
         } : undefined,
     }));
 }
