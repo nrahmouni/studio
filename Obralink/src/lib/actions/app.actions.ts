@@ -22,25 +22,25 @@ const parseProyectos = (proyectos: any[]): Proyecto[] => {
 const parseReportes = (reportes: any[]): ReporteDiario[] => {
     return reportes.map(r => ({
         ...r,
-        fecha: r.fecha ? parseISO(r.fecha) : new Date(),
-        timestamp: r.timestamp ? parseISO(r.timestamp) : new Date(),
+        fecha: r.fecha, // Keep as string
+        timestamp: r.timestamp, // Keep as string
         validacion: {
             encargado: {
                 validado: r.validacion?.encargado?.validado || false,
-                timestamp: r.validacion?.encargado?.timestamp ? parseISO(r.validacion.encargado.timestamp) : null,
+                timestamp: r.validacion?.encargado?.timestamp,
             },
             subcontrata: {
                 validado: r.validacion?.subcontrata?.validado || false,
-                timestamp: r.validacion?.subcontrata?.timestamp ? parseISO(r.validacion.subcontrata.timestamp) : null,
+                timestamp: r.validacion?.subcontrata?.timestamp,
             },
             constructora: {
                 validado: r.validacion?.constructora?.validado || false,
-                timestamp: r.validacion?.constructora?.timestamp ? parseISO(r.validacion.constructora.timestamp) : null,
+                timestamp: r.validacion?.constructora?.timestamp,
             },
         },
         modificacionJefeObra: r.modificacionJefeObra ? {
             ...r.modificacionJefeObra,
-            timestamp: r.modificacionJefeObra.timestamp ? parseISO(r.modificacionJefeObra.timestamp) : null,
+            timestamp: r.modificacionJefeObra.timestamp,
         } : undefined,
     }));
 }
@@ -93,7 +93,7 @@ export async function getProyectosByConstructora(constructoraId: string): Promis
     await delay(100);
     const proyectos = mockProyectos.filter(p => p.constructoraId === constructoraId);
     console.log(`[ACTION LOG] Found ${proyectos.length} proyectos for constructoraId: ${constructoraId}`);
-    return parseProyectos(JSON.parse(JSON.stringify(proyectos)));
+    return JSON.parse(JSON.stringify(proyectos));
 }
 
 export async function getProyectosBySubcontrata(subcontrataId: string): Promise<Proyecto[]> {
@@ -101,7 +101,7 @@ export async function getProyectosBySubcontrata(subcontrataId: string): Promise<
     await delay(100);
     const proyectos = mockProyectos.filter(p => p.subcontrataId === subcontrataId);
     console.log(`[ACTION LOG] Found ${proyectos.length} proyectos for subcontrataId: ${subcontrataId}`);
-    return parseProyectos(JSON.parse(JSON.stringify(proyectos)));
+    return JSON.parse(JSON.stringify(proyectos));
 }
 
 export async function getProyectoById(proyectoId: string): Promise<Proyecto | null> {
@@ -109,7 +109,7 @@ export async function getProyectoById(proyectoId: string): Promise<Proyecto | nu
     await delay(50);
     const proyecto = mockProyectos.find(p => p.id === proyectoId) || null;
     console.log(`[ACTION LOG] Found proyecto: ${!!proyecto}`);
-    return proyecto ? parseProyectos([JSON.parse(JSON.stringify(proyecto))])[0] : null;
+    return proyecto ? JSON.parse(JSON.stringify(proyecto)) : null;
 }
 
 export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Trabajador[]> {
@@ -144,7 +144,7 @@ export async function getReportesDiarios(proyectoId?: string, encargadoId?: stri
         reportes = reportes.filter((r: any) => proyectosDeSub.includes(r.proyectoId));
     }
     console.log(`[ACTION LOG] Found ${reportes.length} reportes with applied filters.`);
-    return parseReportes(JSON.parse(JSON.stringify(reportes)));
+    return JSON.parse(JSON.stringify(reportes));
 }
 
 export async function getReportesDiariosByConstructora(constructoraId: string): Promise<ReporteDiario[]> {
@@ -155,7 +155,7 @@ export async function getReportesDiariosByConstructora(constructoraId: string): 
     const proyectosDeConstructora = mockProyectos.filter(p => p.constructoraId === constructoraId).map(p => p.id);
     reportes = reportes.filter((r: any) => proyectosDeConstructora.includes(r.proyectoId));
     console.log(`[ACTION LOG] Found ${reportes.length} reportes for constructoraId: ${constructoraId}`);
-    return parseReportes(JSON.parse(JSON.stringify(reportes)));
+    return JSON.parse(JSON.stringify(reportes));
 }
 
 export async function getReporteDiarioById(reporteId: string): Promise<ReporteDiario | null> {
@@ -163,7 +163,7 @@ export async function getReporteDiarioById(reporteId: string): Promise<ReporteDi
     await delay(50);
     const reporte = mockReportesDiarios.find(r => r.id === reporteId) || null;
     console.log(`[ACTION LOG] Found reporte: ${!!reporte}`);
-    return reporte ? parseReportes([JSON.parse(JSON.stringify(reporte))])[0] : null;
+    return reporte ? JSON.parse(JSON.stringify(reporte)) : null;
 }
 
 export async function getTrabajadoresBySubcontrata(subcontrataId: string): Promise<Trabajador[]> {
@@ -209,12 +209,12 @@ export async function addProyecto(data: Omit<Proyecto, 'id'>): Promise<{ success
         const newProyecto: any = { 
             id: `proy-mock-${Date.now()}`,
             ...data,
-            fechaInicio: data.fechaInicio ? (data.fechaInicio as Date).toISOString() : null,
-            fechaFin: data.fechaFin ? (data.fechaFin as Date).toISOString() : null,
+            fechaInicio: data.fechaInicio,
+            fechaFin: data.fechaFin,
         };
         mockProyectos.unshift(newProyecto);
         console.log('[ACTION LOG] addProyecto successful. New proyecto:', newProyecto);
-        return { success: true, message: 'Proyecto añadido con éxito.', proyecto: parseProyectos([JSON.parse(JSON.stringify(newProyecto))])[0] };
+        return { success: true, message: 'Proyecto añadido con éxito.', proyecto: JSON.parse(JSON.stringify(newProyecto)) };
     } catch(e: any) {
         console.error("[ACTION LOG] Error in addProyecto:", e);
         return { success: false, message: e.message || 'Error al añadir proyecto.' };
@@ -232,12 +232,12 @@ export async function updateProyecto(proyectoId: string, data: Partial<Omit<Proy
         }
         
         const updatedData: any = { ...data };
-        if (data.fechaInicio) updatedData.fechaInicio = (data.fechaInicio as Date).toISOString();
-        if (data.fechaFin) updatedData.fechaFin = (data.fechaFin as Date).toISOString();
+        if (data.fechaInicio) updatedData.fechaInicio = data.fechaInicio;
+        if (data.fechaFin) updatedData.fechaFin = data.fechaFin;
 
         mockProyectos[index] = { ...mockProyectos[index], ...updatedData };
         console.log('[ACTION LOG] updateProyecto successful.');
-        return { success: true, message: 'Proyecto actualizado.', proyecto: parseProyectos([JSON.parse(JSON.stringify(mockProyectos[index]))])[0] };
+        return { success: true, message: 'Proyecto actualizado.', proyecto: JSON.parse(JSON.stringify(mockProyectos[index])) };
     } catch (e: any) {
         console.error(`[ACTION LOG] Error in updateProyecto for ID ${proyectoId}:`, e);
         return { success: false, message: e.message || 'Error al actualizar el proyecto.' };
@@ -289,7 +289,7 @@ export async function updateDailyReport(reporteId: string, trabajadoresReporte: 
             reporteOriginal: '[]' // Mocked
         };
         console.log('[ACTION LOG] updateDailyReport successful.');
-        return { success: true, message: 'Reporte actualizado.', reporte: parseReportes([JSON.parse(JSON.stringify(mockReportesDiarios[index]))])[0] };
+        return { success: true, message: 'Reporte actualizado.', reporte: JSON.parse(JSON.stringify(mockReportesDiarios[index])) };
     } catch (e: any) {
         console.error(`[ACTION LOG] Error in updateDailyReport for ID ${reporteId}:`, e);
         return { success: false, message: e.message || 'Error al actualizar el reporte.' };
@@ -472,9 +472,10 @@ export async function validateDailyReport(reporteId: string, role: 'subcontrata'
             reporte.validacion.constructora = { validado: true, timestamp: new Date().toISOString() };
         }
         console.log('[ACTION LOG] validateDailyReport successful.');
-        return { success: true, message: `Reporte validado por ${role}.`, reporte: parseReportes([JSON.parse(JSON.stringify(reporte))])[0] };
+        return { success: true, message: `Reporte validado por ${role}.`, reporte: JSON.parse(JSON.stringify(reporte)) };
     } catch (e: any) {
         console.error(`[ACTION LOG] Error in validateDailyReport for ID ${reporteId}:`, e);
         return { success: false, message: e.message || 'Error al validar el reporte.' };
     }
 }
+
