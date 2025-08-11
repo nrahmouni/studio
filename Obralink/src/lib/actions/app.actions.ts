@@ -47,6 +47,31 @@ const parseReportes = (reportes: any[]): ReporteDiario[] => {
     }));
 }
 
+/**
+ * Checks if the initial demo data from JSON files has been loaded into memory correctly.
+ * This is a debugging tool to show a client-side error if the server failed to read local files.
+ */
+export async function getInitialDataLoadStatus(): Promise<{ success: boolean; message?: string }> {
+    const dataSets = {
+        constructoras: mockConstructoras,
+        subcontratas: mockSubcontratas,
+        proyectos: mockProyectos,
+        trabajadores: mockTrabajadores,
+    };
+    const unloadedSets = Object.entries(dataSets).filter(([, data]) => data.length === 0);
+
+    if (unloadedSets.length > 0) {
+        const unloadedNames = unloadedSets.map(([name]) => name).join(', ');
+        const errorMessage = `Error Crítico: Los siguientes archivos de datos de demostración no se pudieron cargar: ${unloadedNames}.json. Revisa los logs del servidor para ver el error de lectura del archivo.`;
+        console.error(`[Data Load Status]: ${errorMessage}`);
+        return {
+            success: false,
+            message: errorMessage,
+        };
+    }
+    return { success: true };
+}
+
 
 // --- DATA FETCHING ---
 

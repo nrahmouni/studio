@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { Button } from '@/components/ui/button';
 import { Loader2, Building, HardHat, FileText, CheckCircle, Clock, BarChart3, Users, AlertCircle, Briefcase } from 'lucide-react';
 import type { Proyecto, ReporteDiario } from '@/lib/types';
-import { getProyectosByConstructora, getReportesDiariosByConstructora } from '@/lib/actions/app.actions';
+import { getProyectosByConstructora, getReportesDiariosByConstructora, getInitialDataLoadStatus } from '@/lib/actions/app.actions';
 import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
@@ -39,7 +39,17 @@ export default function ConstructoraDashboardPage() {
     const { toast } = useToast();
 
     useEffect(() => {
-        const fetchData = async () => {
+        const checkDataAndFetch = async () => {
+            const dataStatus = await getInitialDataLoadStatus();
+            if (!dataStatus.success) {
+                toast({
+                    variant: "destructive",
+                    title: "Error Crítico de Datos",
+                    description: dataStatus.message,
+                    duration: 20000, 
+                });
+            }
+
             setLoading(true);
             const constructoraId = localStorage.getItem('constructoraId_obra_link');
             if (!constructoraId) {
@@ -59,7 +69,7 @@ export default function ConstructoraDashboardPage() {
             }
             setLoading(false);
         };
-        fetchData();
+        checkDataAndFetch();
     }, [toast]);
 
     const proyectosActivos = proyectos.filter(p => {
