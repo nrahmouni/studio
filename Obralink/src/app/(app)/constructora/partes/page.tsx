@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Building, HardHat, FileText, UserCheck, Calendar, AlertTriangle } from 'lucide-react';
 import type { Subcontrata, Proyecto, ReporteDiario } from '@/lib/types';
-import { getSubcontratas, getProyectosByConstructora, getReportesDiarios, validateDailyReport } from '@/lib/actions/app.actions';
+import { getSubcontratas, getProyectosByConstructora, getReportesDiariosByConstructora, validateDailyReport } from '@/lib/actions/app.actions';
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
