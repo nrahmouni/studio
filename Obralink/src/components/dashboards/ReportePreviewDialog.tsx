@@ -12,7 +12,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import type { ReporteDiario } from '@/lib/types';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Calendar, User, Check, X, Clock, MessageSquare } from "lucide-react";
 
@@ -40,7 +40,7 @@ export function ReportePreviewDialog({ reporte, isOpen, onOpenChange }: ReporteP
         </DialogHeader>
         <div className="py-4 space-y-4">
           <div className="flex justify-between items-center text-sm text-muted-foreground bg-muted/50 p-3 rounded-md">
-            <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> <strong>Fecha del Reporte:</strong> {format(parseISO(reporte.fecha), "PPPP", { locale: es })}</p>
+            <p className="flex items-center gap-2"><Calendar className="h-4 w-4" /> <strong>Fecha del Reporte:</strong> {format(reporte.fecha, "PPPP", { locale: es })}</p>
             <p className="flex items-center gap-2"><User className="h-4 w-4" /> <strong>Reportado por (ID):</strong> {reporte.encargadoId}</p>
           </div>
           

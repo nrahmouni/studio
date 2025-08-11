@@ -23,8 +23,8 @@ export const ProyectoSchema = z.object({
   subcontrataId: z.string(),
   direccion: z.string().min(1, "La dirección es requerida"),
   clienteNombre: z.string().min(1, "El nombre del cliente es requerido").optional(),
-  fechaInicio: z.string().optional().nullable(),
-  fechaFin: z.string().optional().nullable(),
+  fechaInicio: z.date().optional().nullable(),
+  fechaFin: z.date().optional().nullable(),
 });
 export type Proyecto = z.infer<typeof ProyectoSchema>;
 
@@ -76,23 +76,23 @@ export type ReporteTrabajador = z.infer<typeof ReporteTrabajadorSchema>;
 export const ReporteDiarioSchema = z.object({
   id: z.string(), // e.g., {proyectoId}-{YYYY-MM-DD}
   proyectoId: z.string(),
-  fecha: z.string(),
+  fecha: z.date(),
   trabajadores: z.array(ReporteTrabajadorSchema),
   encargadoId: z.string(), // User ID of the Encargado who submitted
-  timestamp: z.string(),
+  timestamp: z.date(),
   comentarios: z.string().optional().nullable(),
   fotosURLs: z.array(z.string().url()).optional(),
   // Validation stages
   validacion: z.object({
-    encargado: z.object({ validado: z.boolean(), timestamp: z.string().nullable() }),
-    subcontrata: z.object({ validado: z.boolean(), timestamp: z.string().nullable() }),
-    constructora: z.object({ validado: z.boolean(), timestamp: z.string().nullable() }),
+    encargado: z.object({ validado: z.boolean(), timestamp: z.date().nullable() }),
+    subcontrata: z.object({ validado: z.boolean(), timestamp: z.date().nullable() }),
+    constructora: z.object({ validado: z.boolean(), timestamp: z.date().nullable() }),
   }),
   // For modifications by Jefe de Obra
   modificacionJefeObra: z.object({
     modificado: z.boolean(),
     jefeObraId: z.string().nullable(),
-    timestamp: z.string().nullable(),
+    timestamp: z.date().nullable(),
     reporteOriginal: z.string().nullable(), // JSON string of the original 'trabajadores' array
   }).optional(),
 });

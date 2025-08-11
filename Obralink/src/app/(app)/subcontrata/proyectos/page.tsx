@@ -35,8 +35,8 @@ export default function SubcontrataProyectosPage() {
         ]);
 
         const sortedProyectos = proyectosData.sort((a, b) => {
-            const dateA = a.fechaInicio ? a.fechaInicio.getTime() : 0;
-            const dateB = b.fechaInicio ? b.fechaInicio.getTime() : 0;
+            const dateA = a.fechaInicio?.getTime() ?? 0;
+            const dateB = b.fechaInicio?.getTime() ?? 0;
             return dateB - dateA;
         });
         setProyectos(sortedProyectos);
@@ -58,8 +58,8 @@ export default function SubcontrataProyectosPage() {
     setProyectos(prev => {
         const newProyectos = [newProyecto, ...prev];
         newProyectos.sort((a, b) => {
-            const dateA = a.fechaInicio ? a.fechaInicio.getTime() : 0;
-            const dateB = b.fechaInicio ? b.fechaInicio.getTime() : 0;
+            const dateA = a.fechaInicio?.getTime() ?? 0;
+            const dateB = b.fechaInicio?.getTime() ?? 0;
             return dateB - dateA;
         });
         return newProyectos;

@@ -62,8 +62,8 @@ export default function EditSubcontrataProyectoPage() {
 
         form.reset({
             ...proyectoData,
-            fechaInicio: proyectoData.fechaInicio ? new Date(proyectoData.fechaInicio) : null,
-            fechaFin: proyectoData.fechaFin ? new Date(proyectoData.fechaFin) : null,
+            fechaInicio: proyectoData.fechaInicio,
+            fechaFin: proyectoData.fechaFin,
         });
         setConstructoras(constructorasData);
 
@@ -88,8 +88,6 @@ export default function EditSubcontrataProyectoPage() {
     const result = await updateProyecto(projectId, { 
         ...data, 
         subcontrataId,
-        fechaInicio: data.fechaInicio ? data.fechaInicio.toISOString() : null,
-        fechaFin: data.fechaFin ? data.fechaFin.toISOString() : null,
     });
     if(result.success) {
         toast({ title: "Éxito", description: "Proyecto actualizado correctamente."});

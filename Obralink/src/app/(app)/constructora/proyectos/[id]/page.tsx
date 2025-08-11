@@ -9,7 +9,7 @@ import { Loader2, ArrowLeft, Edit, Calendar, Building, User, HardHat, UserCheck,
 import { getProyectoById, getSubcontratas, getTrabajadoresByProyecto } from '@/lib/actions/app.actions';
 import type { Proyecto, Subcontrata, Trabajador } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
-import { format, parseISO } from 'date-fns';
+import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
@@ -58,8 +58,8 @@ export default function ProyectoDetailPage() {
 
   const getStatus = (p: Proyecto) => {
     const now = new Date();
-    const fechaFin = p.fechaFin ? parseISO(p.fechaFin) : null;
-    const fechaInicio = p.fechaInicio ? parseISO(p.fechaInicio) : null;
+    const fechaFin = p.fechaFin;
+    const fechaInicio = p.fechaInicio;
 
     if (fechaFin && fechaFin < now) return { text: "Finalizado", color: "bg-gray-500" };
     if (fechaInicio && fechaInicio > now) return { text: "Próximamente", color: "bg-blue-500" };
@@ -103,7 +103,7 @@ export default function ProyectoDetailPage() {
             <div className="flex items-center gap-3"><Building className="h-5 w-5 text-muted-foreground"/> <div><span className="font-semibold">Subcontrata Asignada:</span> {subcontrata?.nombre || 'N/A'}</div></div>
             <div className="flex items-center gap-3"><Calendar className="h-5 w-5 text-muted-foreground"/> 
                 <div>
-                    <span className="font-semibold">Fechas:</span> {proyecto.fechaInicio ? format(parseISO(proyecto.fechaInicio), 'd MMM yyyy', {locale: es}) : 'N/A'} - {proyecto.fechaFin ? format(parseISO(proyecto.fechaFin), 'd MMM yyyy', {locale: es}) : 'Indefinido'}
+                    <span className="font-semibold">Fechas:</span> {proyecto.fechaInicio ? format(proyecto.fechaInicio, 'd MMM yyyy', {locale: es}) : 'N/A'} - {proyecto.fechaFin ? format(proyecto.fechaFin, 'd MMM yyyy', {locale: es}) : 'Indefinido'}
                 </div>
             </div>
              <div className="flex items-center gap-3"><HardHat className="h-5 w-5 text-muted-foreground"/> <div><span className="font-semibold">Estado:</span> <Badge style={{backgroundColor: status.color}} className="text-white ml-2 text-md">{status.text}</Badge></div></div>

@@ -54,6 +54,8 @@ export function AddProyectoSubcontrataDialog({ onProyectoAdded, constructoras, c
       nombre: '',
       direccion: '',
       clienteNombre: '',
+      fechaInicio: null,
+      fechaFin: null,
     },
   });
 
@@ -67,8 +69,6 @@ export function AddProyectoSubcontrataDialog({ onProyectoAdded, constructoras, c
     const result = await addProyecto({ 
       subcontrataId, 
       ...data,
-      fechaInicio: data.fechaInicio ? data.fechaInicio.toISOString() : null,
-      fechaFin: data.fechaFin ? data.fechaFin.toISOString() : null,
     });
     if (result.success && result.proyecto) {
       toast({ title: 'Éxito', description: `Proyecto ${result.proyecto.nombre} añadido.` });

@@ -7,7 +7,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Loader2, Building, HardHat, FileText, UserCheck, Calendar, AlertTriangle } from 'lucide-react';
 import type { Subcontrata, Proyecto, ReporteDiario } from '@/lib/types';
-import { getSubcontratas, getProyectosBySubcontrata, getReportesDiarios, validateDailyReport } from '@/lib/actions/app.actions';
+import { getSubcontratas, getProyectosByConstructora, getReportesDiarios, validateDailyReport } from '@/lib/actions/app.actions';
 import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
@@ -29,7 +29,7 @@ function ReporteItem({ reporte, onValidate }: { reporte: ReporteDiario, onValida
                  <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-primary"/>
                     <span className="font-semibold">
-                      Reporte del {format(parseISO(reporte.fecha), 'PPP', { locale: es })}
+                      Reporte del {format(reporte.fecha, 'PPP', { locale: es })}
                     </span>
                     <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
                  </div>
@@ -89,28 +89,34 @@ export default function ConstructoraPartesPage() {
         setLoading(false);
         return;
       }
-      // In a real app, getSubcontratas would be filtered by constructoraId
+      
       const subs = await getSubcontratas();
       setSubcontratas(subs);
 
-      const promsProyectos = subs.map(s => getProyectosBySubcontrata(s.id));
+      const promsProyectos = subs.map(s => getProyectosByConstructora(constructoraId));
       const proyectosArrays = await Promise.all(promsProyectos);
-      const proyMap: Record<string, Proyecto[]> = {};
+
       const allProyectos: Proyecto[] = [];
-      proyectosArrays.forEach((proyArray, index) => {
-        const filteredByConstructora = proyArray.filter(p => p.constructoraId === constructoraId);
-        proyMap[subs[index].id] = filteredByConstructora;
-        allProyectos.push(...filteredByConstructora);
+      const proyMap: Record<string, Proyecto[]> = {};
+      subs.forEach((sub, index) => {
+          const proyectosDeSubcontrataParaEstaConstructora = proyectosArrays[index].filter(p => p.subcontrataId === sub.id);
+          proyMap[sub.id] = proyectosDeSubcontrataParaEstaConstructora;
+          allProyectos.push(...proyectosDeSubcontrataParaEstaConstructora);
       });
       setProyectosPorSub(proyMap);
       
-      const promsReportes = allProyectos.map(p => getReportesDiarios(p.id));
-      const reportesArrays = await Promise.all(promsReportes);
-      const repMap: Record<string, ReporteDiario[]> = {};
-      allProyectos.forEach((proy, index) => {
-          repMap[proy.id] = reportesArrays[index] || [];
-      });
-      setReportesPorProyecto(repMap);
+      if (allProyectos.length > 0) {
+        const promsReportes = allProyectos.map(p => getReportesDiarios(p.id));
+        const reportesArrays = await Promise.all(promsReportes);
+        const repMap: Record<string, ReporteDiario[]> = {};
+        reportesArrays.forEach((repArray, index) => {
+            const proyId = allProyectos[index].id;
+            if(repArray) {
+               repMap[proyId] = repArray;
+            }
+        });
+        setReportesPorProyecto(repMap);
+      }
 
       setLoading(false);
     };
@@ -149,40 +155,42 @@ export default function ConstructoraPartesPage() {
       </div>
 
       <Accordion type="single" collapsible className="w-full space-y-4">
-        {subcontratas.map(sub => (
-          <Card key={sub.id} className="animate-fade-in-up">
-            <AccordionItem value={sub.id} className="border-b-0">
-              <AccordionTrigger className="p-6 text-xl hover:no-underline">
-                <div className="flex items-center gap-3">
-                  <Building className="h-6 w-6 text-primary" />
-                  {sub.nombre}
-                </div>
-              </AccordionTrigger>
-              <AccordionContent className="px-6 pb-6">
-                <div className="space-y-2">
-                  <h3 className="font-semibold text-lg mb-2 flex items-center gap-2"><HardHat className="h-5 w-5"/>Proyectos Asignados</h3>
-                  {(proyectosPorSub[sub.id] || []).length > 0 ? (
-                    (proyectosPorSub[sub.id] || []).map(proy => (
-                      <Card key={proy.id} className="p-4 bg-muted/50">
-                        <p className="font-bold text-base capitalize">{proy.nombre}</p>
-                        <div className="mt-2 space-y-3 pl-4 border-l-2 border-accent/50 ml-2">
-                          <h4 className="font-semibold mt-3 text-muted-foreground">Reportes Diarios Recibidos</h4>
-                           {(reportesPorProyecto[proy.id] || []).length > 0 ? (
-                             (reportesPorProyecto[proy.id] || []).sort((a,b) => parseISO(b.fecha).getTime() - parseISO(a.fecha).getTime()).map(rep => (
-                                <ReporteItem key={rep.id} reporte={rep} onValidate={handleValidation} />
-                             ))
-                           ) : <p className="text-sm text-muted-foreground">No hay reportes para este proyecto.</p> }
-                        </div>
-                      </Card>
-                    ))
-                  ) : (
-                    <p className="text-sm text-muted-foreground pl-2">No hay proyectos asignados a esta subcontrata para tu empresa.</p>
-                  )}
-                </div>
-              </AccordionContent>
-            </AccordionItem>
-          </Card>
-        ))}
+        {subcontratas.map(sub => {
+            const proyectosDeEstaSub = proyectosPorSub[sub.id] || [];
+            if (proyectosDeEstaSub.length === 0) return null;
+
+            return (
+              <Card key={sub.id} className="animate-fade-in-up">
+                <AccordionItem value={sub.id} className="border-b-0">
+                  <AccordionTrigger className="p-6 text-xl hover:no-underline">
+                    <div className="flex items-center gap-3">
+                      <Building className="h-6 w-6 text-primary" />
+                      {sub.nombre}
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent className="px-6 pb-6">
+                    <div className="space-y-2">
+                      <h3 className="font-semibold text-lg mb-2 flex items-center gap-2"><HardHat className="h-5 w-5"/>Proyectos Asignados</h3>
+                      {proyectosDeEstaSub.map(proy => (
+                          <Card key={proy.id} className="p-4 bg-muted/50">
+                            <p className="font-bold text-base capitalize">{proy.nombre}</p>
+                            <div className="mt-2 space-y-3 pl-4 border-l-2 border-accent/50 ml-2">
+                              <h4 className="font-semibold mt-3 text-muted-foreground">Reportes Diarios Recibidos</h4>
+                               {(reportesPorProyecto[proy.id] || []).length > 0 ? (
+                                 (reportesPorProyecto[proy.id] || []).sort((a,b) => b.fecha.getTime() - a.fecha.getTime()).map(rep => (
+                                    <ReporteItem key={rep.id} reporte={rep} onValidate={handleValidation} />
+                                 ))
+                               ) : <p className="text-sm text-muted-foreground">No hay reportes para este proyecto.</p> }
+                            </div>
+                          </Card>
+                        ))
+                      }
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </Card>
+            )
+        })}
       </Accordion>
     </div>
   );

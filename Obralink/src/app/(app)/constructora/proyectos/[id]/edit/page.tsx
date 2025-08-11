@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
-import { format, parseISO } from "date-fns";
+import { format } from "date-fns";
 import { es } from 'date-fns/locale';
 import { cn } from '@/lib/utils';
 
@@ -62,8 +62,8 @@ export default function EditProyectoPage() {
 
         form.reset({
             ...proyectoData,
-            fechaInicio: proyectoData.fechaInicio ? parseISO(proyectoData.fechaInicio) : null,
-            fechaFin: proyectoData.fechaFin ? parseISO(proyectoData.fechaFin) : null,
+            fechaInicio: proyectoData.fechaInicio,
+            fechaFin: proyectoData.fechaFin,
         });
         setSubcontratas(subcontratasData);
 
@@ -78,11 +78,7 @@ export default function EditProyectoPage() {
   
   const handleSubmit = async (data: EditProyectoFormData) => {
     setIsSubmitting(true);
-    const result = await updateProyecto(projectId, {
-      ...data,
-      fechaInicio: data.fechaInicio ? data.fechaInicio.toISOString() : null,
-      fechaFin: data.fechaFin ? data.fechaFin.toISOString() : null,
-    });
+    const result = await updateProyecto(projectId, data);
     if(result.success) {
         toast({ title: "Éxito", description: "Proyecto actualizado correctamente."});
         router.push(`/constructora/proyectos/${projectId}`);
