@@ -16,6 +16,7 @@ const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
  * This is a debugging tool to show a client-side error if the server failed to read local files.
  */
 export async function getInitialDataLoadStatus(): Promise<{ success: boolean; message?: string }> {
+    console.log('[ACTION LOG] getInitialDataLoadStatus called');
     const dataSets = {
         constructoras: mockConstructoras,
         subcontratas: mockSubcontratas,
@@ -33,6 +34,7 @@ export async function getInitialDataLoadStatus(): Promise<{ success: boolean; me
             message: errorMessage,
         };
     }
+    console.log('[ACTION LOG] getInitialDataLoadStatus: All data sets loaded correctly.');
     return { success: true };
 }
 
@@ -40,44 +42,59 @@ export async function getInitialDataLoadStatus(): Promise<{ success: boolean; me
 // --- DATA FETCHING ---
 
 export async function getConstructoras(): Promise<Constructora[]> {
+    console.log('[ACTION LOG] getConstructoras called');
     await delay(50);
     return JSON.parse(JSON.stringify(mockConstructoras));
 }
 
 export async function getSubcontratas(): Promise<Subcontrata[]> {
+    console.log('[ACTION LOG] getSubcontratas called');
     await delay(50);
     return JSON.parse(JSON.stringify(mockSubcontratas));
 }
 
 export async function getProyectosByConstructora(constructoraId: string): Promise<Proyecto[]> {
+    console.log(`[ACTION LOG] getProyectosByConstructora called with constructoraId: ${constructoraId}`);
     await delay(100);
     const proyectos = mockProyectos.filter(p => p.constructoraId === constructoraId);
+    console.log(`[ACTION LOG] Found ${proyectos.length} proyectos for constructoraId: ${constructoraId}`);
     return JSON.parse(JSON.stringify(proyectos));
 }
 
 export async function getProyectosBySubcontrata(subcontrataId: string): Promise<Proyecto[]> {
+    console.log(`[ACTION LOG] getProyectosBySubcontrata called with subcontrataId: ${subcontrataId}`);
     await delay(100);
     const proyectos = mockProyectos.filter(p => p.subcontrataId === subcontrataId);
+    console.log(`[ACTION LOG] Found ${proyectos.length} proyectos for subcontrataId: ${subcontrataId}`);
     return JSON.parse(JSON.stringify(proyectos));
 }
 
 export async function getProyectoById(proyectoId: string): Promise<Proyecto | null> {
+    console.log(`[ACTION LOG] getProyectoById called with proyectoId: ${proyectoId}`);
     await delay(50);
     const proyecto = mockProyectos.find(p => p.id === proyectoId) || null;
+    console.log(`[ACTION LOG] Found proyecto: ${!!proyecto}`);
     return proyecto ? JSON.parse(JSON.stringify(proyecto)) : null;
 }
 
 export async function getTrabajadoresByProyecto(proyectoId: string): Promise<Trabajador[]> {
+    console.log(`[ACTION LOG] getTrabajadoresByProyecto called with proyectoId: ${proyectoId}`);
     await delay(100);
-    return JSON.parse(JSON.stringify(mockTrabajadores.filter(t => t.proyectosAsignados?.includes(proyectoId))));
+    const trabajadores = mockTrabajadores.filter(t => t.proyectosAsignados?.includes(proyectoId));
+    console.log(`[ACTION LOG] Found ${trabajadores.length} trabajadores for proyectoId: ${proyectoId}`);
+    return JSON.parse(JSON.stringify(trabajadores));
 }
 
 export async function getMaquinariaByProyecto(proyectoId: string): Promise<Maquinaria[]> {
+    console.log(`[ACTION LOG] getMaquinariaByProyecto called with proyectoId: ${proyectoId}`);
     await delay(100);
-    return JSON.parse(JSON.stringify(mockMaquinaria.filter(m => m.proyectosAsignados?.includes(proyectoId))));
+    const maquinaria = mockMaquinaria.filter(m => m.proyectosAsignados?.includes(proyectoId));
+    console.log(`[ACTION LOG] Found ${maquinaria.length} maquinaria for proyectoId: ${proyectoId}`);
+    return JSON.parse(JSON.stringify(maquinaria));
 }
 
 export async function getReportesDiarios(proyectoId?: string, encargadoId?: string, subcontrataId?: string): Promise<ReporteDiario[]> {
+    console.log(`[ACTION LOG] getReportesDiarios called with filters: proyectoId=${proyectoId}, encargadoId=${encargadoId}, subcontrataId=${subcontrataId}`);
     await delay(150);
     let reportes = [...mockReportesDiarios];
     
@@ -91,38 +108,49 @@ export async function getReportesDiarios(proyectoId?: string, encargadoId?: stri
         const proyectosDeSub = mockProyectos.filter(p => p.subcontrataId === subcontrataId).map(p => p.id);
         reportes = reportes.filter((r: any) => proyectosDeSub.includes(r.proyectoId));
     }
+    console.log(`[ACTION LOG] Found ${reportes.length} reportes with applied filters.`);
     return JSON.parse(JSON.stringify(reportes));
 }
 
 export async function getReportesDiariosByConstructora(constructoraId: string): Promise<ReporteDiario[]> {
+    console.log(`[ACTION LOG] getReportesDiariosByConstructora called with constructoraId: ${constructoraId}`);
     await delay(150);
     let reportes = [...mockReportesDiarios];
     
     const proyectosDeConstructora = mockProyectos.filter(p => p.constructoraId === constructoraId).map(p => p.id);
     reportes = reportes.filter((r: any) => proyectosDeConstructora.includes(r.proyectoId));
-
+    console.log(`[ACTION LOG] Found ${reportes.length} reportes for constructoraId: ${constructoraId}`);
     return JSON.parse(JSON.stringify(reportes));
 }
 
 export async function getReporteDiarioById(reporteId: string): Promise<ReporteDiario | null> {
+    console.log(`[ACTION LOG] getReporteDiarioById called with reporteId: ${reporteId}`);
     await delay(50);
     const reporte = mockReportesDiarios.find(r => r.id === reporteId) || null;
+    console.log(`[ACTION LOG] Found reporte: ${!!reporte}`);
     return reporte ? JSON.parse(JSON.stringify(reporte)) : null;
 }
 
 export async function getTrabajadoresBySubcontrata(subcontrataId: string): Promise<Trabajador[]> {
+    console.log(`[ACTION LOG] getTrabajadoresBySubcontrata called with subcontrataId: ${subcontrataId}`);
     await delay(100);
-    return JSON.parse(JSON.stringify(mockTrabajadores.filter(t => t.subcontrataId === subcontrataId)));
+    const trabajadores = mockTrabajadores.filter(t => t.subcontrataId === subcontrataId);
+    console.log(`[ACTION LOG] Found ${trabajadores.length} trabajadores for subcontrataId: ${subcontrataId}`);
+    return JSON.parse(JSON.stringify(trabajadores));
 }
 
 export async function getMaquinariaBySubcontrata(subcontrataId: string): Promise<Maquinaria[]> {
-     await delay(100);
-    return JSON.parse(JSON.stringify(mockMaquinaria.filter(m => m.subcontrataId === subcontrataId)));
+    console.log(`[ACTION LOG] getMaquinariaBySubcontrata called with subcontrataId: ${subcontrataId}`);
+    await delay(100);
+    const maquinaria = mockMaquinaria.filter(m => m.subcontrataId === subcontrataId);
+    console.log(`[ACTION LOG] Found ${maquinaria.length} maquinaria for subcontrataId: ${subcontrataId}`);
+    return JSON.parse(JSON.stringify(maquinaria));
 }
 
 // --- DATA MUTATION ---
 
 export async function addEmpresa(data: { empresaNombre: string }): Promise<{ success: boolean; message: string; empresa?: Constructora }> {
+    console.log('[ACTION LOG] addEmpresa called with data:', data);
     await delay(200);
     try {
         const newEmpresa: Constructora = {
@@ -131,44 +159,53 @@ export async function addEmpresa(data: { empresaNombre: string }): Promise<{ suc
         };
         mockConstructoras.unshift(newEmpresa);
         // await saveDataToFile('constructoras', mockConstructoras); // This call is removed
+        console.log('[ACTION LOG] addEmpresa successful. New empresa:', newEmpresa);
         return { success: true, message: 'Empresa añadida con éxito.', empresa: JSON.parse(JSON.stringify(newEmpresa)) };
     } catch(e: any) {
-        console.error("Error en addEmpresa:", e);
+        console.error("[ACTION LOG] Error in addEmpresa:", e);
         return { success: false, message: e.message || 'Error al añadir empresa.' };
     }
 }
 
 
 export async function addProyecto(data: Omit<Proyecto, 'id'>): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
+    console.log('[ACTION LOG] addProyecto called with data:', data);
     await delay(200);
     try {
-        const newProyecto: Proyecto = {
+        const newProyecto: any = { // Use 'any' temporarily
             id: `proy-mock-${Date.now()}`,
             ...data,
         };
-        mockProyectos.unshift(newProyecto as any);
+        mockProyectos.unshift(newProyecto);
+        console.log('[ACTION LOG] addProyecto successful. New proyecto:', newProyecto);
         return { success: true, message: 'Proyecto añadido con éxito.', proyecto: JSON.parse(JSON.stringify(newProyecto)) };
     } catch(e: any) {
+        console.error("[ACTION LOG] Error in addProyecto:", e);
         return { success: false, message: e.message || 'Error al añadir proyecto.' };
     }
 }
 
 export async function updateProyecto(proyectoId: string, data: Partial<Omit<Proyecto, 'id'>>): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
+    console.log(`[ACTION LOG] updateProyecto called for proyectoId: ${proyectoId} with data:`, data);
     await delay(150);
     try {
         const index = mockProyectos.findIndex(p => p.id === proyectoId);
         if (index === -1) {
+            console.error(`[ACTION LOG] updateProyecto failed: Proyecto con ID ${proyectoId} no encontrado.`);
             return { success: false, message: 'Proyecto no encontrado.' };
         }
         
-        mockProyectos[index] = { ...mockProyectos[index], ...data } as any; // Temp assertion
+        mockProyectos[index] = { ...mockProyectos[index], ...data } as any;
+        console.log('[ACTION LOG] updateProyecto successful.');
         return { success: true, message: 'Proyecto actualizado.', proyecto: JSON.parse(JSON.stringify(mockProyectos[index])) };
     } catch (e: any) {
+        console.error(`[ACTION LOG] Error in updateProyecto for ID ${proyectoId}:`, e);
         return { success: false, message: e.message || 'Error al actualizar el proyecto.' };
     }
 }
 
 export async function saveDailyReport(proyectoId: string, encargadoId: string, trabajadoresReporte: ReporteTrabajador[], comentarios: string, fotosURLs: string[]): Promise<{ success: boolean; message: string }> {
+    console.log(`[ACTION LOG] saveDailyReport called for proyectoId: ${proyectoId}`);
     await delay(250);
     try {
         const newReporte: any = {
@@ -187,17 +224,21 @@ export async function saveDailyReport(proyectoId: string, encargadoId: string, t
             },
         };
         mockReportesDiarios.unshift(newReporte);
+        console.log('[ACTION LOG] saveDailyReport successful.');
         return { success: true, message: 'Reporte diario guardado con éxito.' };
     } catch (e: any) {
+        console.error(`[ACTION LOG] Error in saveDailyReport for proyectoId ${proyectoId}:`, e);
         return { success: false, message: e.message || 'Error al guardar el reporte.' };
     }
 }
 
 export async function updateDailyReport(reporteId: string, trabajadoresReporte: ReporteTrabajador[]): Promise<{ success: boolean; message: string; reporte?: ReporteDiario }> {
+    console.log(`[ACTION LOG] updateDailyReport called for reporteId: ${reporteId}`);
     await delay(150);
     try {
         const index = mockReportesDiarios.findIndex(r => r.id === reporteId);
         if (index === -1) {
+             console.error(`[ACTION LOG] updateDailyReport failed: Reporte con ID ${reporteId} no encontrado.`);
             return { success: false, message: 'Reporte no encontrado.' };
         }
         (mockReportesDiarios as any)[index].trabajadores = trabajadoresReporte;
@@ -207,24 +248,30 @@ export async function updateDailyReport(reporteId: string, trabajadoresReporte: 
             timestamp: new Date().toISOString(),
             reporteOriginal: '[]' // Mocked
         };
+        console.log('[ACTION LOG] updateDailyReport successful.');
         return { success: true, message: 'Reporte actualizado.', reporte: JSON.parse(JSON.stringify(mockReportesDiarios[index])) };
     } catch (e: any) {
+        console.error(`[ACTION LOG] Error in updateDailyReport for ID ${reporteId}:`, e);
         return { success: false, message: e.message || 'Error al actualizar el reporte.' };
     }
 }
 
 export async function saveFichaje(data: { trabajadorId: string; tipo: 'inicio' | 'fin' }): Promise<{ success: boolean; message: string }> {
+    console.log('[ACTION LOG] saveFichaje called with data:', data);
     await delay(100);
     try {
         const newFichaje = { id: `fichaje-mock-${Date.now()}`, ...data, timestamp: new Date().toISOString() };
         mockFichajes.push(newFichaje);
+        console.log('[ACTION LOG] saveFichaje successful.');
         return { success: true, message: `Fichaje de ${data.tipo} guardado.` };
     } catch (e: any) {
+        console.error('[ACTION LOG] Error in saveFichaje:', e);
         return { success: false, message: e.message || 'Error al guardar el fichaje.' };
     }
 }
 
 export async function addTrabajador(data: { subcontrataId: string, nombre: string, categoriaProfesional: Trabajador['categoriaProfesional'], codigoAcceso: string }): Promise<{ success: boolean, message: string, trabajador?: Trabajador }> {
+    console.log('[ACTION LOG] addTrabajador called with data:', data);
     await delay(150);
     try {
         const newTrabajador: Trabajador = {
@@ -233,27 +280,34 @@ export async function addTrabajador(data: { subcontrataId: string, nombre: strin
             ...data,
         };
         mockTrabajadores.push(newTrabajador);
+        console.log('[ACTION LOG] addTrabajador successful.');
         return { success: true, message: "Trabajador añadido.", trabajador: JSON.parse(JSON.stringify(newTrabajador)) };
     } catch (e: any) {
+        console.error('[ACTION LOG] Error in addTrabajador:', e);
         return { success: false, message: e.message || 'Error al añadir trabajador.' };
     }
 }
 
 export async function removeTrabajador(trabajadorId: string): Promise<{ success: boolean, message: string }> {
+    console.log(`[ACTION LOG] removeTrabajador called for trabajadorId: ${trabajadorId}`);
     await delay(150);
     try {
         const index = mockTrabajadores.findIndex(t => t.id === trabajadorId);
         if (index === -1) {
+            console.error(`[ACTION LOG] removeTrabajador failed: Trabajador con ID ${trabajadorId} no encontrado.`);
             return { success: false, message: "Trabajador no encontrado." };
         }
         mockTrabajadores.splice(index, 1);
+        console.log('[ACTION LOG] removeTrabajador successful.');
         return { success: true, message: "Trabajador eliminado." };
     } catch (e: any) {
+        console.error(`[ACTION LOG] Error in removeTrabajador for ID ${trabajadorId}:`, e);
         return { success: false, message: e.message || 'Error al eliminar trabajador.' };
     }
 }
 
 export async function addMaquinaria(data: { subcontrataId: string, nombre: string, matriculaORef: string }): Promise<{ success: boolean, message: string, maquinaria?: Maquinaria }> {
+    console.log('[ACTION LOG] addMaquinaria called with data:', data);
     await delay(150);
     try {
         const newMaquinaria: Maquinaria = {
@@ -262,27 +316,34 @@ export async function addMaquinaria(data: { subcontrataId: string, nombre: strin
             ...data,
         };
         mockMaquinaria.push(newMaquinaria);
+        console.log('[ACTION LOG] addMaquinaria successful.');
         return { success: true, message: "Maquinaria añadida.", maquinaria: JSON.parse(JSON.stringify(newMaquinaria)) };
     } catch (e: any) {
+        console.error('[ACTION LOG] Error in addMaquinaria:', e);
         return { success: false, message: e.message || 'Error al añadir maquinaria.' };
     }
 }
 
 export async function removeMaquinaria(maquinariaId: string): Promise<{ success: boolean, message: string }> {
+    console.log(`[ACTION LOG] removeMaquinaria called for maquinariaId: ${maquinariaId}`);
     await delay(150);
     try {
         const index = mockMaquinaria.findIndex(m => m.id === maquinariaId);
         if (index === -1) {
+             console.error(`[ACTION LOG] removeMaquinaria failed: Maquinaria con ID ${maquinariaId} no encontrada.`);
             return { success: false, message: "Maquinaria no encontrada." };
         }
         mockMaquinaria.splice(index, 1);
+        console.log('[ACTION LOG] removeMaquinaria successful.');
         return { success: true, message: "Maquinaria eliminada." };
     } catch (e: any) {
+        console.error(`[ACTION LOG] Error in removeMaquinaria for ID ${maquinariaId}:`, e);
         return { success: false, message: e.message || 'Error al eliminar maquinaria.' };
     }
 }
 
 export async function assignTrabajadoresToProyecto(proyectoId: string, trabajadorIds: string[]): Promise<{ success: boolean, message: string }> {
+    console.log(`[ACTION LOG] assignTrabajadoresToProyecto called for proyectoId: ${proyectoId} with trabajadorIds:`, trabajadorIds);
     await delay(200);
     try {
         trabajadorIds.forEach(id => {
@@ -291,13 +352,16 @@ export async function assignTrabajadoresToProyecto(proyectoId: string, trabajado
                 trabajador.proyectosAsignados?.push(proyectoId);
             }
         });
+        console.log('[ACTION LOG] assignTrabajadoresToProyecto successful.');
         return { success: true, message: "Personal asignado." };
     } catch (e: any) {
+        console.error(`[ACTION LOG] Error in assignTrabajadoresToProyecto for proyectoId ${proyectoId}:`, e);
         return { success: false, message: e.message || 'Error al asignar personal.' };
     }
 }
 
 export async function removeTrabajadorFromProyecto(proyectoId: string, trabajadorId: string): Promise<{ success: boolean, message: string }> {
+    console.log(`[ACTION LOG] removeTrabajadorFromProyecto called for proyectoId: ${proyectoId}, trabajadorId: ${trabajadorId}`);
     await delay(100);
     try {
         const trabajador = mockTrabajadores.find(t => t.id === trabajadorId);
@@ -307,13 +371,16 @@ export async function removeTrabajadorFromProyecto(proyectoId: string, trabajado
                 trabajador.proyectosAsignados.splice(index, 1);
             }
         }
+        console.log('[ACTION LOG] removeTrabajadorFromProyecto successful.');
         return { success: true, message: "Trabajador desvinculado." };
     } catch (e: any) {
+        console.error(`[ACTION LOG] Error in removeTrabajadorFromProyecto for proyectoId ${proyectoId}:`, e);
         return { success: false, message: e.message || 'Error al desvincular trabajador.' };
     }
 }
 
 export async function assignMaquinariaToProyecto(proyectoId: string, maquinariaIds: string[]): Promise<{ success: boolean, message: string }> {
+    console.log(`[ACTION LOG] assignMaquinariaToProyecto called for proyectoId: ${proyectoId} with maquinariaIds:`, maquinariaIds);
     await delay(200);
     try {
         maquinariaIds.forEach(id => {
@@ -322,13 +389,16 @@ export async function assignMaquinariaToProyecto(proyectoId: string, maquinariaI
                 maquina.proyectosAsignados?.push(proyectoId);
             }
         });
+        console.log('[ACTION LOG] assignMaquinariaToProyecto successful.');
         return { success: true, message: "Maquinaria asignada." };
     } catch (e: any) {
+        console.error(`[ACTION LOG] Error in assignMaquinariaToProyecto for proyectoId ${proyectoId}:`, e);
         return { success: false, message: e.message || 'Error al asignar maquinaria.' };
     }
 }
 
 export async function removeMaquinariaFromProyecto(proyectoId: string, maquinariaId: string): Promise<{ success: boolean, message: string }> {
+    console.log(`[ACTION LOG] removeMaquinariaFromProyecto called for proyectoId: ${proyectoId}, maquinariaId: ${maquinariaId}`);
     await delay(100);
     try {
         const maquina = mockMaquinaria.find(m => m.id === maquinariaId);
@@ -338,17 +408,21 @@ export async function removeMaquinariaFromProyecto(proyectoId: string, maquinari
                 maquina.proyectosAsignados.splice(index, 1);
             }
         }
+        console.log('[ACTION LOG] removeMaquinariaFromProyecto successful.');
         return { success: true, message: "Maquinaria desvinculada." };
     } catch (e: any) {
+        console.error(`[ACTION LOG] Error in removeMaquinariaFromProyecto for proyectoId ${proyectoId}:`, e);
         return { success: false, message: e.message || 'Error al desvincular maquinaria.' };
     }
 }
 
 export async function validateDailyReport(reporteId: string, role: 'subcontrata' | 'constructora'): Promise<{ success: boolean; message: string; reporte?: ReporteDiario }> {
+    console.log(`[ACTION LOG] validateDailyReport called for reporteId: ${reporteId} by role: ${role}`);
     await delay(150);
     try {
         const index = mockReportesDiarios.findIndex(r => r.id === reporteId);
         if (index === -1) {
+            console.error(`[ACTION LOG] validateDailyReport failed: Reporte con ID ${reporteId} no encontrado.`);
             return { success: false, message: 'Reporte no encontrado.' };
         }
         const reporte = (mockReportesDiarios as any)[index];
@@ -357,8 +431,10 @@ export async function validateDailyReport(reporteId: string, role: 'subcontrata'
         } else if (role === 'constructora') {
             reporte.validacion.constructora = { validado: true, timestamp: new Date().toISOString() };
         }
+        console.log('[ACTION LOG] validateDailyReport successful.');
         return { success: true, message: `Reporte validado por ${role}.`, reporte: JSON.parse(JSON.stringify(reporte)) };
     } catch (e: any) {
+        console.error(`[ACTION LOG] Error in validateDailyReport for ID ${reporteId}:`, e);
         return { success: false, message: e.message || 'Error al validar el reporte.' };
     }
 }
