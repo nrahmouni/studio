@@ -74,15 +74,15 @@ export default function ConstructoraDashboardPage() {
 
     const proyectosActivos = proyectos.filter(p => {
         const now = new Date();
-        const fechaInicio = p.fechaInicio;
-        const fechaFin = p.fechaFin;
+        const fechaInicio = p.fechaInicio ? new Date(p.fechaInicio) : null;
+        const fechaFin = p.fechaFin ? new Date(p.fechaFin) : null;
         return fechaInicio && fechaInicio <= now && (!fechaFin || fechaFin >= now);
     }).length;
 
     const reportesPendientes = reportes.filter(r => !r.validacion.constructora.validado).length;
 
     const reportesRecientes = reportes
-        .sort((a,b) => b.timestamp.getTime() - a.timestamp.getTime())
+        .sort((a,b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime())
         .slice(0, 5);
         
     return (
@@ -142,11 +142,11 @@ export default function ConstructoraDashboardPage() {
                                            {r.validacion.constructora.validado ? <CheckCircle className="h-5 w-5 text-green-500"/> : <Clock className="h-5 w-5 text-yellow-500"/>}
                                            <div>
                                                <p className="font-semibold capitalize">{r.proyectoId.replace('proy-', '').replace(/-/g, ' ')}</p>
-                                               <p className="text-sm text-muted-foreground">Reporte del {format(r.fecha, 'PPP', {locale: es})}</p>
+                                               <p className="text-sm text-muted-foreground">Reporte del {format(new Date(r.fecha), 'PPP', {locale: es})}</p>
                                            </div>
                                        </div>
                                        <div className="text-right">
-                                           <p className="text-sm font-medium">{formatDistanceToNow(r.timestamp, {locale: es, addSuffix: true})}</p>
+                                           <p className="text-sm font-medium">{formatDistanceToNow(new Date(r.timestamp), {locale: es, addSuffix: true})}</p>
                                            <Link href="/constructora/partes"><Button variant="link" size="sm" className="h-auto p-0">Ir a validar</Button></Link>
                                        </div>
                                    </li>

@@ -28,14 +28,14 @@ export default function AsistenciaDashboardPage() {
       const encargadoId = localStorage.getItem('encargadoId_obra_link');
       if (encargadoId) {
         const data = await getReportesDiarios(undefined, encargadoId);
-        setReportes(data.sort((a, b) => b.fecha.getTime() - a.fecha.getTime()));
+        setReportes(data.sort((a, b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()));
         
         const subs = await getSubcontratas();
         const subMap = subs.reduce((acc, s) => ({ ...acc, [s.id]: s }), {});
         setSubcontratasMap(subMap);
 
         const proyPromises = subs.map(s => getProyectosBySubcontrata(s.id));
-        const proyArrays = await Promise.all(proyPromises);
+        const proyArrays = await Promise.all(promsProyectos);
         const allProyectos = proyArrays.flat();
         const proyMap = allProyectos.reduce((acc, p) => ({ ...acc, [p.id]: p }), {});
         setProyectosMap(proyMap);
@@ -76,7 +76,7 @@ export default function AsistenciaDashboardPage() {
     }
     doc.text(`Subcontrata: ${subcontrataNombre}`, 14, currentY);
     currentY += 6;
-    doc.text(`Fecha: ${format(reporte.fecha, "PPPP", { locale: es })}` , 14, currentY);
+    doc.text(`Fecha: ${format(new Date(reporte.fecha), "PPPP", { locale: es })}` , 14, currentY);
     currentY += 6;
     doc.text(`Enviado por (Encargado ID): ${reporte.encargadoId}`, 14, currentY);
 
@@ -110,23 +110,23 @@ export default function AsistenciaDashboardPage() {
     doc.setFontSize(10);
     const { encargado, subcontrata: subValidation, constructora } = reporte.validacion;
     if(encargado.timestamp) {
-      doc.text(`- Encargado: Validado el ${format(encargado.timestamp, "Pp", {locale: es})}`, 16, finalY);
+      doc.text(`- Encargado: Validado el ${format(new Date(encargado.timestamp), "Pp", {locale: es})}`, 16, finalY);
       finalY += 6;
     }
     if(subValidation.timestamp) {
-       doc.text(`- Subcontrata: Validado el ${format(subValidation.timestamp, "Pp", {locale: es})}`, 16, finalY);
+       doc.text(`- Subcontrata: Validado el ${format(new Date(subValidation.timestamp), "Pp", {locale: es})}`, 16, finalY);
        finalY += 6;
     } else {
        doc.text(`- Subcontrata: Pendiente`, 16, finalY);
        finalY += 6;
     }
     if (constructora.timestamp) {
-        doc.text(`- Constructora: Validado el ${format(constructora.timestamp, "Pp", {locale: es})}`, 16, finalY);
+        doc.text(`- Constructora: Validado el ${format(new Date(constructora.timestamp), "Pp", {locale: es})}`, 16, finalY);
     } else {
         doc.text(`- Constructora: Pendiente`, 16, finalY);
     }
     
-    doc.save(`Asistencia-${proyectoNombre.replace(/ /g, '_')}-${format(reporte.fecha, 'yyyy-MM-dd')}.pdf`);
+    doc.save(`Asistencia-${proyectoNombre.replace(/ /g, '_')}-${format(new Date(reporte.fecha), 'yyyy-MM-dd')}.pdf`);
   };
 
   return (
@@ -182,7 +182,7 @@ export default function AsistenciaDashboardPage() {
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-4 self-start sm:self-center">
-                                   <p className="text-sm text-muted-foreground w-28 text-right">{format(reporte.fecha, "PPP", { locale: es })}</p>
+                                   <p className="text-sm text-muted-foreground w-28 text-right">{format(new Date(reporte.fecha), "PPP", { locale: es })}</p>
                                    <div className="flex flex-col items-end gap-1">
                                       <Badge style={{backgroundColor: status.color}} className="text-white min-w-[120px] justify-center text-center">{status.text}</Badge>
                                       {reporte.modificacionJefeObra?.modificado && <Badge variant="destructive" className="mt-1">Modificado</Badge>}
@@ -229,7 +229,7 @@ export default function AsistenciaDashboardPage() {
                                     <div>
                                         <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-orange-600"><Edit className="h-4 w-4"/>Historial de Modificación</h4>
                                         <div className="text-sm text-muted-foreground bg-orange-500/10 p-3 rounded-md border border-orange-500/20">
-                                            <p>Este reporte fue modificado por el jefe de obra (ID: {reporte.modificacionJefeObra.jefeObraId}) el {format(reporte.modificacionJefeObra.timestamp, 'Pp', {locale: es})}.</p>
+                                            <p>Este reporte fue modificado por el jefe de obra (ID: {reporte.modificacionJefeObra.jefeObraId}) el {format(new Date(reporte.modificacionJefeObra.timestamp), 'Pp', {locale: es})}.</p>
                                         </div>
                                     </div>
                                 )}
@@ -238,14 +238,14 @@ export default function AsistenciaDashboardPage() {
                                     <div>
                                         <h4 className="font-semibold text-md mb-2">Estado de Validación</h4>
                                         <ul className="space-y-1 text-sm">
-                                            <li className="flex items-center gap-2 text-green-600"><Check className="h-4 w-4"/> <span>Validado por ti el {reporte.validacion.encargado.timestamp ? format(reporte.validacion.encargado.timestamp, 'Pp', {locale: es}) : ''}</span></li>
+                                            <li className="flex items-center gap-2 text-green-600"><Check className="h-4 w-4"/> <span>Validado por ti el {reporte.validacion.encargado.timestamp ? format(new Date(reporte.validacion.encargado.timestamp), 'Pp', {locale: es}) : ''}</span></li>
                                             {reporte.validacion.subcontrata.validado && reporte.validacion.subcontrata.timestamp ? (
-                                                <li className="flex items-center gap-2 text-green-600"><Check className="h-4 w-4"/> <span>Validado por Subcontrata el {format(reporte.validacion.subcontrata.timestamp, 'Pp', {locale: es})}</span></li>
+                                                <li className="flex items-center gap-2 text-green-600"><Check className="h-4 w-4"/> <span>Validado por Subcontrata el {format(new Date(reporte.validacion.subcontrata.timestamp), 'Pp', {locale: es})}</span></li>
                                             ) : (
                                                 <li className="flex items-center gap-2 text-muted-foreground"><Clock className="h-4 w-4"/> <span>Pendiente de Subcontrata</span></li>
                                             )}
                                             {reporte.validacion.constructora.validado && reporte.validacion.constructora.timestamp ? (
-                                                <li className="flex items-center gap-2 text-green-600"><Check className="h-4 w-4"/> <span>Validado por Constructora el {format(reporte.validacion.constructora.timestamp, 'Pp', {locale: es})}</span></li>
+                                                <li className="flex items-center gap-2 text-green-600"><Check className="h-4 w-4"/> <span>Validado por Constructora el {format(new Date(reporte.validacion.constructora.timestamp), 'Pp', {locale: es})}</span></li>
                                             ) : (
                                                 <li className="flex items-center gap-2 text-muted-foreground"><Clock className="h-4 w-4"/> <span>Pendiente de Constructora</span></li>
                                             )}

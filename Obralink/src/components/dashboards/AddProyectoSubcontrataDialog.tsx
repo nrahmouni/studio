@@ -48,7 +48,7 @@ export function AddProyectoSubcontrataDialog({ onProyectoAdded, constructoras, c
   const { toast } = useToast();
   const [open, setOpen] = useState(false);
 
-  const form = useForm({
+  const form = useForm<AddProyectoFormData>({
     resolver: zodResolver(AddProyectoFormSchema),
     defaultValues: {
       nombre: '',
@@ -67,8 +67,8 @@ export function AddProyectoSubcontrataDialog({ onProyectoAdded, constructoras, c
     }
 
     const result = await addProyecto({ 
-      subcontrataId, 
       ...data,
+      subcontrataId, 
     });
     if (result.success && result.proyecto) {
       toast({ title: 'Éxito', description: `Proyecto ${result.proyecto.nombre} añadido.` });

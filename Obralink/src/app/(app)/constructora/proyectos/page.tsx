@@ -34,8 +34,8 @@ export default function GestionProyectosConstructoraPage() {
     ]);
     
     proyectosData.sort((a,b) => {
-        const dateA = a.fechaInicio?.getTime() ?? 0;
-        const dateB = b.fechaInicio?.getTime() ?? 0;
+        const dateA = a.fechaInicio ? new Date(a.fechaInicio).getTime() : 0;
+        const dateB = b.fechaInicio ? new Date(b.fechaInicio).getTime() : 0;
         return dateB - dateA;
     });
     setProyectos(proyectosData);
@@ -55,8 +55,8 @@ export default function GestionProyectosConstructoraPage() {
     setProyectos(prev => {
         const newProyectos = [newProyecto, ...prev];
         newProyectos.sort((a,b) => {
-             const dateA = a.fechaInicio?.getTime() ?? 0;
-             const dateB = b.fechaInicio?.getTime() ?? 0;
+             const dateA = a.fechaInicio ? new Date(a.fechaInicio).getTime() : 0;
+             const dateB = b.fechaInicio ? new Date(b.fechaInicio).getTime() : 0;
              return dateB - dateA;
         });
         return newProyectos;
@@ -65,8 +65,8 @@ export default function GestionProyectosConstructoraPage() {
 
   const getStatus = (proyecto: Proyecto) => {
     const now = new Date();
-    const fechaFin = proyecto.fechaFin;
-    const fechaInicio = proyecto.fechaInicio;
+    const fechaFin = proyecto.fechaFin ? new Date(proyecto.fechaFin) : null;
+    const fechaInicio = proyecto.fechaInicio ? new Date(proyecto.fechaInicio) : null;
     if (fechaFin && fechaFin < now) return { text: "Finalizado", color: "bg-gray-500" };
     if (fechaInicio && fechaInicio > now) return { text: "Próximamente", color: "bg-blue-500" };
     return { text: "En Curso", color: "bg-green-500" };
@@ -110,7 +110,7 @@ export default function GestionProyectosConstructoraPage() {
                         </p>
                         <p className="text-sm text-muted-foreground flex items-center gap-2">
                            <Calendar className="h-4 w-4"/>
-                           {p.fechaInicio ? format(p.fechaInicio, 'd MMM yyyy', {locale: es}) : 'N/A'} - {p.fechaFin ? format(p.fechaFin, 'd MMM yyyy', {locale: es}) : 'Indefinido'}
+                           {p.fechaInicio ? format(new Date(p.fechaInicio), 'd MMM yyyy', {locale: es}) : 'N/A'} - {p.fechaFin ? format(new Date(p.fechaFin), 'd MMM yyyy', {locale: es}) : 'Indefinido'}
                         </p>
                     </div>
                   </div>

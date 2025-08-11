@@ -89,8 +89,8 @@ export default function SubcontrataProyectoDetailPage() {
 
   const getStatus = (p: Proyecto) => {
     const now = new Date();
-    const fechaFin = p.fechaFin;
-    const fechaInicio = p.fechaInicio;
+    const fechaFin = p.fechaFin ? new Date(p.fechaFin) : null;
+    const fechaInicio = p.fechaInicio ? new Date(p.fechaInicio) : null;
 
     if (fechaFin && fechaFin < now) return { text: "Finalizado", color: "bg-gray-500" };
     if (fechaInicio && fechaInicio > now) return { text: "Próximamente", color: "bg-blue-500" };
@@ -131,7 +131,7 @@ export default function SubcontrataProyectoDetailPage() {
             <div className="flex items-center gap-3"><Building className="h-5 w-5 text-muted-foreground"/> <div><span className="font-semibold">Cliente (Constructora):</span> {constructora?.nombre || 'N/A'}</div></div>
             <div className="flex items-center gap-3"><Calendar className="h-5 w-5 text-muted-foreground"/> 
                 <div>
-                    <span className="font-semibold">Fechas:</span> {proyecto.fechaInicio ? format(proyecto.fechaInicio, 'd MMM yyyy', {locale: es}) : 'N/A'} - {proyecto.fechaFin ? format(proyecto.fechaFin, 'd MMM yyyy', {locale: es}) : 'Indefinido'}
+                    <span className="font-semibold">Fechas:</span> {proyecto.fechaInicio ? format(new Date(proyecto.fechaInicio), 'd MMM yyyy', {locale: es}) : 'N/A'} - {proyecto.fechaFin ? format(new Date(proyecto.fechaFin), 'd MMM yyyy', {locale: es}) : 'Indefinido'}
                 </div>
             </div>
              <div className="flex items-center gap-3"><HardHat className="h-5 w-5 text-muted-foreground"/> <div><span className="font-semibold">Estado:</span> <Badge style={{backgroundColor: status.color}} className="text-white ml-2 text-md">{status.text}</Badge></div></div>
