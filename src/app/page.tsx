@@ -1,9 +1,8 @@
 
 'use client';
-
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { CheckCircle, Construction, FileText, Cpu, TrendingUp, ShieldCheck, Zap } from "lucide-react";
+import { Briefcase, CheckCircle, Construction, FileText, Cpu, TrendingUp, ShieldCheck, Zap } from "lucide-react";
 import Image from "next/image";
 import Link from "next/link";
 
