@@ -62,8 +62,8 @@ export default function EditProyectoPage() {
 
         form.reset({
             ...proyectoData,
-            fechaInicio: proyectoData.fechaInicio ? parseISO(proyectoData.fechaInicio) : null,
-            fechaFin: proyectoData.fechaFin ? parseISO(proyectoData.fechaFin) : null,
+            fechaInicio: proyectoData.fechaInicio ? new Date(proyectoData.fechaInicio) : null,
+            fechaFin: proyectoData.fechaFin ? new Date(proyectoData.fechaFin) : null,
         });
         setSubcontratas(subcontratasData);
 

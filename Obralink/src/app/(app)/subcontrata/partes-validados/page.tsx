@@ -43,7 +43,7 @@ export default function SubcontrataPartesValidadosPage() {
     doc.text(`Reporte Diario de Trabajo - ObraLink`, 14, 22);
     doc.setFontSize(11);
     doc.text(`Proyecto: ${proyectoNombre}`, 14, 30);
-    doc.text(`Fecha: ${format(parseISO(reporte.fecha), "PPPP", { locale: es })}` , 14, 36);
+    doc.text(`Fecha: ${format(new Date(reporte.fecha), "PPPP", { locale: es })}` , 14, 36);
     doc.text(`Reportado por (Encargado ID): ${reporte.encargadoId}`, 14, 42);
 
     // Table
@@ -66,22 +66,22 @@ export default function SubcontrataPartesValidadosPage() {
     finalY += 6;
     doc.setFontSize(10);
     if(reporte.validacion.encargado.timestamp) {
-      doc.text(`- Encargado: Validado el ${format(parseISO(reporte.validacion.encargado.timestamp), "Pp", {locale: es})}`, 16, finalY);
+      doc.text(`- Encargado: Validado el ${format(new Date(reporte.validacion.encargado.timestamp), "Pp", {locale: es})}`, 16, finalY);
       finalY += 6;
     }
     if(reporte.validacion.subcontrata.timestamp) {
-       doc.text(`- Subcontrata: Validado el ${format(parseISO(reporte.validacion.subcontrata.timestamp), "Pp", {locale: es})}`, 16, finalY);
+       doc.text(`- Subcontrata: Validado el ${format(new Date(reporte.validacion.subcontrata.timestamp), "Pp", {locale: es})}`, 16, finalY);
        finalY += 6;
     }
     if (reporte.validacion.constructora.validado && reporte.validacion.constructora.timestamp) {
-        doc.text(`- Constructora: Validado el ${format(parseISO(reporte.validacion.constructora.timestamp), "Pp", {locale: es})}`, 16, finalY);
+        doc.text(`- Constructora: Validado el ${format(new Date(reporte.validacion.constructora.timestamp), "Pp", {locale: es})}`, 16, finalY);
     } else {
         doc.text(`- Constructora: Pendiente de validación`, 16, finalY);
     }
 
 
     // Save the PDF
-    doc.save(`Reporte-${proyectoNombre.replace(/ /g, '_')}-${format(parseISO(reporte.fecha), 'yyyy-MM-dd')}.pdf`);
+    doc.save(`Reporte-${proyectoNombre.replace(/ /g, '_')}-${format(new Date(reporte.fecha), 'yyyy-MM-dd')}.pdf`);
   };
 
   const handleValidate = async (reporte: ReporteDiario) => {
@@ -129,7 +129,7 @@ export default function SubcontrataPartesValidadosPage() {
                     <HardHat className="h-8 w-8 text-accent"/>
                     <div>
                         <p className="font-bold text-lg capitalize">{reporte.proyectoId.replace('proy-', '').replace(/-/g, ' ')}</p>
-                        <p className="text-sm text-muted-foreground flex items-center gap-2"><Calendar className="h-4 w-4"/>{format(parseISO(reporte.fecha), "PPPP", { locale: es })}</p>
+                        <p className="text-sm text-muted-foreground flex items-center gap-2"><Calendar className="h-4 w-4"/>{format(new Date(reporte.fecha), "PPPP", { locale: es })}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-4 self-end sm:self-center">

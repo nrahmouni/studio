@@ -29,7 +29,7 @@ function ReporteItem({ reporte, onValidate }: { reporte: ReporteDiario, onValida
                  <div className="flex items-center gap-3">
                     <FileText className="h-5 w-5 text-primary"/>
                     <span className="font-semibold">
-                      Reporte del {format(parseISO(reporte.fecha), 'PPP', { locale: es })}
+                      Reporte del {format(new Date(reporte.fecha), 'PPP', { locale: es })}
                     </span>
                     <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
                  </div>
@@ -168,7 +168,7 @@ export default function ConstructoraPartesPage() {
                         <div className="mt-2 space-y-3 pl-4 border-l-2 border-accent/50 ml-2">
                           <h4 className="font-semibold mt-3 text-muted-foreground">Reportes Diarios Recibidos</h4>
                            {(reportesPorProyecto[proy.id] || []).length > 0 ? (
-                             (reportesPorProyecto[proy.id] || []).sort((a,b) => parseISO(b.fecha).getTime() - parseISO(a.fecha).getTime()).map(rep => (
+                             (reportesPorProyecto[proy.id] || []).sort((a,b) => new Date(b.fecha).getTime() - new Date(a.fecha).getTime()).map(rep => (
                                 <ReporteItem key={rep.id} reporte={rep} onValidate={handleValidation} />
                              ))
                            ) : <p className="text-sm text-muted-foreground">No hay reportes para este proyecto.</p> }

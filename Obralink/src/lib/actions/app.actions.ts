@@ -15,6 +15,7 @@ const delay = (ms: number) => new Promise(res => setTimeout(res, ms));
 const parseProyectos = (proyectos: any[]): Proyecto[] => {
     return proyectos.map(p => ({
         ...p,
+        // fechaInicio and fechaFin can be null, so check before parsing
         fechaInicio: p.fechaInicio ? parseISO(p.fechaInicio) : null,
         fechaFin: p.fechaFin ? parseISO(p.fechaFin) : null,
     }));
