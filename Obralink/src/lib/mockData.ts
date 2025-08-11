@@ -4,17 +4,29 @@ import path from 'path';
 import type { Constructora, Subcontrata, Proyecto, Trabajador, ReporteDiario, Maquinaria, FichajeTrabajador } from '@/lib/types';
 
 const dataDirectory = path.join(process.cwd(), 'src', 'lib', 'data');
+console.log(`[MockData] Initializing... Base data directory resolved to: ${dataDirectory}`);
+
 
 function readData<T>(filename: string): T[] {
     const filePath = path.join(dataDirectory, filename);
+    console.log(`[MockData] Attempting to read data for: ${filename} from path: ${filePath}`);
     try {
+        if (!fs.existsSync(filePath)) {
+            console.error(`[MockData] ERROR: File does not exist at path: ${filePath}`);
+            throw new Error(`File not found: ${filename}`);
+        }
         const fileContents = fs.readFileSync(filePath, 'utf8');
-        return JSON.parse(fileContents);
-    } catch (error) {
-        console.error(`Error reading ${filename}:`, error);
+        console.log(`[MockData] SUCCESS: Successfully read file: ${filename}`);
+        const data = JSON.parse(fileContents);
+        console.log(`[MockData] SUCCESS: Successfully parsed JSON for: ${filename}. Found ${data.length} records.`);
+        return data;
+    } catch (error: any) {
+        console.error(`[MockData] CRITICAL ERROR reading or parsing ${filename}:`, error.message);
+        console.error(`[MockData] Full error object for ${filename}:`, error);
         return [];
     }
 }
+
 
 export async function saveDataToFile(filename: string, data: any) {
     // This function is now a no-op in the production environment to avoid file system errors.
@@ -30,6 +42,7 @@ export async function saveDataToFile(filename: string, data: any) {
     } else {
         // In a deployed/demo environment, we don't want to write files.
         // The data is already being updated in the in-memory array.
+        console.log(`[MockData] NOTE: saveDataToFile is a no-op in this environment. Changes for '${filename}' are in-memory only.`);
         return Promise.resolve();
     }
 }
