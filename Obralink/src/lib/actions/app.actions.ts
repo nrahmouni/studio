@@ -118,10 +118,13 @@ export async function getReportesDiarios(proyectoId?: string, encargadoId?: stri
 export async function getReportesDiariosByConstructora(constructoraId: string): Promise<ReporteDiario[]> {
     console.log(`[ACTION LOG] getReportesDiariosByConstructora called with constructoraId: ${constructoraId}`);
     await delay(150);
-    let reportes = [...mockReportesDiarios];
     
-    const proyectosDeConstructoraIds = mockProyectos.filter(p => p.constructoraId === constructoraId).map(p => p.id);
-    reportes = reportes.filter((r: any) => proyectosDeConstructoraIds.includes(r.proyectoId));
+    const proyectosDeConstructoraIds = mockProyectos
+        .filter(p => p.constructoraId === constructoraId)
+        .map(p => p.id);
+    
+    const reportes = mockReportesDiarios.filter((r: any) => proyectosDeConstructoraIds.includes(r.proyectoId));
+    
     console.log(`[ACTION LOG] Found ${reportes.length} reportes for constructoraId: ${constructoraId}`);
     return JSON.parse(JSON.stringify(reportes));
 }
@@ -129,10 +132,13 @@ export async function getReportesDiariosByConstructora(constructoraId: string): 
 export async function getReportesDiariosBySubcontrata(subcontrataId: string): Promise<ReporteDiario[]> {
     console.log(`[ACTION LOG] getReportesDiariosBySubcontrata called with subcontrataId: ${subcontrataId}`);
     await delay(150);
-    let reportes = [...mockReportesDiarios];
     
-    const proyectosDeSubcontrataIds = mockProyectos.filter(p => p.subcontrataId === subcontrataId).map(p => p.id);
-    reportes = reportes.filter((r: any) => proyectosDeSubcontrataIds.includes(r.proyectoId));
+    const proyectosDeSubcontrataIds = mockProyectos
+        .filter(p => p.subcontrataId === subcontrataId)
+        .map(p => p.id);
+
+    const reportes = mockReportesDiarios.filter((r: any) => proyectosDeSubcontrataIds.includes(r.proyectoId));
+
     console.log(`[ACTION LOG] Found ${reportes.length} reportes for subcontrataId: ${subcontrataId}`);
     return JSON.parse(JSON.stringify(reportes));
 }
