@@ -23,7 +23,7 @@ body {
     --muted-foreground: 220 15% 45%;
     --accent: 220 40% 45%; /* Lighter Navy Blue for accents */
     --accent-foreground: 210 40% 98%;
-    --destructive: 220 50% 50%;
+    --destructive: 220 50% 50%; /* Changed to a blue tone */
     --destructive-foreground: 0 0% 98%;
     --border: 220 15% 88%;
     --input: 220 15% 88%;

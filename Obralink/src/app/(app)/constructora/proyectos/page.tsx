@@ -12,6 +12,7 @@ import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { Badge } from '@/components/ui/badge';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 export default function GestionProyectosConstructoraPage() {
   const [proyectos, setProyectos] = useState<Proyecto[]>([]);
@@ -67,9 +68,9 @@ export default function GestionProyectosConstructoraPage() {
     const now = new Date();
     const fechaFin = proyecto.fechaFin ? new Date(proyecto.fechaFin) : null;
     const fechaInicio = proyecto.fechaInicio ? new Date(proyecto.fechaInicio) : null;
-    if (fechaFin && fechaFin < now) return { text: "Finalizado", color: "bg-gray-500" };
-    if (fechaInicio && fechaInicio > now) return { text: "Próximamente", color: "bg-blue-500" };
-    return { text: "En Curso", color: "bg-green-500" };
+    if (fechaFin && fechaFin < now) return { text: "Finalizado", className: "bg-muted text-muted-foreground" };
+    if (fechaInicio && fechaInicio > now) return { text: "Próximamente", className: "bg-secondary text-secondary-foreground" };
+    return { text: "En Curso", className: "bg-primary text-primary-foreground" };
   }
 
   if (loading) {
@@ -115,7 +116,7 @@ export default function GestionProyectosConstructoraPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4 self-end sm:self-start">
-                    <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
+                    <Badge className={cn("text-white", status.className)}>{status.text}</Badge>
                     <Link href={`/constructora/proyectos/${p.id}`} passHref>
                         <Button variant="outline" size="sm">Gestionar</Button>
                     </Link>

@@ -45,10 +45,10 @@ export default function AsistenciaDashboardPage() {
   }, []);
 
   const getValidationStatus = (reporte: ReporteDiario) => {
-    if(reporte.validacion.constructora.validado) return {text: "Validado por todos", color: "bg-green-600"};
-    if(reporte.validacion.subcontrata.validado) return {text: "Validado por Subcontrata", color: "bg-blue-500"};
-    if(reporte.validacion.encargado.validado) return {text: "Enviado", color: "bg-yellow-500 text-black"};
-    return {text: "Borrador", color: "bg-gray-400"};
+    if(reporte.validacion.constructora.validado) return {text: "Validado por todos", className: "bg-primary text-primary-foreground"};
+    if(reporte.validacion.subcontrata.validado) return {text: "Validado por Subcontrata", className: "bg-accent text-accent-foreground"};
+    if(reporte.validacion.encargado.validado) return {text: "Enviado", className: "bg-secondary text-secondary-foreground"};
+    return {text: "Borrador", className: "bg-muted text-muted-foreground"};
   }
 
   const generatePDF = (reporte: ReporteDiario) => {
@@ -183,7 +183,7 @@ export default function AsistenciaDashboardPage() {
                                 <div className="flex items-center gap-4 self-start sm:self-center">
                                    <p className="text-sm text-muted-foreground w-28 text-right">{format(new Date(reporte.fecha), "PPP", { locale: es })}</p>
                                    <div className="flex flex-col items-end gap-1">
-                                      <Badge style={{backgroundColor: status.color}} className="text-white min-w-[120px] justify-center text-center">{status.text}</Badge>
+                                      <Badge className={cn("text-white min-w-[120px] justify-center text-center", status.className)}>{status.text}</Badge>
                                       {reporte.modificacionJefeObra?.modificado && <Badge variant="destructive" className="mt-1">Modificado</Badge>}
                                    </div>
                                 </div>
@@ -207,7 +207,7 @@ export default function AsistenciaDashboardPage() {
                                             <TableRow key={trabajador.trabajadorId}>
                                               <TableCell className="font-medium">{trabajador.nombre}</TableCell>
                                               <TableCell className="text-center">
-                                                <Badge variant={trabajador.asistencia ? "default" : "destructive"} className={cn(trabajador.asistencia ? "bg-green-100 text-green-800" : "bg-red-100 text-red-800")}>{trabajador.asistencia ? 'Presente' : 'Ausente'}</Badge>
+                                                <Badge variant={trabajador.asistencia ? "default" : "destructive"} className={cn(trabajador.asistencia ? "bg-primary/10 text-primary" : "bg-destructive/10 text-destructive")}>{trabajador.asistencia ? 'Presente' : 'Ausente'}</Badge>
                                               </TableCell>
                                               <TableCell className="text-right font-mono text-lg">{trabajador.asistencia ? `${trabajador.horas}h` : 'N/A'}</TableCell>
                                             </TableRow>
@@ -226,8 +226,8 @@ export default function AsistenciaDashboardPage() {
                                  
                                 {reporte.modificacionJefeObra?.modificado && reporte.modificacionJefeObra.timestamp && (
                                     <div>
-                                        <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-orange-600"><Edit className="h-4 w-4"/>Historial de Modificación</h4>
-                                        <div className="text-sm text-muted-foreground bg-orange-500/10 p-3 rounded-md border border-orange-500/20">
+                                        <h4 className="font-semibold text-md mb-2 flex items-center gap-2 text-accent"><Edit className="h-4 w-4"/>Historial de Modificación</h4>
+                                        <div className="text-sm text-muted-foreground bg-accent/10 p-3 rounded-md border border-accent/20">
                                             <p>Este reporte fue modificado por el jefe de obra (ID: {reporte.modificacionJefeObra.jefeObraId}) el {format(new Date(reporte.modificacionJefeObra.timestamp), 'Pp', {locale: es})}.</p>
                                         </div>
                                     </div>
@@ -237,14 +237,14 @@ export default function AsistenciaDashboardPage() {
                                     <div>
                                         <h4 className="font-semibold text-md mb-2">Estado de Validación</h4>
                                         <ul className="space-y-1 text-sm">
-                                            <li className="flex items-center gap-2 text-green-600"><Check className="h-4 w-4"/> <span>Validado por ti el {reporte.validacion.encargado.timestamp ? format(new Date(reporte.validacion.encargado.timestamp), 'Pp', {locale: es}) : ''}</span></li>
+                                            <li className="flex items-center gap-2 text-primary"><Check className="h-4 w-4"/> <span>Validado por ti el {reporte.validacion.encargado.timestamp ? format(new Date(reporte.validacion.encargado.timestamp), 'Pp', {locale: es}) : ''}</span></li>
                                             {reporte.validacion.subcontrata.validado && reporte.validacion.subcontrata.timestamp ? (
-                                                <li className="flex items-center gap-2 text-green-600"><Check className="h-4 w-4"/> <span>Validado por Subcontrata el {format(new Date(reporte.validacion.subcontrata.timestamp), 'Pp', {locale: es})}</span></li>
+                                                <li className="flex items-center gap-2 text-primary"><Check className="h-4 w-4"/> <span>Validado por Subcontrata el {format(new Date(reporte.validacion.subcontrata.timestamp), 'Pp', {locale: es})}</span></li>
                                             ) : (
                                                 <li className="flex items-center gap-2 text-muted-foreground"><Clock className="h-4 w-4"/> <span>Pendiente de Subcontrata</span></li>
                                             )}
                                             {reporte.validacion.constructora.validado && reporte.validacion.constructora.timestamp ? (
-                                                <li className="flex items-center gap-2 text-green-600"><Check className="h-4 w-4"/> <span>Validado por Constructora el {format(new Date(reporte.validacion.constructora.timestamp), 'Pp', {locale: es})}</span></li>
+                                                <li className="flex items-center gap-2 text-primary"><Check className="h-4 w-4"/> <span>Validado por Constructora el {format(new Date(reporte.validacion.constructora.timestamp), 'Pp', {locale: es})}</span></li>
                                             ) : (
                                                 <li className="flex items-center gap-2 text-muted-foreground"><Clock className="h-4 w-4"/> <span>Pendiente de Constructora</span></li>
                                             )}

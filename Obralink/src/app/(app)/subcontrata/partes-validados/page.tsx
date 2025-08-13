@@ -137,7 +137,7 @@ export default function SubcontrataPartesValidadosPage() {
                     </div>
                   </div>
                   <div className="flex items-center gap-4 self-end sm:self-center">
-                    <Badge variant={reporte.validacion.subcontrata.validado ? "default" : "secondary"} className={reporte.validacion.subcontrata.validado ? "bg-green-600 text-white" : ""}>
+                    <Badge variant={reporte.validacion.subcontrata.validado ? "default" : "secondary"} className={reporte.validacion.subcontrata.validado ? "bg-primary text-primary-foreground" : ""}>
                       {reporte.validacion.subcontrata.validado ? "Validado por ti" : "Pendiente de tu Validación"}
                     </Badge>
                      <Button

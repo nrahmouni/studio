@@ -49,7 +49,7 @@ export default function FichajePage() {
                     </CardHeader>
                     <CardContent className="flex flex-col gap-4 p-6">
                         <Button 
-                            className="h-28 text-2xl bg-green-600 hover:bg-green-700 text-white rounded-xl shadow-lg transform hover:scale-105 transition-transform" 
+                            className="h-28 text-2xl bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl shadow-lg transform hover:scale-105 transition-transform" 
                             onClick={() => handleFichaje('inicio')}
                             disabled={isSubmitting || status === 'in'}
                         >
@@ -57,7 +57,7 @@ export default function FichajePage() {
                             Registrar INICIO
                         </Button>
                         <Button 
-                            className="h-28 text-2xl bg-red-600 hover:bg-red-700 text-white rounded-xl shadow-lg transform hover:scale-105 transition-transform"
+                            className="h-28 text-2xl bg-destructive hover:bg-destructive/90 text-destructive-foreground rounded-xl shadow-lg transform hover:scale-105 transition-transform"
                             onClick={() => handleFichaje('fin')}
                             disabled={isSubmitting || status === 'out'}
                         >

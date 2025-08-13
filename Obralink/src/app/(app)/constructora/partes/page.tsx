@@ -11,15 +11,16 @@ import { getSubcontratas, getProyectosByConstructora, getReportesDiariosByConstr
 import { format } from 'date-fns';
 import { es } from 'date-fns/locale';
 import { useToast } from '@/hooks/use-toast';
+import { cn } from '@/lib/utils';
 
 function ReporteItem({ reporte, onValidate }: { reporte: ReporteDiario, onValidate: (id: string) => void }) {
     const [isOpen, setIsOpen] = useState(false);
     
     const getValidationStatus = (validacion: ReporteDiario['validacion']) => {
-        if(validacion.constructora.validado) return {text: "Validado por ti", color: "bg-green-500"};
-        if(validacion.subcontrata.validado) return {text: "Validado (Subcontrata)", color: "bg-blue-500"};
-        if(validacion.encargado.validado) return {text: "Enviado por Encargado", color: "bg-yellow-500 text-black"};
-        return {text: "Pendiente", color: "bg-gray-400"};
+        if(validacion.constructora.validado) return {text: "Validado por ti", className: "bg-primary text-primary-foreground"};
+        if(validacion.subcontrata.validado) return {text: "Validado (Subcontrata)", className: "bg-accent text-accent-foreground"};
+        if(validacion.encargado.validado) return {text: "Enviado por Encargado", className: "bg-secondary text-secondary-foreground"};
+        return {text: "Pendiente", className: "bg-muted text-muted-foreground"};
     }
     const status = getValidationStatus(reporte.validacion);
     
@@ -31,7 +32,7 @@ function ReporteItem({ reporte, onValidate }: { reporte: ReporteDiario, onValida
                     <span className="font-semibold">
                       Reporte del {format(new Date(reporte.fecha), 'PPP', { locale: es })}
                     </span>
-                    <Badge style={{backgroundColor: status.color}} className="text-white">{status.text}</Badge>
+                    <Badge className={cn("text-white", status.className)}>{status.text}</Badge>
                  </div>
 
                  <div className="flex items-center gap-2">
@@ -45,7 +46,7 @@ function ReporteItem({ reporte, onValidate }: { reporte: ReporteDiario, onValida
                 <div className="mt-4 p-4 bg-background rounded-md border space-y-3 animate-fade-in-up">
                    <p className="font-semibold flex items-center gap-2"><UserCheck className="h-4 w-4"/>Reportado por: <span className="font-normal">{reporte.encargadoId} (ID)</span></p>
                    {reporte.modificacionJefeObra?.modificado && (
-                        <p className="font-semibold text-orange-600 flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>
+                        <p className="font-semibold text-accent flex items-center gap-2"><AlertTriangle className="h-4 w-4"/>
                             Este parte fue modificado por el jefe de obra.
                         </p>
                    )}

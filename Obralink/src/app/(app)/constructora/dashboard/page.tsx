@@ -10,6 +10,7 @@ import { useToast } from '@/hooks/use-toast';
 import { format, formatDistanceToNow, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 import Link from 'next/link';
+import { cn } from '@/lib/utils';
 
 function StatCard({ title, value, icon: Icon, description, isLoading }: { title: string, value: string | number, icon: React.ElementType, description: string, isLoading: boolean }) {
     return (
@@ -139,7 +140,7 @@ export default function ConstructoraDashboardPage() {
                                {reportesRecientes.map(r => (
                                    <li key={r.id} className="flex items-center justify-between p-3 rounded-lg bg-muted/50 border">
                                        <div className="flex items-center gap-3">
-                                           {r.validacion.constructora.validado ? <CheckCircle className="h-5 w-5 text-green-500"/> : <Clock className="h-5 w-5 text-yellow-500"/>}
+                                           {r.validacion.constructora.validado ? <CheckCircle className="h-5 w-5 text-primary"/> : <Clock className="h-5 w-5 text-accent"/>}
                                            <div>
                                                <p className="font-semibold capitalize">{r.proyectoId.replace('proy-', '').replace(/-/g, ' ')}</p>
                                                <p className="text-sm text-muted-foreground">Reporte del {format(new Date(r.fecha), 'PPP', {locale: es})}</p>
