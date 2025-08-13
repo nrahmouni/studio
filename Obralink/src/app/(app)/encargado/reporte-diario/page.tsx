@@ -139,15 +139,14 @@ export default function ReporteDiarioPage() {
     setIsSubmitting(true);
     
     const reporte: ReporteTrabajador[] = trabajadores
-      .filter(t => t.asistencia)
       .map(t => ({
         trabajadorId: t.id,
         nombre: t.nombre,
-        asistencia: true,
-        horas: t.horas,
+        asistencia: t.asistencia,
+        horas: t.asistencia ? t.horas : 0,
       }));
 
-    if (reporte.length === 0) {
+    if (reporte.filter(t => t.asistencia).length === 0) {
       toast({
         title: "Atención",
         description: "No se puede enviar un reporte si no ha asistido ningún trabajador.",
