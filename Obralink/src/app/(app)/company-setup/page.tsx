@@ -2,7 +2,7 @@
 'use client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Check, HardHat, Building, Briefcase, ArrowRight, User, Wrench, Settings } from "lucide-react";
+import { Check, HardHat, Building, Briefcase, ArrowRight, Wrench } from "lucide-react";
 import Link from 'next/link';
 
 interface SetupStep {

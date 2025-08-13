@@ -95,8 +95,8 @@ export async function getMaquinariaByProyecto(proyectoId: string): Promise<Maqui
     return JSON.parse(JSON.stringify(maquinaria));
 }
 
-export async function getReportesDiarios(proyectoId?: string, encargadoId?: string, subcontrataId?: string): Promise<ReporteDiario[]> {
-    console.log(`[ACTION LOG] getReportesDiarios called with filters: proyectoId=${proyectoId}, encargadoId=${encargadoId}, subcontrataId=${subcontrataId}`);
+export async function getReportesDiarios(proyectoId?: string, encargadoId?: string): Promise<ReporteDiario[]> {
+    console.log(`[ACTION LOG] getReportesDiarios called with filters: proyectoId=${proyectoId}, encargadoId=${encargadoId}`);
     await delay(150);
     let reportes = [...mockReportesDiarios];
     
@@ -105,10 +105,6 @@ export async function getReportesDiarios(proyectoId?: string, encargadoId?: stri
     }
     if (encargadoId) {
         reportes = reportes.filter((r: any) => r.encargadoId === encargadoId);
-    }
-    if (subcontrataId) {
-        const proyectosDeSubcontrataIds = mockProyectos.filter(p => p.subcontrataId === subcontrataId).map(p => p.id);
-        reportes = reportes.filter((r: any) => proyectosDeSubcontrataIds.includes(r.proyectoId));
     }
     
     console.log(`[ACTION LOG] Found ${reportes.length} reportes with applied filters.`);
@@ -193,8 +189,8 @@ const AddProyectoSchema = z.object({
   clienteNombre: z.string().min(1, "El nombre del cliente final es requerido"),
   constructoraId: z.string().optional(),
   subcontrataId: z.string().optional(),
-  fechaInicio: z.string().optional().nullable(),
-  fechaFin: z.string().optional().nullable(),
+  fechaInicio: z.date().optional().nullable(),
+  fechaFin: z.date().optional().nullable(),
 });
 
 export async function addProyecto(data: z.infer<typeof AddProyectoSchema>): Promise<{ success: boolean; message: string; proyecto?: Proyecto }> {
@@ -206,8 +202,8 @@ export async function addProyecto(data: z.infer<typeof AddProyectoSchema>): Prom
             ...data,
             constructoraId: data.constructoraId || '',
             subcontrataId: data.subcontrataId || '',
-            fechaInicio: data.fechaInicio,
-            fechaFin: data.fechaFin,
+            fechaInicio: data.fechaInicio ? data.fechaInicio.toISOString() : null,
+            fechaFin: data.fechaFin ? data.fechaFin.toISOString() : null,
         };
         mockProyectos.unshift(newProyecto as any);
         console.log('[ACTION LOG] addProyecto successful. New proyecto:', newProyecto);
@@ -229,6 +225,13 @@ export async function updateProyecto(proyectoId: string, data: Partial<Omit<Proy
         }
         
         const updatedData: any = { ...data };
+        if (data.fechaInicio && data.fechaInicio instanceof Date) {
+            updatedData.fechaInicio = data.fechaInicio.toISOString();
+        }
+        if (data.fechaFin && data.fechaFin instanceof Date) {
+            updatedData.fechaFin = data.fechaFin.toISOString();
+        }
+
         mockProyectos[index] = { ...mockProyectos[index], ...updatedData };
         console.log('[ACTION LOG] updateProyecto successful.');
         return { success: true, message: 'Proyecto actualizado.', proyecto: JSON.parse(JSON.stringify(mockProyectos[index])) };

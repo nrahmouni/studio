@@ -61,7 +61,7 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
       localStorage.removeItem('constructoraId_obra_link');
       localStorage.removeItem('subcontrataId_obra_link');
       localStorage.removeItem('trabajadorId_obra_link');
-      localStorage.removeItem('encargadoId_obra_link'); // Added missing key
+      localStorage.removeItem('encargadoId_obra_link');
 
       // Force a full page navigation and reload to ensure state is reset
       window.location.href = '/dashboard';
@@ -138,12 +138,6 @@ export function AppHeader({ companyName = "ObraLink" }: AppHeaderProps) {
             <DropdownMenuContent align="end" className="w-56">
               <DropdownMenuLabel>Mi Cuenta</DropdownMenuLabel>
               <DropdownMenuSeparator />
-              <Link href="/company-profile" passHref>
-                <DropdownMenuItem>
-                  <UserCircle className="mr-2 h-4 w-4" />
-                  <span>Perfil</span>
-                </DropdownMenuItem>
-              </Link>
               <Link href="/settings" passHref> 
                 <DropdownMenuItem>
                   <Settings className="mr-2 h-4 w-4" />
