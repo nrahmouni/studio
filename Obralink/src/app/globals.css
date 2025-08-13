@@ -23,7 +23,7 @@ body {
     --muted-foreground: 220 15% 45%;
     --accent: 220 40% 45%; /* Lighter Navy Blue for accents */
     --accent-foreground: 210 40% 98%;
-    --destructive: 0 84.2% 60.2%;
+    --destructive: 220 50% 50%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 15% 88%;
     --input: 220 15% 88%;
@@ -59,7 +59,7 @@ body {
     --muted-foreground: 210 15% 65%;
     --accent: 210 40% 55%; /* Accent blue for dark mode */
     --accent-foreground: 220 25% 10%;
-    --destructive: 0 70% 50%;
+    --destructive: 210 50% 60%;
     --destructive-foreground: 0 0% 98%;
     --border: 220 20% 25%;
     --input: 220 20% 25%;
@@ -150,4 +150,3 @@ body {
 .will-animate-fade-in-up, .will-animate-fade-in-down {
   opacity: 0;
 }
-
