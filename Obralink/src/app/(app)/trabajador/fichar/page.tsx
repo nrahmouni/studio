@@ -29,7 +29,7 @@ export default function FichajePage() {
             toast({ title: 'Éxito', description: result.message });
             setStatus(tipo === 'inicio' ? 'in' : 'out');
         } else {
-            toast({ title: 'Error', description: 'No se pudo registrar el fichaje.', variant: 'destructive' });
+            toast({ title: 'Error', description: result.message, variant: 'destructive' });
         }
         setIsSubmitting(false);
     };
