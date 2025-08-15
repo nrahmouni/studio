@@ -10,7 +10,7 @@ import { saveFichaje } from '@/lib/actions/app.actions';
 export default function FichajePage() {
     const { toast } = useToast();
     const [isSubmitting, setIsSubmitting] = useState(false);
-    const [status, setStatus] = useState<'in' | 'out'>('out');
+    const [status, setStatus<'in' | 'out'>('out');
 
     const handleFichaje = async (tipo: 'inicio' | 'fin') => {
         setIsSubmitting(true);

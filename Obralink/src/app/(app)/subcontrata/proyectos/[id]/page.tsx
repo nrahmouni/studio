@@ -92,9 +92,9 @@ export default function SubcontrataProyectoDetailPage() {
     const fechaFin = p.fechaFin ? new Date(p.fechaFin) : null;
     const fechaInicio = p.fechaInicio ? new Date(p.fechaInicio) : null;
 
-    if (fechaFin && fechaFin < now) return { text: "Finalizado", color: "bg-gray-500" };
-    if (fechaInicio && fechaInicio > now) return { text: "Próximamente", color: "bg-blue-500" };
-    return { text: "En Curso", color: "bg-green-500" };
+    if (fechaFin && fechaFin < now) return { text: "Finalizado", className: "bg-muted text-muted-foreground" };
+    if (fechaInicio && fechaInicio > now) return { text: "Próximamente", className: "bg-secondary text-secondary-foreground" };
+    return { text: "En Curso", className: "bg-primary text-primary-foreground" };
   };
 
   if (loading) {
@@ -134,7 +134,7 @@ export default function SubcontrataProyectoDetailPage() {
                     <span className="font-semibold">Fechas:</span> {proyecto.fechaInicio ? format(new Date(proyecto.fechaInicio), 'd MMM yyyy', {locale: es}) : 'N/A'} - {proyecto.fechaFin ? format(new Date(proyecto.fechaFin), 'd MMM yyyy', {locale: es}) : 'Indefinido'}
                 </div>
             </div>
-             <div className="flex items-center gap-3"><HardHat className="h-5 w-5 text-muted-foreground"/> <div><span className="font-semibold">Estado:</span> <Badge style={{backgroundColor: status.color}} className="text-white ml-2 text-md">{status.text}</Badge></div></div>
+             <div className="flex items-center gap-3"><HardHat className="h-5 w-5 text-muted-foreground"/> <div><span className="font-semibold">Estado:</span> <Badge className={status.className}>{status.text}</Badge></div></div>
           </CardContent>
         </Card>
         
@@ -153,7 +153,7 @@ export default function SubcontrataProyectoDetailPage() {
               {trabajadores.length > 0 ? trabajadores.map(t => (
                 <div key={t.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50 border">
                   <span className="flex items-center gap-3"><User className="h-5 w-5 text-primary"/>{t.nombre}</span>
-                  <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-500/10"><Trash2 className="h-4 w-4"/></Button></AlertDialogTrigger>
+                  <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"><Trash2 className="h-4 w-4"/></Button></AlertDialogTrigger>
                       <AlertDialogContent>
                           <AlertDialogHeader><AlertDialogTitle>¿Desvincular trabajador?</AlertDialogTitle><AlertDialogDescription>Esta acción desvinculará a <strong>{t.nombre}</strong> de este proyecto.</AlertDialogDescription></AlertDialogHeader>
                           <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleRemoveTrabajador(t.id)} className="bg-destructive hover:bg-destructive/90">Desvincular</AlertDialogAction></AlertDialogFooter>
@@ -178,7 +178,7 @@ export default function SubcontrataProyectoDetailPage() {
               {maquinaria.length > 0 ? maquinaria.map(m => (
                 <div key={m.id} className="flex items-center justify-between p-2 rounded-md bg-muted/50 border">
                   <span className="flex items-center gap-3"><Truck className="h-5 w-5 text-primary"/>{m.nombre}</span>
-                  <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-red-500 hover:text-red-700 hover:bg-red-500/10"><Trash2 className="h-4 w-4"/></Button></AlertDialogTrigger>
+                  <AlertDialog><AlertDialogTrigger asChild><Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"><Trash2 className="h-4 w-4"/></Button></AlertDialogTrigger>
                       <AlertDialogContent>
                           <AlertDialogHeader><AlertDialogTitle>¿Desvincular maquinaria?</AlertDialogTitle><AlertDialogDescription>Esta acción desvinculará a <strong>{m.nombre}</strong> de este proyecto.</AlertDialogDescription></AlertDialogHeader>
                           <AlertDialogFooter><AlertDialogCancel>Cancelar</AlertDialogCancel><AlertDialogAction onClick={() => handleRemoveMaquinaria(m.id)} className="bg-destructive hover:bg-destructive/90">Desvincular</AlertDialogAction></AlertDialogFooter>
