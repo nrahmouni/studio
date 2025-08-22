@@ -1,5 +1,4 @@
 
-// src/lib/actions/app.actions.ts
 'use server';
 
 import type { Subcontrata, Proyecto, Trabajador, ReporteTrabajador, ReporteDiario, Constructora, Maquinaria } from '../types';

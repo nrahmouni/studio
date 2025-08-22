@@ -1,5 +1,4 @@
 
-// src/app/(app)/settings/page.tsx
 'use client';
 
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -8,7 +7,6 @@ import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
-import { useState } from "react";
 import { useToast } from "@/hooks/use-toast";
 
 export default function SettingsPage() {

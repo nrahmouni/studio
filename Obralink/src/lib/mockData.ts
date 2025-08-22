@@ -20,10 +20,11 @@ function readData<T>(filename: string): T[] {
 export async function saveDataToFile(filename: string, data: any) {
     const filePath = path.join(dataDirectory, `${filename}.json`);
     try {
+        // En un entorno de desarrollo de solo lectura, esta operación puede fallar.
+        // Se añade un try-catch aquí para que la app no se caiga si no tiene permisos de escritura.
         await fs.promises.writeFile(filePath, JSON.stringify(data, null, 2), 'utf8');
     } catch (error) {
-        console.error(`Error writing to ${filename}.json:`, error);
-        throw new Error(`Could not save data to ${filename}.json`);
+        console.warn(`Could not save data to ${filename}.json. Running in read-only mode. Error:`, error);
     }
 }
 

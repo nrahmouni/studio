@@ -7,7 +7,7 @@ import { useEffect } from 'react';
 export default function DeprecatedNewAsistenciaPage() {
   const router = useRouter();
   useEffect(() => {
-    router.replace('/encargado/asistencia');
+    router.replace('/encargado/reporte-diario');
   }, [router]);
   return null;
 }

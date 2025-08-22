@@ -1,3 +1,4 @@
+
 'use client';
 import { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
@@ -9,6 +10,7 @@ import { getReportesDiarios } from '@/lib/actions/app.actions';
 import { useToast } from '@/hooks/use-toast';
 import { analyzeResourceAllocation, AnalyzeResourceAllocationOutput } from '@/ai/flows/resource-allocation';
 import { Skeleton } from '@/components/ui/skeleton';
+import { Label } from '@/components/ui/label';
 
 export default function AnalisisRecursosPage() {
     const [reportes, setReportes] = useState<ReporteDiario[]>([]);
@@ -20,7 +22,6 @@ export default function AnalisisRecursosPage() {
     useEffect(() => {
         const fetchReportes = async () => {
             setLoading(true);
-            // Fetch all reports, then filter for "open" ones (not validated by constructora)
             const allReportes = await getReportesDiarios();
             const openReportes = allReportes.filter(r => !r.validacion.constructora.validado);
             setReportes(openReportes);
